@@ -28,8 +28,20 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 $action = $_GET["action"] ?? "";
 $repo = trim($_GET["repo"] ?? "");
 
-if (!in_array($action, ["info", "zip", "asset", "catalog_icon"], true)) {
+if (!in_array($action, ["info", "zip", "asset", "catalog", "catalog_icon"], true)) {
     jsonError("Invalid action.", 400);
+}
+
+if ($action === "catalog") {
+    $component = trim(
+        $_GET["component"] ?? ""
+    );
+
+    jsonResponse(
+        getCatalogPlugin(
+            $component
+        )
+    );
 }
 
 if ($action === "catalog_icon") {
@@ -181,18 +193,6 @@ function getRepositoryInfo(
         $versionPhp
     );
 
-    $readme = getRepositoryTextFile(
-        $owner,
-        $repository,
-        $tag,
-        "README.md"
-    );
-
-    $marketing = parseReadmeMarketing(
-        $readme,
-        $repository
-    );
-
     $result = [
         "repo" => $owner . "/" . $repository,
 
@@ -217,12 +217,6 @@ function getRepositoryInfo(
 
         "html_url" =>
             $release["html_url"] ?? null,
-
-        "plugin_name" =>
-            $marketing["name"],
-
-        "short_description" =>
-            $marketing["short_description"],
 
         "fetched_at" =>
             gmdate("c"),
@@ -559,9 +553,9 @@ function parseReadmeMarketing(
     ];
 }
 
-function streamCatalogIcon(
+function getCatalogPlugin(
     string $component
-): never {
+): array {
     if (!preg_match(
         "/^[a-z][a-z0-9]*_[a-z0-9_]+$/i",
         $component
@@ -572,26 +566,194 @@ function streamCatalogIcon(
         );
     }
 
-    $directoryPath =
-        "icon/" .
-        $component;
+    $filename =
+        dirname(__DIR__) .
+        "/plugins.json";
 
-    $url =
-        "https://api.github.com/repos/" .
-        "EduardoKrausME/" .
-        "marketplace-plugins/" .
-        "contents/" .
-        rawurlencode("icon") .
-        "/" .
-        rawurlencode($component) .
-        "?ref=master";
-
-    $entries =
-        githubJsonRequest(
-            $url
+    $contents =
+        file_get_contents(
+            $filename
         );
 
-    $supported = [
+    if ($contents === false) {
+        throwApiError(
+            "Unable to read plugins.json.",
+            500
+        );
+    }
+
+    $plugins =
+        json_decode(
+            $contents,
+            true
+        );
+
+    if (!is_array($plugins)) {
+        throwApiError(
+            "plugins.json contains invalid JSON.",
+            500
+        );
+    }
+
+    foreach ($plugins as $plugin) {
+        if (
+            !is_array($plugin) ||
+            ($plugin["component"] ?? null) !==
+            $component
+        ) {
+            continue;
+        }
+
+        $description =
+            trim(
+                (string)(
+                    $plugin["description"] ??
+                    ""
+                )
+            );
+
+        $iconUrl =
+            trim(
+                (string)(
+                    $plugin["iconUrl"] ??
+                    ""
+                )
+            );
+
+        if ($description === "") {
+            throwApiError(
+                "Catalog description is empty for " .
+                $component .
+                ".",
+                500
+            );
+        }
+
+        if ($iconUrl === "") {
+            throwApiError(
+                "Catalog iconUrl is empty for " .
+                $component .
+                ".",
+                500
+            );
+        }
+
+        return [
+            "component" =>
+                $component,
+
+            "name" =>
+                trim(
+                    (string)(
+                        $plugin["name"] ??
+                        ""
+                    )
+                ),
+
+            "description" =>
+                $description,
+
+            "iconUrl" =>
+                $iconUrl,
+
+            "repository_url" =>
+                trim(
+                    (string)(
+                        $plugin["repository_url"] ??
+                        ""
+                    )
+                ),
+        ];
+    }
+
+    jsonError(
+        "Plugin not found in plugins.json: " .
+        $component,
+        404
+    );
+}
+
+function streamCatalogIcon(
+    string $component
+): never {
+    $plugin =
+        getCatalogPlugin(
+            $component
+        );
+
+    $iconUrl =
+        $plugin["iconUrl"];
+
+    $prefix =
+        "/marketplace-plugins/";
+
+    if (!str_starts_with(
+        $iconUrl,
+        $prefix
+    )) {
+        jsonError(
+            "Catalog iconUrl must point inside /marketplace-plugins/.",
+            400
+        );
+    }
+
+    $relative =
+        substr(
+            $iconUrl,
+            strlen($prefix)
+        );
+
+    if (
+        $relative === "" ||
+        str_contains(
+            $relative,
+            ".."
+        )
+    ) {
+        jsonError(
+            "Invalid catalog iconUrl.",
+            400
+        );
+    }
+
+    $root =
+        realpath(
+            dirname(__DIR__)
+        );
+
+    $filename =
+        realpath(
+            dirname(__DIR__) .
+            "/" .
+            $relative
+        );
+
+    if (
+        $root === false ||
+        $filename === false ||
+        !str_starts_with(
+            $filename,
+            $root .
+            DIRECTORY_SEPARATOR
+        ) ||
+        !is_file($filename)
+    ) {
+        jsonError(
+            "Catalog icon file was not found: " .
+            $iconUrl,
+            404
+        );
+    }
+
+    $extension =
+        strtolower(
+            pathinfo(
+                $filename,
+                PATHINFO_EXTENSION
+            )
+        );
+
+    $types = [
         "png" =>
             "image/png",
         "webp" =>
@@ -606,128 +768,58 @@ function streamCatalogIcon(
             "image/svg+xml",
     ];
 
-    $candidates = [];
-
-    foreach ($entries as $entry) {
-        if (
-            !is_array($entry) ||
-            ($entry["type"] ?? "") !== "file"
-        ) {
-            continue;
-        }
-
-        $name =
-            (string)($entry["name"] ?? "");
-
-        $extension =
-            strtolower(
-                pathinfo(
-                    $name,
-                    PATHINFO_EXTENSION
-                )
-            );
-
-        if (!isset($supported[$extension])) {
-            continue;
-        }
-
-        $exact =
-            strtolower(
-                pathinfo(
-                    $name,
-                    PATHINFO_FILENAME
-                )
-            ) ===
-            strtolower($component);
-
-        $priority =
-            $exact
-                ? 0
-                : 10;
-
-        if ($extension === "svg") {
-            $priority += 5;
-        }
-
-        $candidates[] = [
-            "priority" =>
-                $priority,
-            "name" =>
-                $name,
-            "path" =>
-                (string)($entry["path"] ?? ""),
-            "extension" =>
-                $extension,
-        ];
-    }
-
-    if (!$candidates) {
+    if (!isset(
+        $types[$extension]
+    )) {
         jsonError(
-            "No icon found for component " .
-            $component .
-            " in " .
-            $directoryPath .
-            ".",
-            404
+            "Unsupported catalog icon type.",
+            415
         );
     }
 
-    usort(
-        $candidates,
-        static function (
-            array $a,
-            array $b
-        ): int {
-            return [
-                $a["priority"],
-                $a["name"],
-            ] <=>
-            [
-                $b["priority"],
-                $b["name"],
-            ];
-        }
-    );
-
-    $selected =
-        $candidates[0];
-
-    $bytes =
-        getRepositoryFileBytes(
-            "EduardoKrausME",
-            "marketplace-plugins",
-            "master",
-            $selected["path"]
+    $size =
+        filesize(
+            $filename
         );
 
     header(
         "Content-Type: " .
-        $supported[
-            $selected["extension"]
-        ]
+        $types[$extension]
     );
     header(
         'Content-Disposition: inline; filename="' .
         addcslashes(
-            $selected["name"],
-            "\\\""
+            basename($filename),
+            "\\""
         ) .
         '"'
     );
     header(
         "X-Asset-Filename: " .
-        $selected["name"]
+        basename($filename)
     );
     header(
-        "Access-Control-Expose-Headers: X-Asset-Filename"
+        "X-Asset-Path: " .
+        $iconUrl
     );
-    header("Cache-Control: no-store");
     header(
-        "Content-Length: " .
-        strlen($bytes)
+        "Access-Control-Expose-Headers: X-Asset-Filename, X-Asset-Path"
+    );
+    header(
+        "Cache-Control: no-store"
     );
 
-    echo $bytes;
+    if ($size !== false) {
+        header(
+            "Content-Length: " .
+            $size
+        );
+    }
+
+    readfile(
+        $filename
+    );
+
     exit;
 }
 
