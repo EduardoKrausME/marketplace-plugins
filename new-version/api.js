@@ -1319,8 +1319,14 @@
         element.value =
             value;
 
+        const EventClass =
+            element.ownerDocument
+                ?.defaultView
+                ?.Event ||
+            Event;
+
         element.dispatchEvent(
-            new Event(
+            new EventClass(
                 "input",
                 {
                     bubbles: true,
@@ -1329,7 +1335,7 @@
         );
 
         element.dispatchEvent(
-            new Event(
+            new EventClass(
                 "change",
                 {
                     bubbles: true,
