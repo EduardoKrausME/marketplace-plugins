@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.8-filepond-api";
+        "2026-09-28.9-filepond-states";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1507,11 +1507,20 @@
         ) {
             const candidates = [
                 browser,
+                browser.closest(
+                    ".filepond--root"
+                ),
                 root,
+                root.querySelector(
+                    ".filepond--root"
+                ),
+                root.querySelector(
+                    ".filepond"
+                ),
                 ...root.querySelectorAll(
                     "input[type='file']"
                 ),
-            ];
+            ].filter(Boolean);
 
             for (const candidate of candidates) {
                 try {
@@ -1568,6 +1577,8 @@
                  */
                 if (
                     processWithServer &&
+                    options?.instantUpload ===
+                        false &&
                     typeof pond.processFile ===
                         "function"
                 ) {
