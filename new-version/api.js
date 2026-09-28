@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.3-plugins-json-overview";
+        "2026-09-28.4-support-setup";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -887,6 +887,65 @@
         );
     }
 
+
+    async function apiSupport(
+        repository
+    ) {
+        const url =
+            new URL(
+                CONFIG.apiUrl
+            );
+
+        url.searchParams.set(
+            "action",
+            "support"
+        );
+
+        url.searchParams.set(
+            "repo",
+            repository
+        );
+
+        const response =
+            await fetch(
+                url.toString(),
+                {
+                    cache: "no-store",
+                }
+            );
+
+        let data;
+
+        try {
+            data =
+                await response.json();
+        } catch (_) {
+            throw new Error(
+                `Support API returned invalid JSON (HTTP ${response.status})`
+            );
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                data.error ||
+                `Support API HTTP ${response.status}`
+            );
+        }
+
+        if (
+            !data ||
+            typeof data !== "object" ||
+            !data.repository_url ||
+            !data.issues_url
+        ) {
+            throw new Error(
+                "Support API returned an incomplete response."
+            );
+        }
+
+        return data;
+    }
+
     async function apiCatalog(
         component
     ) {
@@ -1656,6 +1715,220 @@
         }
     }
 
+
+    async function submitMarketplaceSupport(
+        plugin,
+        repository,
+        supportInfo
+    ) {
+        const supportUrl =
+            `/plugins/${plugin.id}/edit/support`;
+
+        const support =
+            await marketplaceHtml(
+                supportUrl
+            );
+
+        const form =
+            support.document.querySelector(
+                "form[name='plugin_edit_support_form']"
+            );
+
+        if (!form) {
+            throw new Error(
+                "Support form was not found."
+            );
+        }
+
+        const repositoryInput =
+            form.querySelector(
+                "#plugin_edit_support_form_sourceControlUrl"
+            );
+
+        const issueInput =
+            form.querySelector(
+                "#plugin_edit_support_form_bugTrackerUrl"
+            );
+
+        const documentationInput =
+            form.querySelector(
+                "#plugin_edit_support_form_documentationUrl"
+            );
+
+        const websiteInput =
+            form.querySelector(
+                "#plugin_edit_support_form_websiteUrl"
+            );
+
+        if (
+            !repositoryInput ||
+            !issueInput ||
+            !documentationInput ||
+            !websiteInput
+        ) {
+            throw new Error(
+                "One or more support fields were not found."
+            );
+        }
+
+        const expectedRepository =
+            String(
+                supportInfo.repository_url ||
+                `https://github.com/${repository.fullName}`
+            ).trim();
+
+        const expectedIssue =
+            String(
+                supportInfo.issues_url ||
+                `${expectedRepository}/issues`
+            ).trim();
+
+        const expectedDocumentation =
+            supportInfo.docs_exists &&
+            supportInfo.has_pages
+                ? String(
+                    supportInfo.documentation_url ||
+                    supportInfo.pages_url ||
+                    ""
+                ).trim()
+                : "";
+
+        const expectedWebsite =
+            `https://eduardokraus.com/marketplace-plugins/plugin/${plugin.component}`;
+
+        setFormValue(
+            repositoryInput,
+            expectedRepository
+        );
+
+        setFormValue(
+            issueInput,
+            expectedIssue
+        );
+
+        setFormValue(
+            documentationInput,
+            expectedDocumentation
+        );
+
+        setFormValue(
+            websiteInput,
+            expectedWebsite
+        );
+
+        const submit =
+            form.querySelector(
+                "button[type='submit'][name='save_and_next']"
+            );
+
+        if (!submit) {
+            throw new Error(
+                "Support Save and next button was not found."
+            );
+        }
+
+        const formData =
+            formToFormData(
+                form
+            );
+
+        formData.append(
+            submit.name,
+            submit.value || ""
+        );
+
+        const action =
+            form.getAttribute(
+                "action"
+            );
+
+        const postUrl =
+            action
+                ? new URL(
+                    action,
+                    location.origin
+                ).toString()
+                : new URL(
+                    supportUrl,
+                    location.origin
+                ).toString();
+
+        const response =
+            await marketplaceFetch(
+                postUrl,
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
+
+        const html =
+            await response.text();
+
+        const resultDocument =
+            new DOMParser()
+                .parseFromString(
+                    html,
+                    "text/html"
+                );
+
+        const errors =
+            getOverviewErrors(
+                resultDocument
+            );
+
+        if (errors.length) {
+            throw new Error(
+                "Support: " +
+                errors.join(" | ")
+            );
+        }
+
+        const resultUrl =
+            new URL(
+                response.url,
+                location.origin
+            );
+
+        if (
+            resultUrl.pathname === supportUrl ||
+            resultUrl.pathname.endsWith(
+                `/plugins/${plugin.id}/edit/support`
+            )
+        ) {
+            throw new Error(
+                "Support form remained on the same page after submit."
+            );
+        }
+
+        return {
+            url:
+                response.url,
+
+            repositoryUrl:
+                expectedRepository,
+
+            issueUrl:
+                expectedIssue,
+
+            documentationUrl:
+                expectedDocumentation,
+
+            websiteUrl:
+                expectedWebsite,
+
+            docsExists:
+                Boolean(
+                    supportInfo.docs_exists
+                ),
+
+            hasPages:
+                Boolean(
+                    supportInfo.has_pages
+                ),
+        };
+    }
+
     async function setupMarketplacePlugin(
         plugin,
         status
@@ -1696,6 +1969,16 @@
         );
 
         status.set(
+            "Consultando suporte no GitHub...",
+            repository.fullName
+        );
+
+        const supportInfo =
+            await apiSupport(
+                repository.fullName
+            );
+
+        status.set(
             "Preparando ícone e screenshot...",
             catalog.iconUrl
         );
@@ -1711,7 +1994,7 @@
             `${catalog.name || plugin.component} · ${catalog.description.slice(0, 80)} · ${catalog.iconUrl}`
         );
 
-        const result =
+        const overviewResult =
             await submitMarketplaceOverview(
                 plugin,
                 catalog,
@@ -1720,13 +2003,37 @@
 
         status.set(
             "Página 1 configurada",
-            `${result.name} · description do plugins.json · ${setupImage.converted ? "ícone convertido para PNG" : "arquivo original usado como ícone e screenshot"} · Save and next`,
+            `${overviewResult.name} · description do plugins.json · ${setupImage.converted ? "ícone convertido para PNG" : "arquivo original usado como ícone e screenshot"} · Save and next`,
+            "success"
+        );
+
+        status.set(
+            "Preenchendo Support...",
+            `${supportInfo.repository_url} · issues · ${supportInfo.docs_exists && supportInfo.has_pages ? "GitHub Pages" : "sem Documentation"}`
+        );
+
+        const supportResult =
+            await submitMarketplaceSupport(
+                plugin,
+                repository,
+                supportInfo
+            );
+
+        status.set(
+            "Página 2 configurada",
+            `${supportResult.repositoryUrl} · ${supportResult.issueUrl} · Documentation: ${supportResult.documentationUrl || "vazia"} · ${supportResult.websiteUrl} · Save and next`,
             "success"
         );
 
         return {
             state: "setup",
-            result,
+            result: {
+                overview:
+                    overviewResult,
+
+                support:
+                    supportResult,
+            },
         };
     }
 
