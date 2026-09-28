@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteBase /marketplace-plugins
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^plugin/([a-z0-9_]+)/?$ plugin-detail.php?component=$1 [L,QSA,NC]

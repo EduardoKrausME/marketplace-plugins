@@ -1,0 +1,1702 @@
+(() => {
+    "use strict";
+
+    const CONFIG = {
+        apiUrl: "https://eduardokraus.com/marketplace-plugins/new-version/api.php",
+        autoUpload: true,
+        concurrency: 2,
+        delayBetweenPluginsMs: 500,
+        clientCacheTtlMs: 24 * 60 * 60 * 1000,
+        clientCachePrefix: "marketplace-github-info:v1:",
+        pluginOkCachePrefix: "marketplace-plugin-ok:v1:",
+    };
+
+    const SCRIPT_BUILD =
+        "2026-09-20.3-debug-errors";
+
+    console.info(
+        `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
+    );
+
+    function marketplaceErrorMessage(error) {
+        if (error instanceof Error) {
+            return error.message;
+        }
+
+        return String(error);
+    }
+
+    function logMarketplaceError(
+        error,
+        context = {}
+    ) {
+        const message =
+            marketplaceErrorMessage(error);
+
+        const stack =
+            error instanceof Error
+                ? error.stack
+                : null;
+
+        const plugin =
+            context.plugin || null;
+
+        const debug =
+            context.debug || {};
+
+        console.group(
+            `[Marketplace][ERRO] ${plugin?.component || "erro geral"}`
+        );
+
+        console.error(
+            "Erro capturado:",
+            error
+        );
+
+        console.error(
+            "Build do JS:",
+            SCRIPT_BUILD
+        );
+
+        if (plugin) {
+            console.error(
+                "Plugin:",
+                {
+                    id: plugin.id,
+                    component: plugin.component,
+                }
+            );
+        }
+
+        console.error(
+            "Etapa em execuÃ§Ã£o:",
+            debug.status || context.phase || "nÃ£o identificada"
+        );
+
+        if (debug.details) {
+            console.error(
+                "Detalhes da etapa:",
+                debug.details
+            );
+        }
+
+        if (debug.marketplace) {
+            console.error(
+                "VersÃ£o no Marketplace:",
+                debug.marketplace
+            );
+        }
+
+        if (debug.repository) {
+            console.error(
+                "RepositÃ³rio:",
+                debug.repository
+            );
+        }
+
+        if (debug.repositoryInfo) {
+            console.error(
+                "Resposta da API/cache para o repositÃ³rio:",
+                debug.repositoryInfo
+            );
+        }
+
+        console.error(
+            "Mensagem:",
+            message
+        );
+
+        if (stack) {
+            console.error(
+                "Stack trace (arquivo/linha exatos):",
+                stack
+            );
+        }
+
+        if (/\bremote is not defined\b/i.test(message)) {
+            console.error(
+                "DIAGNÃ“STICO: 'remote is not defined' Ã© um ReferenceError do JavaScript, " +
+                "nÃ£o um erro da API do GitHub. A API pode ter retornado HTTP 200 e mesmo assim " +
+                "um JS antigo tentar usar uma variÃ¡vel chamada 'remote' fora do escopo."
+            );
+
+            console.error(
+                "Nesta build a variÃ¡vel executÃ¡vel 'remote' nem existe mais: ela foi renomeada " +
+                "para 'repositoryInfo'. Se este erro aparecer junto de uma build diferente de " +
+                `"${SCRIPT_BUILD}", o navegador estÃ¡ executando uma versÃ£o antiga do script. ` +
+                "Confira no stack trace acima qual arquivo e linha geraram o erro."
+            );
+        }
+
+        console.groupEnd();
+    }
+
+    window.addEventListener(
+        "error",
+        (event) => {
+            const error =
+                event.error ||
+                new Error(
+                    event.message ||
+                    "JavaScript error without Error object"
+                );
+
+            logMarketplaceError(
+                error,
+                {
+                    phase: `window.error @ ${event.filename || "arquivo desconhecido"}:${event.lineno || "?"}:${event.colno || "?"}`,
+                }
+            );
+        }
+    );
+
+    window.addEventListener(
+        "unhandledrejection",
+        (event) => {
+            logMarketplaceError(
+                event.reason,
+                {
+                    phase: "Promise rejeitada sem tratamento",
+                }
+            );
+        }
+    );
+
+    const sleep = (ms) =>
+        new Promise((resolve) => setTimeout(resolve, ms));
+
+    function normalizeRelease(value) {
+        return String(value || "")
+            .trim()
+            .replace(/^release[-_\s]*/i, "")
+            .replace(/^v(?=\d)/i, "")
+            .trim();
+    }
+
+    function compareVersions(a, b) {
+        const pa = normalizeRelease(a)
+            .split(/[.+\-]/)
+            .map((part) => {
+                const match = part.match(/^\d+/);
+
+                return match
+                    ? Number(match[0])
+                    : 0;
+            });
+
+        const pb = normalizeRelease(b)
+            .split(/[.+\-]/)
+            .map((part) => {
+                const match = part.match(/^\d+/);
+
+                return match
+                    ? Number(match[0])
+                    : 0;
+            });
+
+        const max = Math.max(
+            pa.length,
+            pb.length
+        );
+
+        for (let i = 0; i < max; i++) {
+            const va = pa[i] || 0;
+            const vb = pb[i] || 0;
+
+            if (va > vb) {
+                return 1;
+            }
+
+            if (va < vb) {
+                return -1;
+            }
+        }
+
+        return normalizeRelease(a)
+            .localeCompare(
+                normalizeRelease(b),
+                undefined,
+                {
+                    numeric: true,
+                    sensitivity: "base",
+                }
+            );
+    }
+
+    function getDashboardPlugins() {
+        const plugins = [];
+
+        for (
+            const row
+            of document.querySelectorAll(
+            "table tbody tr"
+        )
+            ) {
+            const cells =
+                row.querySelectorAll("td");
+
+            if (cells.length < 4) {
+                continue;
+            }
+
+            const componentCell =
+                cells[1];
+
+            const listingCell =
+                cells[3];
+
+            const component =
+                componentCell
+                    .querySelector("span")
+                    ?.textContent
+                    .trim() ||
+                componentCell
+                    .textContent
+                    .trim();
+
+            if (!component) {
+                continue;
+            }
+
+            /*
+             * Plugins ignorados.
+             */
+            if (
+                component.endsWith("_videofront") ||
+                component.endsWith("_cloudstudio")
+            ) {
+                continue;
+            }
+
+            /*
+             * Somente Listing = Published.
+             */
+            const published = [
+                ...listingCell.querySelectorAll(
+                    "span"
+                ),
+            ].some(
+                (span) =>
+                    span.textContent.trim() ===
+                    "Published"
+            );
+
+            if (!published) {
+                continue;
+            }
+
+            const link =
+                listingCell.querySelector(
+                    "a[href^='/plugins/']"
+                );
+
+            if (!link) {
+                continue;
+            }
+
+            const idMatch =
+                link
+                    .getAttribute("href")
+                    ?.match(
+                        /^\/plugins\/(\d+)(?:\/|$)/
+                    );
+
+            if (!idMatch) {
+                continue;
+            }
+
+            plugins.push({
+                id: Number(idMatch[1]),
+                component,
+                componentCell,
+                row,
+            });
+        }
+
+        return plugins;
+    }
+
+    function addStatusRow(plugin) {
+        const debugContext = {
+            status: "inicializando",
+            details: "",
+            marketplace: null,
+            repository: null,
+            repositoryInfo: null,
+        };
+
+        let container =
+            plugin.componentCell.querySelector(
+                ".marketplace-github-status"
+            );
+
+        if (!container) {
+            container =
+                document.createElement("div");
+
+            container.className =
+                "marketplace-github-status";
+
+            container.style.cssText = [
+                "margin-top:5px",
+                "font-size:12px",
+                "line-height:1.35",
+            ].join(";");
+
+            plugin.componentCell.appendChild(
+                container
+            );
+        }
+
+        container.innerHTML = `
+            <div data-role="status"></div>
+            <div
+                data-role="details"
+                style="
+                    margin-top:2px;
+                    font-size:11px;
+                    color:#6c757d;
+                    word-break:break-word;
+                "
+            ></div>
+        `;
+
+        return {
+            set(
+                status,
+                details = "",
+                kind = "normal"
+            ) {
+                debugContext.status = status;
+                debugContext.details = details;
+
+                const statusElement =
+                    container.querySelector(
+                        "[data-role='status']"
+                    );
+
+                const detailsElement =
+                    container.querySelector(
+                        "[data-role='details']"
+                    );
+
+                statusElement.textContent =
+                    status;
+
+                detailsElement.textContent =
+                    details;
+
+                statusElement.style.fontWeight =
+                    "600";
+
+                if (kind === "success") {
+                    statusElement.style.color =
+                        "#198754";
+                } else if (
+                    kind === "warning"
+                ) {
+                    statusElement.style.color =
+                        "#fd7e14";
+                } else if (
+                    kind === "error"
+                ) {
+                    statusElement.style.color =
+                        "#dc3545";
+                } else {
+                    statusElement.style.color =
+                        "#6c757d";
+                }
+            },
+
+            setDebug(key, value) {
+                debugContext[key] = value;
+            },
+
+            getDebugContext() {
+                return {
+                    ...debugContext,
+                };
+            },
+        };
+    }
+
+    async function marketplaceFetch(
+        url,
+        options = {}
+    ) {
+        const response =
+            await fetch(
+                url,
+                {
+                    credentials: "include",
+                    redirect: "follow",
+                    ...options,
+                }
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                `Marketplace HTTP ${response.status}`
+            );
+        }
+
+        return response;
+    }
+
+    async function marketplaceHtml(url) {
+        const response =
+            await marketplaceFetch(url);
+
+        const html =
+            await response.text();
+
+        return {
+            response,
+
+            html,
+
+            document:
+                new DOMParser()
+                    .parseFromString(
+                        html,
+                        "text/html"
+                    ),
+        };
+    }
+
+    function parseMarketplaceVersion(
+        documentObject
+    ) {
+        const card =
+            documentObject.querySelector(
+                "section[aria-labelledby='versions-heading'] .card .card"
+            );
+
+        const heading =
+            card?.querySelector("h2");
+
+        if (!heading) {
+            throw new Error(
+                "Marketplace version not found."
+            );
+        }
+
+        const text =
+            heading.textContent.trim();
+
+        const match =
+            text.match(
+                /^(.*?)\s*\((\d+)\)\s*$/
+            );
+
+        if (!match) {
+            throw new Error(
+                `Unable to parse Marketplace version: ${text}`
+            );
+        }
+
+        return {
+            release:
+                match[1].trim(),
+
+            build:
+                Number(match[2]),
+        };
+    }
+
+    async function getMarketplaceRepositoryUrl(
+        pluginId
+    ) {
+        const support =
+            await marketplaceHtml(
+                `/plugins/${pluginId}/edit/support`
+            );
+
+        const input =
+            support.document.querySelector(
+                "#plugin_edit_support_form_sourceControlUrl"
+            );
+
+        if (!input) {
+            throw new Error(
+                "Repository URL field not found."
+            );
+        }
+
+        const repositoryUrl =
+            input.value.trim();
+
+        if (!repositoryUrl) {
+            throw new Error(
+                "Repository URL is empty."
+            );
+        }
+
+        return repositoryUrl;
+    }
+
+    function parseGitHubRepository(url) {
+        const match =
+            String(url)
+                .trim()
+                .match(
+                    /^https?:\/\/github\.com\/([^/]+)\/([^/#?]+?)(?:\.git)?(?:[/?#]|$)/i
+                );
+
+        if (!match) {
+            return null;
+        }
+
+        return {
+            owner: match[1],
+            repository: match[2],
+            fullName:
+                `${match[1]}/${match[2]}`,
+        };
+    }
+
+    function apiInfoCacheKey(repository) {
+        return (
+            CONFIG.clientCachePrefix +
+            String(repository)
+                .trim()
+                .toLowerCase()
+        );
+    }
+
+
+    function pluginOkCacheKey(plugin) {
+        return (
+            CONFIG.pluginOkCachePrefix +
+            plugin.id + ":" +
+            String(plugin.component || "")
+                .trim()
+                .toLowerCase()
+        );
+    }
+
+    function getPluginOkCache(plugin) {
+        try {
+            const key =
+                pluginOkCacheKey(plugin);
+
+            const raw =
+                localStorage.getItem(key);
+
+            if (!raw) {
+                return null;
+            }
+
+            const entry = JSON.parse(raw);
+            const checkedAt = Number(
+                entry?.checkedAt
+            );
+
+            if (
+                !Number.isFinite(checkedAt) ||
+                Date.now() - checkedAt >=
+                CONFIG.clientCacheTtlMs
+            ) {
+                localStorage.removeItem(key);
+
+                return null;
+            }
+
+            return entry;
+        } catch (error) {
+            console.warn(
+                "[Marketplace] Falha ao ler cache OK do plugin:",
+                error
+            );
+
+            return null;
+        }
+    }
+
+    function savePluginOkCache(
+        plugin,
+        details
+    ) {
+        try {
+            localStorage.setItem(
+                pluginOkCacheKey(plugin),
+                JSON.stringify({
+                    checkedAt: Date.now(),
+                    ...details,
+                })
+            );
+        } catch (error) {
+            console.warn(
+                "[Marketplace] Falha ao salvar cache OK do plugin:",
+                error
+            );
+        }
+    }
+
+    function getCachedApiInfo(repository) {
+        try {
+            const raw = localStorage.getItem(
+                apiInfoCacheKey(repository)
+            );
+
+            if (!raw) {
+                return null;
+            }
+
+            const entry = JSON.parse(raw);
+            const savedAt = Number(
+                entry?.savedAt
+            );
+
+            if (
+                !Number.isFinite(savedAt) ||
+                !entry?.data ||
+                typeof entry.data !== "object"
+            ) {
+                localStorage.removeItem(
+                    apiInfoCacheKey(repository)
+                );
+
+                return null;
+            }
+
+            if (
+                Date.now() - savedAt >=
+                CONFIG.clientCacheTtlMs
+            ) {
+                localStorage.removeItem(
+                    apiInfoCacheKey(repository)
+                );
+
+                return null;
+            }
+
+            return {
+                ...entry.data,
+                client_cached: true,
+                client_cached_at:
+                    new Date(savedAt)
+                        .toISOString(),
+            };
+        } catch (error) {
+            console.warn(
+                "[Marketplace] Falha ao ler cache local:",
+                error
+            );
+
+            return null;
+        }
+    }
+
+    function saveApiInfoCache(
+        repository,
+        data
+    ) {
+        try {
+            localStorage.setItem(
+                apiInfoCacheKey(repository),
+                JSON.stringify({
+                    savedAt: (() => {
+                        const fetchedAt = Date.parse(
+                            data?.fetched_at || ""
+                        );
+
+                        return Number.isFinite(fetchedAt)
+                            ? fetchedAt
+                            : Date.now();
+                    })(),
+                    data,
+                })
+            );
+        } catch (error) {
+            console.warn(
+                "[Marketplace] Falha ao salvar cache local:",
+                error
+            );
+        }
+    }
+
+    async function apiInfo(repository) {
+        const cached =
+            getCachedApiInfo(repository);
+
+        if (cached !== null) {
+            return cached;
+        }
+
+        const url =
+            new URL(
+                CONFIG.apiUrl
+            );
+
+        url.searchParams.set(
+            "action",
+            "info"
+        );
+
+        url.searchParams.set(
+            "repo",
+            repository
+        );
+
+        const response =
+            await fetch(
+                url.toString(),
+                {
+                    cache: "no-store",
+                }
+            );
+
+        let data;
+
+        try {
+            data = await response.json();
+        } catch (_) {
+            throw new Error(
+                `API returned invalid JSON (HTTP ${response.status})`
+            );
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                data.error ||
+                `API HTTP ${response.status}`
+            );
+        }
+
+        if (
+            !data ||
+            typeof data !== "object" ||
+            !data.tag ||
+            !data.repo
+        ) {
+            throw new Error(
+                "API returned an incomplete repository response."
+            );
+        }
+
+        /*
+         * Somente respostas vÃ¡lidas/OK entram no localStorage.
+         * Erros nunca sÃ£o cacheados no navegador.
+         */
+        saveApiInfoCache(
+            repository,
+            data
+        );
+
+        return data;
+    }
+
+    async function apiZip(
+        repository,
+        tag,
+        component
+    ) {
+        const url =
+            new URL(
+                CONFIG.apiUrl
+            );
+
+        url.searchParams.set(
+            "action",
+            "zip"
+        );
+
+        url.searchParams.set(
+            "repo",
+            repository
+        );
+
+        url.searchParams.set(
+            "tag",
+            tag
+        );
+
+        const response =
+            await fetch(
+                url.toString(),
+                {
+                    cache: "no-store",
+                }
+            );
+
+        if (!response.ok) {
+            let message =
+                `ZIP API HTTP ${response.status}`;
+
+            try {
+                const data =
+                    await response.json();
+
+                if (data.error) {
+                    message =
+                        data.error;
+                }
+            } catch (_) {
+                // ZIP errors may not be JSON.
+            }
+
+            throw new Error(message);
+        }
+
+        const blob =
+            await response.blob();
+
+        const safeTag =
+            String(tag)
+                .replace(
+                    /[^A-Za-z0-9._-]+/g,
+                    "-"
+                );
+
+        return new File(
+            [
+                blob,
+            ],
+            `${component}-${safeTag}.zip`,
+            {
+                type: "application/zip",
+            }
+        );
+    }
+
+    function isRemoteNewer(
+        marketplace,
+        repositoryInfo
+    ) {
+        if (
+            Number.isFinite(repositoryInfo.build) &&
+            Number.isFinite(
+                marketplace.build
+            )
+        ) {
+            return (
+                repositoryInfo.build >
+                marketplace.build
+            );
+        }
+
+        return (
+            compareVersions(
+                repositoryInfo.release ||
+                repositoryInfo.tag,
+                marketplace.release
+            ) > 0
+        );
+    }
+
+    async function uploadMarketplaceVersion(
+        pluginId,
+        file,
+        repositoryInfo
+    ) {
+        /*
+         * STEP 1
+         *
+         * Primeiro carrega a pÃ¡gina para obter
+         * um CSRF token novo.
+         */
+        const step1Url =
+            `/plugins/${pluginId}/versions/add/step1`;
+
+        const step1 =
+            await marketplaceHtml(
+                step1Url
+            );
+
+        const tokenInput =
+            step1.document.querySelector(
+                "input[name='plugin_submission_file_form[_token]']"
+            );
+
+        if (!tokenInput?.value) {
+            throw new Error(
+                "CSRF token not found on step1."
+            );
+        }
+
+        const form =
+            tokenInput.closest("form");
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "plugin_submission_file_form[file]",
+            file,
+            file.name
+        );
+
+        formData.append(
+            "plugin_submission_file_form[_token]",
+            tokenInput.value
+        );
+
+        const action =
+            form?.getAttribute("action");
+
+        const step1PostUrl =
+            action
+                ? new URL(
+                    action,
+                    location.origin
+                ).toString()
+                : new URL(
+                    step1Url,
+                    location.origin
+                ).toString();
+
+        const uploadResponse =
+            await marketplaceFetch(
+                step1PostUrl,
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
+
+        const uploadHtml =
+            await uploadResponse.text();
+
+        const uploadDocument =
+            new DOMParser()
+                .parseFromString(
+                    uploadHtml,
+                    "text/html"
+                );
+
+        const step1Errors = [
+            ...uploadDocument.querySelectorAll(
+                [
+                    ".invalid-feedback",
+                    ".form-error-message",
+                    ".alert-danger",
+                    ".alert-error",
+                ].join(",")
+            ),
+        ]
+            .map(
+                (element) =>
+                    element.textContent.trim()
+            )
+            .filter(Boolean);
+
+        if (step1Errors.length) {
+            throw new Error(
+                "Step1: " +
+                step1Errors.join(" | ")
+            );
+        }
+
+        /*
+         * STEP 2
+         *
+         * O upload do ZIP deixa os dados preparados
+         * na sessÃ£o do Marketplace.
+         *
+         * Agora carregamos explicitamente o step2
+         * e submetemos o formulÃ¡rio existente.
+         */
+        const step2 =
+            await submitMarketplaceStep2(
+                pluginId,
+                repositoryInfo
+            );
+
+        return {
+            url: step2.url,
+            document: step2.document,
+            html: step2.html,
+        };
+    }
+
+    async function inspectPlugin(
+        plugin,
+        status
+    ) {
+        const cachedOk =
+            getPluginOkCache(plugin);
+
+        if (cachedOk !== null) {
+            const checkedAt =
+                new Date(cachedOk.checkedAt);
+
+            status.set(
+                "OK (cache local)",
+                `${cachedOk.release || "versÃ£o jÃ¡ conferida"} Â· ` +
+                `verificado ${checkedAt.toLocaleString()}`,
+                "success"
+            );
+
+            return {
+                state: "current",
+                clientCached: true,
+            };
+        }
+
+        status.set(
+            "Verificando Marketplace..."
+        );
+
+        const versions =
+            await marketplaceHtml(
+                `/plugins/${plugin.id}/edit/versions`
+            );
+
+        const marketplace =
+            parseMarketplaceVersion(
+                versions.document
+            );
+
+        status.setDebug(
+            "marketplace",
+            marketplace
+        );
+
+        status.set(
+            "Buscando repositÃ³rio...",
+            `${marketplace.release} (${marketplace.build})`
+        );
+
+        const repositoryUrl =
+            await getMarketplaceRepositoryUrl(
+                plugin.id
+            );
+
+        const repository =
+            parseGitHubRepository(
+                repositoryUrl
+            );
+
+        if (repository) {
+            status.setDebug(
+                "repository",
+                repository.fullName
+            );
+        }
+
+        if (!repository) {
+            status.set(
+                "Ignorado",
+                `RepositÃ³rio invÃ¡lido: ${repositoryUrl}`,
+                "warning"
+            );
+
+            return {
+                state: "skipped",
+            };
+        }
+
+        status.set(
+            "Consultando GitHub...",
+            repository.fullName
+        );
+
+        /*
+         * Daqui para frente o navegador
+         * nÃ£o acessa mais github.com.
+         */
+        const repositoryInfo =
+            await apiInfo(
+                repository.fullName
+            );
+
+        status.setDebug(
+            "repositoryInfo",
+            repositoryInfo
+        );
+
+        if (repositoryInfo.client_cached) {
+            status.set(
+                "GitHub em cache local",
+                `${repository.fullName} Â· vÃ¡lido por 24h`
+            );
+        }
+
+        const remoteRelease =
+            repositoryInfo.release ||
+            repositoryInfo.tag;
+
+        const remoteBuild =
+            repositoryInfo.build ?? "?";
+
+        if (
+            !isRemoteNewer(
+                marketplace,
+                repositoryInfo
+            )
+        ) {
+            status.set(
+                "Atualizado",
+                `Marketplace ${marketplace.release} (${marketplace.build}) Â· ` +
+                `GitHub ${remoteRelease} (${remoteBuild})`,
+                "success"
+            );
+
+            savePluginOkCache(
+                plugin,
+                {
+                    release: remoteRelease,
+                    build: remoteBuild,
+                    repository: repository.fullName,
+                }
+            );
+
+            return {
+                state: "current",
+            };
+        }
+
+        status.set(
+            "Nova versÃ£o",
+            `Marketplace ${marketplace.release} (${marketplace.build}) â†’ ` +
+            `GitHub ${remoteRelease} (${remoteBuild})`,
+            "warning"
+        );
+
+        if (!CONFIG.autoUpload) {
+            return {
+                state: "outdated",
+            };
+        }
+
+        status.set(
+            "Baixando ZIP...",
+            `${repository.fullName} @ ${repositoryInfo.tag}`
+        );
+
+        /*
+         * O navegador baixa atravÃ©s do seu PHP.
+         * O PHP transmite o ZIP sem cacheÃ¡-lo.
+         */
+        const zip =
+            await apiZip(
+                repository.fullName,
+                repositoryInfo.tag,
+                plugin.component
+            );
+
+        status.set(
+            "Publicando no Marketplace...",
+            `${zip.name} Â· step1 + step2`
+        );
+
+        const result =
+            await uploadMarketplaceVersion(
+                plugin.id,
+                zip,
+                repositoryInfo
+            );
+
+        status.set(
+            "Nova versÃ£o enviada",
+            `${remoteRelease} (${remoteBuild})`,
+            "success"
+        );
+
+        status.set(
+            "ZIP enviado",
+            `${remoteRelease} (${remoteBuild})`,
+            "success"
+        );
+
+        savePluginOkCache(
+            plugin,
+            {
+                release: remoteRelease,
+                build: remoteBuild,
+                repository: repository.fullName,
+            }
+        );
+
+        return {
+            state: "uploaded",
+            result,
+        };
+    }
+
+    async function worker(
+        queue,
+        counters
+    ) {
+        while (queue.length) {
+            const item =
+                queue.shift();
+
+            if (!item) {
+                return;
+            }
+
+            try {
+                const result =
+                    await inspectPlugin(
+                        item.plugin,
+                        item.status
+                    );
+
+                if (
+                    result.state ===
+                    "uploaded"
+                ) {
+                    counters.uploaded++;
+                }
+
+                if (
+                    result.state ===
+                    "current"
+                ) {
+                    counters.current++;
+                }
+
+                if (
+                    result.state ===
+                    "outdated"
+                ) {
+                    counters.outdated++;
+                }
+
+                if (
+                    result.state ===
+                    "skipped"
+                ) {
+                    counters.skipped++;
+                }
+            } catch (error) {
+                counters.errors++;
+
+                logMarketplaceError(
+                    error,
+                    {
+                        plugin: item.plugin,
+                        debug: item.status.getDebugContext(),
+                    }
+                );
+
+                item.status.set(
+                    "Erro",
+                    marketplaceErrorMessage(error),
+                    "error"
+                );
+            }
+
+            counters.done++;
+
+            console.log(
+                `[Marketplace] ${counters.done}/${counters.total}` +
+                ` | enviados=${counters.uploaded}` +
+                ` | atuais=${counters.current}` +
+                ` | ignorados=${counters.skipped}` +
+                ` | erros=${counters.errors}`
+            );
+
+            await sleep(
+                CONFIG.delayBetweenPluginsMs
+            );
+        }
+    }
+
+    async function main() {
+        if (
+            window.top !==
+            window.self
+        ) {
+            return;
+        }
+
+        const plugins =
+            getDashboardPlugins();
+
+        if (!plugins.length) {
+            console.log(
+                "[Marketplace] Nenhum plugin Published encontrado."
+            );
+
+            return;
+        }
+
+        console.log(
+            `[Marketplace] ${plugins.length} plugins Published encontrados.`
+        );
+
+        const counters = {
+            total:
+            plugins.length,
+
+            done: 0,
+
+            uploaded: 0,
+
+            current: 0,
+
+            outdated: 0,
+
+            skipped: 0,
+
+            errors: 0,
+        };
+
+        const queue =
+            plugins.map(
+                (plugin) => ({
+                    plugin,
+
+                    status:
+                        addStatusRow(
+                            plugin
+                        ),
+                })
+            );
+
+        const workers = [];
+
+        const concurrency =
+            Math.max(
+                1,
+                Math.min(
+                    CONFIG.concurrency,
+                    plugins.length
+                )
+            );
+
+        for (
+            let i = 0;
+            i < concurrency;
+            i++
+        ) {
+            workers.push(
+                worker(
+                    queue,
+                    counters
+                )
+            );
+        }
+
+        await Promise.all(
+            workers
+        );
+
+        console.log(
+            "[Marketplace] Finalizado",
+            counters
+        );
+    }
+
+    function formToFormData(form) {
+        const formData = new FormData();
+
+        for (const element of form.elements) {
+            if (!element.name || element.disabled) {
+                continue;
+            }
+
+            if (
+                (element.type === "checkbox" ||
+                    element.type === "radio") &&
+                !element.checked
+            ) {
+                continue;
+            }
+
+            if (
+                element.type === "submit" ||
+                element.type === "button" ||
+                element.type === "reset" ||
+                element.type === "file"
+            ) {
+                continue;
+            }
+
+            if (element.tagName === "SELECT" && element.multiple) {
+                for (const option of element.selectedOptions) {
+                    formData.append(
+                        element.name,
+                        option.value
+                    );
+                }
+
+                continue;
+            }
+
+            formData.append(
+                element.name,
+                element.value
+            );
+        }
+
+        return formData;
+    }
+
+    async function submitMarketplaceStep2(
+        pluginId,
+        repositoryInfo
+    ) {
+        if (!repositoryInfo || typeof repositoryInfo !== "object") {
+            throw new Error(
+                "Remote repository information is missing on step2."
+            );
+        }
+
+        const step2Url =
+            `/plugins/${pluginId}/versions/add/step2`;
+
+        const step2 =
+            await marketplaceHtml(
+                step2Url
+            );
+
+        const form =
+            step2.document.querySelector(
+                "form"
+            );
+
+        if (!form) {
+            throw new Error(
+                "Step2 form not found."
+            );
+        }
+
+        const supportedVersions =
+            selectSupportedMoodleVersions(
+                form,
+                repositoryInfo
+            );
+
+        console.log(
+            `[Marketplace] Moodle supported: ` +
+            supportedVersions.join(", ")
+        );
+
+        /*
+         * NÃ£o envia silenciosamente um formulÃ¡rio
+         * se algum campo obrigatÃ³rio estiver vazio.
+         */
+        const emptyRequired = [
+            ...form.querySelectorAll(
+                "input[required], select[required], textarea[required]"
+            ),
+        ].filter((element) => {
+            if (
+                element.type === "checkbox" ||
+                element.type === "radio"
+            ) {
+                return false;
+            }
+
+            return !String(
+                element.value || ""
+            ).trim();
+        });
+
+        if (emptyRequired.length) {
+            const names = emptyRequired.map(
+                (element) =>
+                    element.name ||
+                    element.id ||
+                    "unknown"
+            );
+
+            throw new Error(
+                "Step2 contains empty required fields: " +
+                names.join(", ")
+            );
+        }
+
+        const formData =
+            formToFormData(form);
+
+        const action =
+            form.getAttribute("action");
+
+        const postUrl =
+            action
+                ? new URL(
+                    action,
+                    location.origin
+                ).toString()
+                : new URL(
+                    step2Url,
+                    location.origin
+                ).toString();
+
+        const response =
+            await marketplaceFetch(
+                postUrl,
+                {
+                    method: "POST",
+                    body: formData,
+                }
+            );
+
+        const html =
+            await response.text();
+
+        const resultDocument =
+            new DOMParser()
+                .parseFromString(
+                    html,
+                    "text/html"
+                );
+
+        const errors = [
+            ...resultDocument.querySelectorAll(
+                [
+                    ".invalid-feedback",
+                    ".form-error-message",
+                    ".alert-danger",
+                    ".alert-error",
+                ].join(",")
+            ),
+        ]
+            .map(
+                (element) =>
+                    element.textContent.trim()
+            )
+            .filter(Boolean);
+
+        if (errors.length) {
+            throw new Error(
+                "Step2: " +
+                errors.join(" | ")
+            );
+        }
+
+        return {
+            url: response.url,
+            document: resultDocument,
+            html,
+        };
+    }
+
+    function moodleVersionToBranch(version) {
+        const parts = String(version)
+            .trim()
+            .split(".");
+
+        if (parts.length !== 2) {
+            return null;
+        }
+
+        const major = Number(parts[0]);
+        const minor = Number(parts[1]);
+
+        if (!Number.isInteger(major) || !Number.isInteger(minor)) {
+            return null;
+        }
+
+        /*
+         * Moodle branch:
+         *
+         * 5.2  -> 502
+         * 5.1  -> 501
+         * 5.0  -> 500
+         * 4.5  -> 405
+         * 4.0  -> 400
+         * 3.11 -> 311
+         */
+        return major * 100 + minor;
+    }
+
+    function selectSupportedMoodleVersions(
+        form,
+        repositoryInfo
+    ) {
+        const select =
+            form.querySelector(
+                "#plugin_version_file_form_moodleVersions"
+            );
+
+        if (!select) {
+            throw new Error(
+                "Moodle versions field not found on step2."
+            );
+        }
+
+        let minimum =
+            repositoryInfo.supported_min ??
+            repositoryInfo.requires_branch ??
+            null;
+
+        let maximum =
+            repositoryInfo.supported_max ??
+            null;
+
+        const incompatible =
+            repositoryInfo.incompatible ??
+            null;
+
+        if (minimum === null) {
+            throw new Error(
+                "Unable to determine minimum supported Moodle version."
+            );
+        }
+
+        /*
+         * Limpa o default estranho do Marketplace,
+         * por exemplo Moodle 1.9 selecionado.
+         */
+        for (const option of select.options) {
+            option.selected = false;
+        }
+
+        let selected = 0;
+
+        for (const option of select.options) {
+            const branch =
+                moodleVersionToBranch(
+                    option.textContent
+                );
+
+            if (branch === null) {
+                continue;
+            }
+
+            if (branch < minimum) {
+                continue;
+            }
+
+            if (
+                maximum !== null &&
+                branch > maximum
+            ) {
+                continue;
+            }
+
+            /*
+             * $plugin->incompatible Ã© a primeira
+             * branch incompatÃ­vel.
+             */
+            if (
+                incompatible !== null &&
+                branch >= incompatible
+            ) {
+                continue;
+            }
+
+            option.selected = true;
+            selected++;
+        }
+
+        if (!selected) {
+            throw new Error(
+                `No Moodle versions matched: ` +
+                `min=${minimum}, max=${maximum ?? "*"}`
+            );
+        }
+
+        return [
+            ...select.selectedOptions,
+        ].map(
+            (option) =>
+                option.textContent.trim()
+        );
+    }
+
+    main().catch(
+        (error) => {
+            console.error(
+                "[Marketplace]",
+                error
+            );
+        }
+    );
+})();
