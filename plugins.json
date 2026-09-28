@@ -1833,19 +1833,6 @@
   },
   {
     "id": null,
-    "name": "VideoFront",
-    "component": "mod_videofront",
-    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoteca",
-    "branch": "master",
-    "category": "video",
-    "description": "Publish and organize video content through the VideoFront activity integration.",
-    "moodle": "2.7+",
-    "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-danger\">Activity module</span>\n<span class=\"badge text-bg-light border\">Video</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">VideoFront</h2>\n<p class=\"lead text-body-secondary mb-0\">Publish and organize video content through the VideoFront activity integration.</p>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>mod_videofront</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">2.7+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-mod_videoteca\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
-    "screenshots": [],
-    "iconUrl": ""
-  },
-  {
-    "id": null,
     "name": "Flexbook",
     "component": "mod_flexbook",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_flexbook",
