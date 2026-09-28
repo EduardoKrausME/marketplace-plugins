@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.7-filepond-overview-upload";
+        "2026-09-28.8-filepond-api";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1466,9 +1466,7 @@
             );
 
         /*
-         * O File criado no documento principal pode falhar nos brand checks
-         * do DataTransfer/input.files do iframe em alguns navegadores.
-         * Recriamos o File no mesmo realm do FilePond.
+         * File/DataTransfer precisam pertencer ao mesmo realm do iframe.
          */
         const FrameFile =
             frameWindow.File ||
@@ -1490,48 +1488,157 @@
                 }
             );
 
-        const DataTransferClass =
-            frameWindow.DataTransfer ||
-            DataTransfer;
+        /*
+         * Quando FilePond está exposto no iframe, usamos a API dele.
+         * Simular apenas um "change" no input funciona em algumas versões,
+         * mas não é a API pública e pode não iniciar load/processamento.
+         */
+        const FilePondApi =
+            frameWindow.FilePond;
 
-        const transfer =
-            new DataTransferClass();
+        let pond = null;
+        let addedItem = null;
+        let processWithServer = false;
 
-        transfer.items.add(
-            frameFile
-        );
+        if (
+            FilePondApi &&
+            typeof FilePondApi.find ===
+                "function"
+        ) {
+            const candidates = [
+                browser,
+                root,
+                ...root.querySelectorAll(
+                    "input[type='file']"
+                ),
+            ];
 
-        browser.files =
-            transfer.files;
+            for (const candidate of candidates) {
+                try {
+                    pond =
+                        FilePondApi.find(
+                            candidate
+                        );
 
-        browser.dispatchEvent(
-            new frameWindow.Event(
-                "change",
-                {
-                    bubbles: true,
+                    if (pond) {
+                        break;
+                    }
+                } catch (_) {
+                    // Tenta o próximo elemento.
                 }
-            )
-        );
+            }
+        }
+
+        if (
+            pond &&
+            typeof pond.addFile ===
+                "function"
+        ) {
+            try {
+                addedItem =
+                    await pond.addFile(
+                        frameFile
+                    );
+
+                const options =
+                    typeof pond.getOptions ===
+                    "function"
+                        ? pond.getOptions()
+                        : {};
+
+                const storeAsFile =
+                    options?.storeAsFile ===
+                    true;
+
+                const serverProcess =
+                    options?.server &&
+                    options.server.process;
+
+                processWithServer =
+                    Boolean(
+                        serverProcess
+                    ) &&
+                    !storeAsFile &&
+                    options?.allowProcess !==
+                        false;
+
+                /*
+                 * Se existe endpoint de processamento, terminamos o envio
+                 * agora em vez de depender do instantUpload da página.
+                 */
+                if (
+                    processWithServer &&
+                    typeof pond.processFile ===
+                        "function"
+                ) {
+                    addedItem =
+                        await pond.processFile(
+                            addedItem?.id ||
+                            addedItem
+                        );
+                }
+            } catch (error) {
+                throw new Error(
+                    `FilePond API failed for ${rootId}: ${marketplaceErrorMessage(error)}`
+                );
+            }
+        } else {
+            /*
+             * Fallback para páginas em que FilePond não está exposto
+             * globalmente, mas o input gerado continua ouvindo change.
+             */
+            const DataTransferClass =
+                frameWindow.DataTransfer ||
+                DataTransfer;
+
+            const transfer =
+                new DataTransferClass();
+
+            transfer.items.add(
+                frameFile
+            );
+
+            browser.files =
+                transfer.files;
+
+            browser.dispatchEvent(
+                new frameWindow.Event(
+                    "change",
+                    {
+                        bubbles: true,
+                    }
+                )
+            );
+        }
 
         await waitForCondition(
             () => {
-                const failed =
+                const item =
                     root.querySelector(
-                        [
-                            "[data-filepond-item-state='load-error']",
-                            "[data-filepond-item-state='processing-error']",
-                            "[data-filepond-item-state='processing-revert-error']",
-                            "[data-filepond-item-state='error']",
-                        ].join(",")
+                        "[data-filepond-item-state]"
                     );
 
-                if (failed) {
+                const state =
+                    item?.getAttribute(
+                        "data-filepond-item-state"
+                    ) || "";
+
+                if (
+                    [
+                        "load-error",
+                        "processing-error",
+                        "processing-revert-error",
+                        "error",
+                    ].includes(
+                        state
+                    )
+                ) {
                     const statusText =
-                        failed.querySelector(
+                        item.querySelector(
                             ".filepond--file-status-sub"
                         )?.textContent?.trim() ||
-                        failed.textContent?.trim() ||
-                        "unknown FilePond error";
+                        item.textContent?.trim() ||
+                        state;
 
                     throw new Error(
                         `FilePond failed for ${rootId}: ${statusText}`
@@ -1563,11 +1670,6 @@
                     return true;
                 }
 
-                /*
-                 * O nome do hidden gerado pelo FilePond pode variar entre
-                 * campo simples e coleção. Não dependemos só dele: qualquer
-                 * hidden novo/alterado dentro do pond também confirma upload.
-                 */
                 const genericChanged =
                     hiddenInputs().some(
                         (input) =>
@@ -1586,17 +1688,40 @@
                     return true;
                 }
 
+                if (
+                    state ===
+                    "processing-complete"
+                ) {
+                    return true;
+                }
+
                 /*
-                 * processing-complete é o sinal do próprio FilePond de que
-                 * o arquivo já foi aceito/processado pelo endpoint remoto.
+                 * "idle" significa que o arquivo já foi carregado no pond.
+                 * Em storeAsFile / formulário tradicional não haverá
+                 * processing-complete nem token hidden novo.
                  */
-                return Boolean(
-                    root.querySelector(
-                        "[data-filepond-item-state='processing-complete']"
-                    )
-                );
+                if (
+                    state === "idle" &&
+                    !processWithServer
+                ) {
+                    return true;
+                }
+
+                /*
+                 * A chamada addFile/processFile resolveu e o FilePond não
+                 * expôs estado DOM. Nesse caso a própria API é a confirmação.
+                 */
+                if (
+                    addedItem &&
+                    !processWithServer &&
+                    !state
+                ) {
+                    return true;
+                }
+
+                return false;
             },
-            `${rootId} upload`
+            `${rootId} file ready`
         );
     }
 
