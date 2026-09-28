@@ -1326,19 +1326,6 @@
   },
   {
     "id": null,
-    "name": "MercadoPago Enrollment",
-    "component": "enrol_mercadopago",
-    "repository_url": "https://github.com/EduardoKrausME/moodle-enrol_mercadopago",
-    "branch": "master",
-    "category": "integrations",
-    "description": "Accept course enrolment payments through Mercado Pago.",
-    "moodle": "3.8+",
-    "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-primary\">Enrolment</span>\n<span class=\"badge text-bg-light border\">Integrations</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">MercadoPago Enrollment</h2>\n<p class=\"lead text-body-secondary mb-0\">Accept course enrolment payments through Mercado Pago.</p>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>enrol_mercadopago</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">3.8+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-enrol_mercadopago\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
-    "screenshots": [],
-    "iconUrl": ""
-  },
-  {
-    "id": null,
     "name": "Missing Students",
     "component": "local_missingstudents",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_missingstudents",
@@ -1373,19 +1360,6 @@
     "description": "Create interactive branching videos with decisions, alternate paths, multiple endings, resume and learner path tracking.",
     "moodle": "4.4+",
     "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-danger\">Activity module</span>\n<span class=\"badge text-bg-light border\">Video</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">Branching Video</h2>\n<p class=\"lead text-body-secondary mb-0\">Create interactive branching videos with decisions, alternate paths, multiple endings, resume and learner path tracking.</p>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>mod_videobranch</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">4.4+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-mod_videobranch\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
-    "screenshots": [],
-    "iconUrl": ""
-  },
-  {
-    "id": null,
-    "name": "Numeric Theme",
-    "component": "theme_numeric",
-    "repository_url": "https://github.com/EduardoKrausME/moodle-theme_numeric",
-    "branch": "master",
-    "category": "themes",
-    "description": "A numeric-style Moodle theme originally designed for Moodle 2.7.",
-    "moodle": "2.7+",
-    "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-info\">Theme</span>\n<span class=\"badge text-bg-light border\">Themes</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">Numeric Theme</h2>\n<p class=\"lead text-body-secondary mb-0\">A numeric-style Moodle theme originally designed for Moodle 2.7.</p>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>theme_numeric</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">2.7+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-theme_numeric\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
     "screenshots": [],
     "iconUrl": ""
   },
@@ -1989,19 +1963,6 @@
   },
   {
     "id": null,
-    "name": "Facial Recognition",
-    "component": "local_facial",
-    "repository_url": "https://github.com/EduardoKrausME/moodle-local_facial",
-    "branch": "master",
-    "category": "integrations",
-    "description": "Provide facial-recognition capture and comparison services used by Moodle access workflows.",
-    "moodle": "2.2+",
-    "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-primary\">Local plugin</span>\n<span class=\"badge text-bg-light border\">Integrations</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">Facial Recognition</h2>\n<p class=\"lead text-body-secondary mb-0\">Provide facial-recognition capture and comparison services used by Moodle access workflows.</p>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>local_facial</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">2.2+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-local_facial\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
-    "screenshots": [],
-    "iconUrl": ""
-  },
-  {
-    "id": null,
     "name": "Probability Simulator",
     "component": "mod_probability",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_probability",
@@ -2140,19 +2101,6 @@
     "description": "Collect a quick learner mood check-in and show teachers an aggregated class dashboard.",
     "moodle": "4.1+",
     "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-success\">Activity module</span>\n<span class=\"badge text-bg-light border\">Reports</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">Mood Tracker</h2>\n<p class=\"lead text-body-secondary mb-0\">Collect a quick learner mood check-in and show teachers an aggregated class dashboard.</p>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>mod_moodtracker</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">4.1+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-mod_moodtracker\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
-    "screenshots": [],
-    "iconUrl": ""
-  },
-  {
-    "id": null,
-    "name": "Numeric Course Format",
-    "component": "format_numeric",
-    "repository_url": "https://github.com/EduardoKrausME/moodle-course_format_numeric",
-    "branch": "master",
-    "category": "themes",
-    "description": "Provide the numeric-style course format originally designed alongside the Numeric theme.",
-    "moodle": "2.7+",
-    "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-info\">Course format</span>\n<span class=\"badge text-bg-light border\">Themes</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">Numeric Course Format</h2>\n<p class=\"lead text-body-secondary mb-0\">Provide the numeric-style course format originally designed alongside the Numeric theme.</p>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>format_numeric</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">2.7+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-course_format_numeric\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
     "screenshots": [],
     "iconUrl": ""
   },
