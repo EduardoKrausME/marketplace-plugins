@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.1-auto-setup-overview";
+        "2026-09-28.3-plugins-json-overview";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -887,30 +887,8 @@
         );
     }
 
-    function repositoryFromComponent(
+    async function apiCatalog(
         component
-    ) {
-        const value =
-            String(component || "")
-                .trim();
-
-        if (!/^[a-z][a-z0-9]*_[a-z0-9_]+$/i.test(value)) {
-            throw new Error(
-                `Unable to derive repository from component: ${value}`
-            );
-        }
-
-        return (
-            CONFIG.githubOwner +
-            "/moodle-" +
-            value
-        );
-    }
-
-    async function apiRepositoryAsset(
-        repository,
-        tag,
-        path
     ) {
         const url =
             new URL(
@@ -919,30 +897,102 @@
 
         url.searchParams.set(
             "action",
-            "asset"
+            "catalog"
         );
 
         url.searchParams.set(
-            "repo",
-            repository
+            "component",
+            component
+        );
+
+        const response =
+            await fetch(
+                url.toString(),
+                {
+                    cache: "no-store",
+                }
+            );
+
+        let data;
+
+        try {
+            data =
+                await response.json();
+        } catch (_) {
+            throw new Error(
+                `Catalog returned invalid JSON (HTTP ${response.status})`
+            );
+        }
+
+        if (!response.ok) {
+            throw new Error(
+                data.error ||
+                `Catalog HTTP ${response.status}`
+            );
+        }
+
+        if (
+            !data ||
+            data.component !== component ||
+            !data.description ||
+            !data.iconUrl
+        ) {
+            throw new Error(
+                `plugins.json entry is incomplete for ${component}.`
+            );
+        }
+
+        return data;
+    }
+
+    async function apiCatalogIcon(
+        component
+    ) {
+        const url =
+            new URL(
+                CONFIG.apiUrl
+            );
+
+        url.searchParams.set(
+            "action",
+            "catalog_icon"
         );
 
         url.searchParams.set(
-            "tag",
-            tag
+            "component",
+            component
         );
 
-        url.searchParams.set(
-            "path",
-            path
-        );
+        const response =
+            await fetch(
+                url.toString(),
+                {
+                    cache: "no-store",
+                }
+            );
 
-        return fetch(
-            url.toString(),
-            {
-                cache: "no-store",
+        if (!response.ok) {
+            let message =
+                `Catalog icon HTTP ${response.status}`;
+
+            try {
+                const data =
+                    await response.json();
+
+                if (data.error) {
+                    message =
+                        data.error;
+                }
+            } catch (_) {
+                // Image errors may not be JSON.
             }
-        );
+
+            throw new Error(
+                message
+            );
+        }
+
+        return response;
     }
 
     async function imageBlobToPngFile(
@@ -966,7 +1016,7 @@
                     image.onerror =
                         () => reject(
                             new Error(
-                                "Unable to decode repository icon."
+                                "Unable to decode catalog icon."
                             )
                         );
 
@@ -1048,7 +1098,7 @@
                                 } else {
                                     reject(
                                         new Error(
-                                            "Unable to rasterize repository icon."
+                                            "Unable to rasterize catalog icon."
                                         )
                                     );
                                 }
@@ -1062,7 +1112,10 @@
                 [
                     pngBlob,
                 ],
-                filename,
+                filename.replace(
+                    /\.[^.]+$/,
+                    ""
+                ) + ".png",
                 {
                     type: "image/png",
                 }
@@ -1074,71 +1127,74 @@
         }
     }
 
-    async function getRepositorySetupImage(
-        repository,
-        repositoryInfo,
-        component
+    async function getCatalogSetupImage(
+        component,
+        catalog
     ) {
-        const candidates = [
-            repositoryInfo.icon_path,
-            "pix/icon.svg",
-            "pix/icon.png",
-            "pix/icon.webp",
-            "pix/icon.jpg",
-            "pix/icon.jpeg",
-            "pix/icon.gif",
-        ].filter(
-            (value, index, values) =>
-                value &&
-                values.indexOf(value) ===
-                index
-        );
+        const response =
+            await apiCatalogIcon(
+                component
+            );
 
-        let lastError = null;
+        const blob =
+            await response.blob();
 
-        for (const path of candidates) {
-            try {
-                const response =
-                    await apiRepositoryAsset(
-                        repository,
-                        repositoryInfo.tag,
-                        path
-                    );
-
-                if (!response.ok) {
-                    lastError =
-                        new Error(
-                            `Repository image ${path}: HTTP ${response.status}`
-                        );
-
-                    continue;
-                }
-
-                const blob =
-                    await response.blob();
-
-                const file =
-                    await imageBlobToPngFile(
-                        blob,
-                        `${component}.png`
-                    );
-
-                return {
-                    file,
-                    path,
-                };
-            } catch (error) {
-                lastError =
-                    error;
-            }
-        }
-
-        throw (
-            lastError ||
-            new Error(
-                "No repository icon could be loaded."
+        const contentType =
+            String(
+                blob.type ||
+                response.headers.get(
+                    "Content-Type"
+                ) ||
+                ""
             )
+                .split(";")[0]
+                .trim()
+                .toLowerCase();
+
+        const filename =
+            response.headers.get(
+                "X-Asset-Filename"
+            ) ||
+            String(
+                catalog.iconUrl
+            )
+                .split("/")
+                .pop() ||
+            `${component}.png`;
+
+        const directlyAccepted = [
+            "image/png",
+            "image/jpeg",
+            "image/gif",
+            "image/webp",
+        ].includes(
+            contentType
         );
+
+        const file =
+            directlyAccepted
+                ? new File(
+                    [
+                        blob,
+                    ],
+                    filename,
+                    {
+                        type:
+                            contentType,
+                    }
+                )
+                : await imageBlobToPngFile(
+                    blob,
+                    filename
+                );
+
+        return {
+            file,
+            path:
+                catalog.iconUrl,
+            converted:
+                !directlyAccepted,
+        };
     }
 
     async function waitForCondition(
@@ -1421,7 +1477,7 @@
 
     async function submitMarketplaceOverview(
         plugin,
-        repositoryInfo,
+        catalog,
         setupImage
     ) {
         const overviewUrl =
@@ -1472,7 +1528,7 @@
 
             const name =
                 String(
-                    repositoryInfo.plugin_name ||
+                    catalog.name ||
                     nameInput.value ||
                     plugin.component
                 )
@@ -1481,8 +1537,7 @@
 
             const shortDescription =
                 String(
-                    repositoryInfo.short_description ||
-                    descriptionInput.value ||
+                    catalog.description ||
                     ""
                 )
                     .trim()
@@ -1599,60 +1654,67 @@
         plugin,
         status
     ) {
-        const repository =
-            repositoryFromComponent(
+        status.set(
+            "Lendo plugins.json...",
+            plugin.component
+        );
+
+        const catalog =
+            await apiCatalog(
                 plugin.component
             );
 
+        const repository =
+            parseGitHubRepository(
+                catalog.repository_url
+            );
+
+        if (!repository) {
+            throw new Error(
+                `Repository URL from plugins.json is invalid: ${catalog.repository_url || "(empty)"}`
+            );
+        }
+
         status.setDebug(
             "repository",
-            repository
+            repository.fullName
         );
-
-        status.set(
-            "Configurando página do plugin...",
-            repository
-        );
-
-        const repositoryInfo =
-            await apiInfo(
-                repository,
-                true
-            );
 
         status.setDebug(
             "repositoryInfo",
-            repositoryInfo
+            {
+                source:
+                    "plugins.json",
+                ...catalog,
+            }
         );
 
         status.set(
             "Preparando ícone e screenshot...",
-            repositoryInfo.icon_path ||
-                "pix/icon.svg"
+            catalog.iconUrl
         );
 
         const setupImage =
-            await getRepositorySetupImage(
-                repository,
-                repositoryInfo,
-                plugin.component
+            await getCatalogSetupImage(
+                plugin.component,
+                catalog
             );
 
         status.set(
             "Preenchendo Overview...",
-            `${repositoryInfo.plugin_name || plugin.component} · ${setupImage.path}`
+            `${catalog.name || plugin.component} · ${catalog.description.slice(0, 80)} · ${catalog.iconUrl}`
         );
 
         const result =
             await submitMarketplaceOverview(
                 plugin,
-                repositoryInfo,
+                catalog,
                 setupImage
             );
 
         status.set(
             "Página 1 configurada",
-            `${result.name} · ícone + screenshot enviados · Save and next`,
+            `${result.name} · description do plugins.json · ${setupImage.converted ? "ícone convertido para PNG" : "arquivo original usado como ícone e screenshot"} · Save and next`,
             "success"
         );
 
