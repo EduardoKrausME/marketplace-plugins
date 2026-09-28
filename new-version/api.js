@@ -3,6 +3,9 @@
 
     const CONFIG = {
         apiUrl: "https://eduardokraus.com/marketplace-plugins/new-version/api.php",
+        githubOwner: "EduardoKrausME",
+        setupPageTimeoutMs: 45000,
+        setupImageSize: 512,
         autoUpload: true,
         concurrency: 2,
         delayBetweenPluginsMs: 500,
@@ -12,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-20.3-debug-errors";
+        "2026-09-28.1-auto-setup-overview";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -269,8 +272,15 @@
             }
 
             /*
-             * Somente Listing = Published.
+             * Processa tanto plugins publicados quanto
+             * plugins aprovados que ainda precisam passar
+             * pelo wizard "Set up plugin page".
              */
+            const setupLink =
+                listingCell.querySelector(
+                    "a[data-ga-label='setup_after_review'][href^='/plugins/']"
+                );
+
             const published = [
                 ...listingCell.querySelectorAll(
                     "span"
@@ -281,11 +291,12 @@
                     "Published"
             );
 
-            if (!published) {
+            if (!published && !setupLink) {
                 continue;
             }
 
             const link =
+                setupLink ||
                 listingCell.querySelector(
                     "a[href^='/plugins/']"
                 );
@@ -310,6 +321,8 @@
                 component,
                 componentCell,
                 row,
+                published,
+                needsSetup: Boolean(setupLink),
             });
         }
 
@@ -716,9 +729,16 @@
         }
     }
 
-    async function apiInfo(repository) {
+    async function apiInfo(
+        repository,
+        force = false
+    ) {
         const cached =
-            getCachedApiInfo(repository);
+            force
+                ? null
+                : getCachedApiInfo(
+                    repository
+                );
 
         if (cached !== null) {
             return cached;
@@ -738,6 +758,13 @@
             "repo",
             repository
         );
+
+        if (force) {
+            url.searchParams.set(
+                "force",
+                "1"
+            );
+        }
 
         const response =
             await fetch(
@@ -858,6 +885,781 @@
                 type: "application/zip",
             }
         );
+    }
+
+    function repositoryFromComponent(
+        component
+    ) {
+        const value =
+            String(component || "")
+                .trim();
+
+        if (!/^[a-z][a-z0-9]*_[a-z0-9_]+$/i.test(value)) {
+            throw new Error(
+                `Unable to derive repository from component: ${value}`
+            );
+        }
+
+        return (
+            CONFIG.githubOwner +
+            "/moodle-" +
+            value
+        );
+    }
+
+    async function apiRepositoryAsset(
+        repository,
+        tag,
+        path
+    ) {
+        const url =
+            new URL(
+                CONFIG.apiUrl
+            );
+
+        url.searchParams.set(
+            "action",
+            "asset"
+        );
+
+        url.searchParams.set(
+            "repo",
+            repository
+        );
+
+        url.searchParams.set(
+            "tag",
+            tag
+        );
+
+        url.searchParams.set(
+            "path",
+            path
+        );
+
+        return fetch(
+            url.toString(),
+            {
+                cache: "no-store",
+            }
+        );
+    }
+
+    async function imageBlobToPngFile(
+        blob,
+        filename
+    ) {
+        const objectUrl =
+            URL.createObjectURL(
+                blob
+            );
+
+        try {
+            const image =
+                new Image();
+
+            await new Promise(
+                (resolve, reject) => {
+                    image.onload =
+                        () => resolve();
+
+                    image.onerror =
+                        () => reject(
+                            new Error(
+                                "Unable to decode repository icon."
+                            )
+                        );
+
+                    image.src =
+                        objectUrl;
+                }
+            );
+
+            const size =
+                CONFIG.setupImageSize;
+
+            const canvas =
+                document.createElement(
+                    "canvas"
+                );
+
+            canvas.width = size;
+            canvas.height = size;
+
+            const context =
+                canvas.getContext("2d");
+
+            if (!context) {
+                throw new Error(
+                    "Canvas 2D is unavailable."
+                );
+            }
+
+            context.clearRect(
+                0,
+                0,
+                size,
+                size
+            );
+
+            const sourceWidth =
+                image.naturalWidth ||
+                size;
+
+            const sourceHeight =
+                image.naturalHeight ||
+                size;
+
+            const scale =
+                Math.min(
+                    size / sourceWidth,
+                    size / sourceHeight
+                );
+
+            const width =
+                sourceWidth * scale;
+
+            const height =
+                sourceHeight * scale;
+
+            const x =
+                (size - width) / 2;
+
+            const y =
+                (size - height) / 2;
+
+            context.drawImage(
+                image,
+                x,
+                y,
+                width,
+                height
+            );
+
+            const pngBlob =
+                await new Promise(
+                    (resolve, reject) => {
+                        canvas.toBlob(
+                            (result) => {
+                                if (result) {
+                                    resolve(
+                                        result
+                                    );
+                                } else {
+                                    reject(
+                                        new Error(
+                                            "Unable to rasterize repository icon."
+                                        )
+                                    );
+                                }
+                            },
+                            "image/png"
+                        );
+                    }
+                );
+
+            return new File(
+                [
+                    pngBlob,
+                ],
+                filename,
+                {
+                    type: "image/png",
+                }
+            );
+        } finally {
+            URL.revokeObjectURL(
+                objectUrl
+            );
+        }
+    }
+
+    async function getRepositorySetupImage(
+        repository,
+        repositoryInfo,
+        component
+    ) {
+        const candidates = [
+            repositoryInfo.icon_path,
+            "pix/icon.svg",
+            "pix/icon.png",
+            "pix/icon.webp",
+            "pix/icon.jpg",
+            "pix/icon.jpeg",
+            "pix/icon.gif",
+        ].filter(
+            (value, index, values) =>
+                value &&
+                values.indexOf(value) ===
+                index
+        );
+
+        let lastError = null;
+
+        for (const path of candidates) {
+            try {
+                const response =
+                    await apiRepositoryAsset(
+                        repository,
+                        repositoryInfo.tag,
+                        path
+                    );
+
+                if (!response.ok) {
+                    lastError =
+                        new Error(
+                            `Repository image ${path}: HTTP ${response.status}`
+                        );
+
+                    continue;
+                }
+
+                const blob =
+                    await response.blob();
+
+                const file =
+                    await imageBlobToPngFile(
+                        blob,
+                        `${component}.png`
+                    );
+
+                return {
+                    file,
+                    path,
+                };
+            } catch (error) {
+                lastError =
+                    error;
+            }
+        }
+
+        throw (
+            lastError ||
+            new Error(
+                "No repository icon could be loaded."
+            )
+        );
+    }
+
+    async function waitForCondition(
+        callback,
+        description,
+        timeout =
+            CONFIG.setupPageTimeoutMs
+    ) {
+        const started =
+            Date.now();
+
+        while (
+            Date.now() - started <
+            timeout
+        ) {
+            const value =
+                callback();
+
+            if (value) {
+                return value;
+            }
+
+            await sleep(100);
+        }
+
+        throw new Error(
+            `Timeout waiting for ${description}.`
+        );
+    }
+
+    function waitForIframeLoad(
+        iframe,
+        description
+    ) {
+        return new Promise(
+            (resolve, reject) => {
+                const timer =
+                    setTimeout(
+                        () => {
+                            cleanup();
+
+                            reject(
+                                new Error(
+                                    `Timeout loading ${description}.`
+                                )
+                            );
+                        },
+                        CONFIG.setupPageTimeoutMs
+                    );
+
+                const onLoad =
+                    () => {
+                        cleanup();
+                        resolve();
+                    };
+
+                function cleanup() {
+                    clearTimeout(
+                        timer
+                    );
+
+                    iframe.removeEventListener(
+                        "load",
+                        onLoad
+                    );
+                }
+
+                iframe.addEventListener(
+                    "load",
+                    onLoad
+                );
+            }
+        );
+    }
+
+    async function createSetupIframe(
+        url
+    ) {
+        const iframe =
+            document.createElement(
+                "iframe"
+            );
+
+        iframe.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        iframe.style.cssText = [
+            "position:fixed",
+            "left:-10000px",
+            "top:-10000px",
+            "width:1024px",
+            "height:768px",
+            "opacity:0",
+            "pointer-events:none",
+            "border:0",
+        ].join(";");
+
+        const loaded =
+            waitForIframeLoad(
+                iframe,
+                url
+            );
+
+        iframe.src =
+            url;
+
+        document.body.appendChild(
+            iframe
+        );
+
+        await loaded;
+
+        return iframe;
+    }
+
+    function setFormValue(
+        element,
+        value
+    ) {
+        element.value =
+            value;
+
+        element.dispatchEvent(
+            new Event(
+                "input",
+                {
+                    bubbles: true,
+                }
+            )
+        );
+
+        element.dispatchEvent(
+            new Event(
+                "change",
+                {
+                    bubbles: true,
+                }
+            )
+        );
+    }
+
+    async function setFilePondFile(
+        iframe,
+        rootId,
+        hiddenName,
+        file
+    ) {
+        const frameWindow =
+            iframe.contentWindow;
+
+        const frameDocument =
+            iframe.contentDocument;
+
+        if (
+            !frameWindow ||
+            !frameDocument
+        ) {
+            throw new Error(
+                "Marketplace setup iframe is unavailable."
+            );
+        }
+
+        const root =
+            await waitForCondition(
+                () =>
+                    frameDocument.getElementById(
+                        rootId
+                    ),
+                rootId
+            );
+
+        const browser =
+            await waitForCondition(
+                () =>
+                    root.querySelector(
+                        "input.filepond--browser[type='file']"
+                    ),
+                `${rootId} file input`
+            );
+
+        const oldValues = [
+            ...root.querySelectorAll(
+                `input[type='hidden'][name="${hiddenName}"]`
+            ),
+        ].map(
+            (input) =>
+                input.value
+        );
+
+        const DataTransferClass =
+            frameWindow.DataTransfer ||
+            DataTransfer;
+
+        const transfer =
+            new DataTransferClass();
+
+        transfer.items.add(
+            file
+        );
+
+        browser.files =
+            transfer.files;
+
+        browser.dispatchEvent(
+            new frameWindow.Event(
+                "change",
+                {
+                    bubbles: true,
+                }
+            )
+        );
+
+        await waitForCondition(
+            () => {
+                const failed =
+                    root.querySelector(
+                        [
+                            "[data-filepond-item-state='load-error']",
+                            "[data-filepond-item-state='processing-error']",
+                            "[data-filepond-item-state='error']",
+                        ].join(",")
+                    );
+
+                if (failed) {
+                    throw new Error(
+                        `FilePond failed for ${rootId}.`
+                    );
+                }
+
+                const values = [
+                    ...root.querySelectorAll(
+                        `input[type='hidden'][name="${hiddenName}"]`
+                    ),
+                ]
+                    .map(
+                        (input) =>
+                            input.value
+                    )
+                    .filter(Boolean);
+
+                return values.some(
+                    (value) =>
+                        !oldValues.includes(
+                            value
+                        )
+                );
+            },
+            `${rootId} upload`
+        );
+    }
+
+    function getOverviewErrors(
+        documentObject
+    ) {
+        const messages = [
+            ...documentObject.querySelectorAll(
+                [
+                    ".alert-danger",
+                    ".alert-error",
+                    ".form-error-message",
+                    ".is-invalid + .invalid-feedback",
+                    "[aria-invalid='true'] + .invalid-feedback",
+                ].join(",")
+            ),
+        ]
+            .map(
+                (element) =>
+                    element.textContent.trim()
+            )
+            .filter(Boolean);
+
+        return [
+            ...new Set(
+                messages
+            ),
+        ];
+    }
+
+    async function submitMarketplaceOverview(
+        plugin,
+        repositoryInfo,
+        setupImage
+    ) {
+        const overviewUrl =
+            `/plugins/${plugin.id}/edit/overview`;
+
+        const iframe =
+            await createSetupIframe(
+                overviewUrl
+            );
+
+        try {
+            const frameDocument =
+                iframe.contentDocument;
+
+            if (!frameDocument) {
+                throw new Error(
+                    "Marketplace overview document is unavailable."
+                );
+            }
+
+            const form =
+                await waitForCondition(
+                    () =>
+                        frameDocument.querySelector(
+                            "form[name='plugin_edit_overview_form']"
+                        ),
+                    "overview form"
+                );
+
+            const nameInput =
+                form.querySelector(
+                    "#plugin_edit_overview_form_name"
+                );
+
+            const descriptionInput =
+                form.querySelector(
+                    "#plugin_edit_overview_form_shortDescription"
+                );
+
+            if (
+                !nameInput ||
+                !descriptionInput
+            ) {
+                throw new Error(
+                    "Overview name/description fields were not found."
+                );
+            }
+
+            const name =
+                String(
+                    repositoryInfo.plugin_name ||
+                    nameInput.value ||
+                    plugin.component
+                )
+                    .trim()
+                    .slice(0, 60);
+
+            const shortDescription =
+                String(
+                    repositoryInfo.short_description ||
+                    descriptionInput.value ||
+                    ""
+                )
+                    .trim()
+                    .slice(0, 256);
+
+            if (!name) {
+                throw new Error(
+                    "Plugin name is empty."
+                );
+            }
+
+            if (!shortDescription) {
+                throw new Error(
+                    "Short description is empty."
+                );
+            }
+
+            setFormValue(
+                nameInput,
+                name
+            );
+
+            setFormValue(
+                descriptionInput,
+                shortDescription
+            );
+
+            await setFilePondFile(
+                iframe,
+                "plugin_edit_overview_form_icon",
+                "plugin_edit_overview_form[icon]",
+                setupImage.file
+            );
+
+            await setFilePondFile(
+                iframe,
+                "plugin_edit_overview_form_screenshots",
+                "plugin_edit_overview_form[screenshots][]",
+                setupImage.file
+            );
+
+            const submit =
+                form.querySelector(
+                    "button[type='submit'][name='save_and_next']"
+                );
+
+            if (!submit) {
+                throw new Error(
+                    "Save and next button was not found."
+                );
+            }
+
+            const submitted =
+                waitForIframeLoad(
+                    iframe,
+                    "overview submit"
+                );
+
+            submit.click();
+
+            await submitted;
+
+            const resultDocument =
+                iframe.contentDocument;
+
+            const resultWindow =
+                iframe.contentWindow;
+
+            if (
+                !resultDocument ||
+                !resultWindow
+            ) {
+                throw new Error(
+                    "Marketplace overview result is unavailable."
+                );
+            }
+
+            const path =
+                resultWindow.location.pathname;
+
+            if (
+                path === overviewUrl ||
+                path.endsWith(
+                    `/plugins/${plugin.id}/edit/overview`
+                )
+            ) {
+                const errors =
+                    getOverviewErrors(
+                        resultDocument
+                    );
+
+                throw new Error(
+                    errors.length
+                        ? "Overview: " +
+                            errors.join(" | ")
+                        : "Overview form remained on the same page after submit."
+                );
+            }
+
+            return {
+                url:
+                    resultWindow.location.href,
+                name,
+                shortDescription,
+                imagePath:
+                    setupImage.path,
+            };
+        } finally {
+            iframe.remove();
+        }
+    }
+
+    async function setupMarketplacePlugin(
+        plugin,
+        status
+    ) {
+        const repository =
+            repositoryFromComponent(
+                plugin.component
+            );
+
+        status.setDebug(
+            "repository",
+            repository
+        );
+
+        status.set(
+            "Configurando página do plugin...",
+            repository
+        );
+
+        const repositoryInfo =
+            await apiInfo(
+                repository,
+                true
+            );
+
+        status.setDebug(
+            "repositoryInfo",
+            repositoryInfo
+        );
+
+        status.set(
+            "Preparando ícone e screenshot...",
+            repositoryInfo.icon_path ||
+                "pix/icon.svg"
+        );
+
+        const setupImage =
+            await getRepositorySetupImage(
+                repository,
+                repositoryInfo,
+                plugin.component
+            );
+
+        status.set(
+            "Preenchendo Overview...",
+            `${repositoryInfo.plugin_name || plugin.component} · ${setupImage.path}`
+        );
+
+        const result =
+            await submitMarketplaceOverview(
+                plugin,
+                repositoryInfo,
+                setupImage
+            );
+
+        status.set(
+            "Página 1 configurada",
+            `${result.name} · ícone + screenshot enviados · Save and next`,
+            "success"
+        );
+
+        return {
+            state: "setup",
+            result,
+        };
     }
 
     function isRemoteNewer(
@@ -1014,6 +1816,13 @@
         plugin,
         status
     ) {
+        if (plugin.needsSetup) {
+            return setupMarketplacePlugin(
+                plugin,
+                status
+            );
+        }
+
         const cachedOk =
             getPluginOkCache(plugin);
 
@@ -1243,6 +2052,13 @@
 
                 if (
                     result.state ===
+                    "setup"
+                ) {
+                    counters.setup++;
+                }
+
+                if (
+                    result.state ===
                     "current"
                 ) {
                     counters.current++;
@@ -1284,6 +2100,7 @@
             console.log(
                 `[Marketplace] ${counters.done}/${counters.total}` +
                 ` | enviados=${counters.uploaded}` +
+                ` | configurados=${counters.setup}` +
                 ` | atuais=${counters.current}` +
                 ` | ignorados=${counters.skipped}` +
                 ` | erros=${counters.errors}`
@@ -1308,14 +2125,14 @@
 
         if (!plugins.length) {
             console.log(
-                "[Marketplace] Nenhum plugin Published encontrado."
+                "[Marketplace] Nenhum plugin Published ou aguardando setup encontrado."
             );
 
             return;
         }
 
         console.log(
-            `[Marketplace] ${plugins.length} plugins Published encontrados.`
+            `[Marketplace] ${plugins.length} plugins processáveis encontrados.`
         );
 
         const counters = {
@@ -1325,6 +2142,8 @@
             done: 0,
 
             uploaded: 0,
+
+            setup: 0,
 
             current: 0,
 
