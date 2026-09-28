@@ -28,8 +28,18 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 $action = $_GET["action"] ?? "";
 $repo = trim($_GET["repo"] ?? "");
 
-if (!in_array($action, ["info", "zip", "asset"], true)) {
+if (!in_array($action, ["info", "zip", "asset", "catalog_icon"], true)) {
     jsonError("Invalid action.", 400);
+}
+
+if ($action === "catalog_icon") {
+    $component = trim(
+        $_GET["component"] ?? ""
+    );
+
+    streamCatalogIcon(
+        $component
+    );
 }
 
 [$owner, $repository] = parseRepository($repo);
@@ -213,9 +223,6 @@ function getRepositoryInfo(
 
         "short_description" =>
             $marketing["short_description"],
-
-        "icon_path" =>
-            "pix/icon.svg",
 
         "fetched_at" =>
             gmdate("c"),
@@ -550,6 +557,178 @@ function parseReadmeMarketing(
                 256
             ),
     ];
+}
+
+function streamCatalogIcon(
+    string $component
+): never {
+    if (!preg_match(
+        "/^[a-z][a-z0-9]*_[a-z0-9_]+$/i",
+        $component
+    )) {
+        jsonError(
+            "Invalid plugin component.",
+            400
+        );
+    }
+
+    $directoryPath =
+        "icon/" .
+        $component;
+
+    $url =
+        "https://api.github.com/repos/" .
+        "EduardoKrausME/" .
+        "marketplace-plugins/" .
+        "contents/" .
+        rawurlencode("icon") .
+        "/" .
+        rawurlencode($component) .
+        "?ref=master";
+
+    $entries =
+        githubJsonRequest(
+            $url
+        );
+
+    $supported = [
+        "png" =>
+            "image/png",
+        "webp" =>
+            "image/webp",
+        "jpg" =>
+            "image/jpeg",
+        "jpeg" =>
+            "image/jpeg",
+        "gif" =>
+            "image/gif",
+        "svg" =>
+            "image/svg+xml",
+    ];
+
+    $candidates = [];
+
+    foreach ($entries as $entry) {
+        if (
+            !is_array($entry) ||
+            ($entry["type"] ?? "") !== "file"
+        ) {
+            continue;
+        }
+
+        $name =
+            (string)($entry["name"] ?? "");
+
+        $extension =
+            strtolower(
+                pathinfo(
+                    $name,
+                    PATHINFO_EXTENSION
+                )
+            );
+
+        if (!isset($supported[$extension])) {
+            continue;
+        }
+
+        $exact =
+            strtolower(
+                pathinfo(
+                    $name,
+                    PATHINFO_FILENAME
+                )
+            ) ===
+            strtolower($component);
+
+        $priority =
+            $exact
+                ? 0
+                : 10;
+
+        if ($extension === "svg") {
+            $priority += 5;
+        }
+
+        $candidates[] = [
+            "priority" =>
+                $priority,
+            "name" =>
+                $name,
+            "path" =>
+                (string)($entry["path"] ?? ""),
+            "extension" =>
+                $extension,
+        ];
+    }
+
+    if (!$candidates) {
+        jsonError(
+            "No icon found for component " .
+            $component .
+            " in " .
+            $directoryPath .
+            ".",
+            404
+        );
+    }
+
+    usort(
+        $candidates,
+        static function (
+            array $a,
+            array $b
+        ): int {
+            return [
+                $a["priority"],
+                $a["name"],
+            ] <=>
+            [
+                $b["priority"],
+                $b["name"],
+            ];
+        }
+    );
+
+    $selected =
+        $candidates[0];
+
+    $bytes =
+        getRepositoryFileBytes(
+            "EduardoKrausME",
+            "marketplace-plugins",
+            "master",
+            $selected["path"]
+        );
+
+    header(
+        "Content-Type: " .
+        $supported[
+            $selected["extension"]
+        ]
+    );
+    header(
+        'Content-Disposition: inline; filename="' .
+        addcslashes(
+            $selected["name"],
+            "\\\""
+        ) .
+        '"'
+    );
+    header(
+        "X-Asset-Filename: " .
+        $selected["name"]
+    );
+    header(
+        "Access-Control-Expose-Headers: X-Asset-Filename"
+    );
+    header("Cache-Control: no-store");
+    header(
+        "Content-Length: " .
+        strlen($bytes)
+    );
+
+    echo $bytes;
+    exit;
 }
 
 function streamRepositoryAsset(
