@@ -1365,19 +1365,6 @@
   },
   {
     "id": null,
-    "name": "Facial Recognition Availability",
-    "component": "availability_facial",
-    "repository_url": "https://github.com/EduardoKrausME/moodle-availability_facial",
-    "branch": "master",
-    "category": "integrations",
-    "description": "Restrict access to Moodle content until the facial-recognition requirement is satisfied.",
-    "moodle": "3.2+",
-    "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-primary\">Availability condition</span>\n<span class=\"badge text-bg-light border\">Integrations</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">Facial Recognition Availability</h2>\n<p class=\"lead text-body-secondary mb-0\">Restrict access to Moodle content until the facial-recognition requirement is satisfied.</p>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>availability_facial</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">3.2+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-availability_facial\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
-    "screenshots": [],
-    "iconUrl": ""
-  },
-  {
-    "id": null,
     "name": "GeniAI Chat",
     "component": "mod_geniai",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_geniai",
