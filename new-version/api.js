@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.6-changes-needed";
+        "2026-09-28.7-filepond-overview-upload";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1237,38 +1237,29 @@
                 .pop() ||
             `${component}.png`;
 
-        const directlyAccepted = [
-            "image/png",
-            "image/jpeg",
-            "image/gif",
-            "image/webp",
-        ].includes(
-            contentType
-        );
-
+        /*
+         * Sempre normaliza a imagem pelo canvas. Antes, PNG/JPEG/WebP/GIF
+         * eram enviados no tamanho original, apesar de setupImageSize existir.
+         * Isso deixa ícones grandes sujeitos aos limites do FilePond/Marketplace.
+         */
         const file =
-            directlyAccepted
-                ? new File(
-                    [
-                        blob,
-                    ],
-                    filename,
-                    {
-                        type:
-                            contentType,
-                    }
-                )
-                : await imageBlobToPngFile(
-                    blob,
-                    filename
-                );
+            await imageBlobToPngFile(
+                blob,
+                filename
+            );
 
         return {
             file,
             path:
                 catalog.iconUrl,
             converted:
-                !directlyAccepted,
+                contentType !== "image/png" ||
+                file.name !== filename ||
+                file.size !== blob.size,
+            originalSize:
+                blob.size,
+            normalizedSize:
+                file.size,
         };
     }
 
@@ -1458,14 +1449,46 @@
                 `${rootId} file input`
             );
 
-        const oldValues = [
+        const hiddenInputs = () => [
             ...root.querySelectorAll(
-                `input[type='hidden'][name="${hiddenName}"]`
+                "input[type='hidden']"
             ),
-        ].map(
-            (input) =>
-                input.value
-        );
+        ];
+
+        const oldHiddenValues =
+            new Map(
+                hiddenInputs().map(
+                    (input) => [
+                        input.name,
+                        input.value,
+                    ]
+                )
+            );
+
+        /*
+         * O File criado no documento principal pode falhar nos brand checks
+         * do DataTransfer/input.files do iframe em alguns navegadores.
+         * Recriamos o File no mesmo realm do FilePond.
+         */
+        const FrameFile =
+            frameWindow.File ||
+            File;
+
+        const frameFile =
+            new FrameFile(
+                [
+                    file,
+                ],
+                file.name,
+                {
+                    type:
+                        file.type ||
+                        "application/octet-stream",
+                    lastModified:
+                        file.lastModified ||
+                        Date.now(),
+                }
+            );
 
         const DataTransferClass =
             frameWindow.DataTransfer ||
@@ -1475,7 +1498,7 @@
             new DataTransferClass();
 
         transfer.items.add(
-            file
+            frameFile
         );
 
         browser.files =
@@ -1497,17 +1520,25 @@
                         [
                             "[data-filepond-item-state='load-error']",
                             "[data-filepond-item-state='processing-error']",
+                            "[data-filepond-item-state='processing-revert-error']",
                             "[data-filepond-item-state='error']",
                         ].join(",")
                     );
 
                 if (failed) {
+                    const statusText =
+                        failed.querySelector(
+                            ".filepond--file-status-sub"
+                        )?.textContent?.trim() ||
+                        failed.textContent?.trim() ||
+                        "unknown FilePond error";
+
                     throw new Error(
-                        `FilePond failed for ${rootId}.`
+                        `FilePond failed for ${rootId}: ${statusText}`
                     );
                 }
 
-                const values = [
+                const exactValues = [
                     ...root.querySelectorAll(
                         `input[type='hidden'][name="${hiddenName}"]`
                     ),
@@ -1518,11 +1549,51 @@
                     )
                     .filter(Boolean);
 
-                return values.some(
-                    (value) =>
-                        !oldValues.includes(
-                            value
-                        )
+                const exactChanged =
+                    exactValues.some(
+                        (value) =>
+                            ![
+                                ...oldHiddenValues.values(),
+                            ].includes(
+                                value
+                            )
+                    );
+
+                if (exactChanged) {
+                    return true;
+                }
+
+                /*
+                 * O nome do hidden gerado pelo FilePond pode variar entre
+                 * campo simples e coleção. Não dependemos só dele: qualquer
+                 * hidden novo/alterado dentro do pond também confirma upload.
+                 */
+                const genericChanged =
+                    hiddenInputs().some(
+                        (input) =>
+                            Boolean(input.value) &&
+                            (
+                                !oldHiddenValues.has(
+                                    input.name
+                                ) ||
+                                oldHiddenValues.get(
+                                    input.name
+                                ) !== input.value
+                            )
+                    );
+
+                if (genericChanged) {
+                    return true;
+                }
+
+                /*
+                 * processing-complete é o sinal do próprio FilePond de que
+                 * o arquivo já foi aceito/processado pelo endpoint remoto.
+                 */
+                return Boolean(
+                    root.querySelector(
+                        "[data-filepond-item-state='processing-complete']"
+                    )
                 );
             },
             `${rootId} upload`
