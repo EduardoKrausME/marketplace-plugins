@@ -28,11 +28,31 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 $action = $_GET["action"] ?? "";
 $repo = trim($_GET["repo"] ?? "");
 
-if (!in_array($action, ["info", "zip"], true)) {
+if (!in_array($action, ["info", "zip", "asset"], true)) {
     jsonError("Invalid action.", 400);
 }
 
 [$owner, $repository] = parseRepository($repo);
+
+if ($action === "asset") {
+    $tag = trim($_GET["tag"] ?? "");
+    $path = trim($_GET["path"] ?? "");
+
+    if ($tag === "") {
+        jsonError("Missing tag.", 400);
+    }
+
+    if ($path === "") {
+        jsonError("Missing path.", 400);
+    }
+
+    streamRepositoryAsset(
+        $owner,
+        $repository,
+        $tag,
+        $path
+    );
+}
 
 if ($action === "info") {
     $force = ($_GET["force"] ?? "") === "1";
@@ -151,6 +171,18 @@ function getRepositoryInfo(
         $versionPhp
     );
 
+    $readme = getRepositoryTextFile(
+        $owner,
+        $repository,
+        $tag,
+        "README.md"
+    );
+
+    $marketing = parseReadmeMarketing(
+        $readme,
+        $repository
+    );
+
     $result = [
         "repo" => $owner . "/" . $repository,
 
@@ -175,6 +207,15 @@ function getRepositoryInfo(
 
         "html_url" =>
             $release["html_url"] ?? null,
+
+        "plugin_name" =>
+            $marketing["name"],
+
+        "short_description" =>
+            $marketing["short_description"],
+
+        "icon_path" =>
+            "pix/icon.svg",
 
         "fetched_at" =>
             gmdate("c"),
@@ -241,6 +282,341 @@ function getVersionPhp(
     }
 
     return $decoded;
+}
+
+function getRepositoryTextFile(
+    string $owner,
+    string $repository,
+    string $tag,
+    string $path
+): string {
+    $bytes = getRepositoryFileBytes(
+        $owner,
+        $repository,
+        $tag,
+        $path
+    );
+
+    if (!mbCheckEncoding($bytes)) {
+        throwApiError(
+            "Repository text file is not valid UTF-8: " . $path,
+            502
+        );
+    }
+
+    return $bytes;
+}
+
+function getRepositoryFileBytes(
+    string $owner,
+    string $repository,
+    string $tag,
+    string $path
+): string {
+    if (
+        $path === "" ||
+        str_contains($path, "..") ||
+        str_starts_with($path, "/") ||
+        str_contains($path, "\\")
+    ) {
+        jsonError(
+            "Invalid repository path.",
+            400
+        );
+    }
+
+    $url =
+        "https://api.github.com/repos/" .
+        rawurlencode($owner) .
+        "/" .
+        rawurlencode($repository) .
+        "/contents/" .
+        implode(
+            "/",
+            array_map(
+                "rawurlencode",
+                explode("/", $path)
+            )
+        ) .
+        "?ref=" .
+        rawurlencode($tag);
+
+    $response = githubJsonRequest(
+        $url
+    );
+
+    $encoding = strtolower(
+        (string)($response["encoding"] ?? "")
+    );
+
+    $content =
+        $response["content"] ?? null;
+
+    if (
+        $encoding !== "base64" ||
+        !is_string($content)
+    ) {
+        throwApiError(
+            "Unable to read repository file: " . $path,
+            502
+        );
+    }
+
+    $decoded = base64_decode(
+        str_replace(
+            ["\r", "\n"],
+            "",
+            $content
+        ),
+        true
+    );
+
+    if ($decoded === false) {
+        throwApiError(
+            "Unable to decode repository file: " . $path,
+            502
+        );
+    }
+
+    return $decoded;
+}
+
+function mbCheckEncoding(string $value): bool {
+    if (function_exists("mb_check_encoding")) {
+        return mb_check_encoding(
+            $value,
+            "UTF-8"
+        );
+    }
+
+    return preg_match("//u", $value) === 1;
+}
+
+function textLimit(
+    string $value,
+    int $limit
+): string {
+    $value = trim(
+        preg_replace(
+            "/\\s+/u",
+            " ",
+            $value
+        ) ?? $value
+    );
+
+    if (function_exists("mb_strlen")) {
+        if (mb_strlen($value, "UTF-8") <= $limit) {
+            return $value;
+        }
+
+        return rtrim(
+            mb_substr(
+                $value,
+                0,
+                max(1, $limit - 3),
+                "UTF-8"
+            )
+        ) . "...";
+    }
+
+    if (strlen($value) <= $limit) {
+        return $value;
+    }
+
+    return rtrim(
+        substr(
+            $value,
+            0,
+            max(1, $limit - 3)
+        )
+    ) . "...";
+}
+
+function markdownToPlainText(string $value): string {
+    $value = preg_replace(
+        "/!\\[[^\\]]*\\]\\([^)]*\\)/u",
+        "",
+        $value
+    ) ?? $value;
+
+    $value = preg_replace(
+        "/\\[([^\\]]+)\\]\\([^)]*\\)/u",
+        "$1",
+        $value
+    ) ?? $value;
+
+    $value = str_replace(
+        ["**", "__", "*", "_", "`"],
+        "",
+        $value
+    );
+
+    $value = strip_tags($value);
+
+    return trim(
+        preg_replace(
+            "/\\s+/u",
+            " ",
+            $value
+        ) ?? $value
+    );
+}
+
+function parseReadmeMarketing(
+    string $readme,
+    string $repository
+): array {
+    $name = preg_replace(
+        "/^moodle-[^-_]+[_-]?/i",
+        "",
+        $repository
+    ) ?? $repository;
+
+    $name = ucwords(
+        str_replace(
+            ["_", "-"],
+            " ",
+            $name
+        )
+    );
+
+    if (preg_match(
+        "/^\\s*#\\s+(.+?)\\s*$/mu",
+        $readme,
+        $matches
+    )) {
+        $candidate = markdownToPlainText(
+            $matches[1]
+        );
+
+        if ($candidate !== "") {
+            $name = $candidate;
+        }
+    }
+
+    $description = "";
+
+    $blocks = preg_split(
+        "/(?:\\r?\\n){2,}/",
+        trim($readme)
+    ) ?: [];
+
+    foreach ($blocks as $block) {
+        $block = trim($block);
+
+        if (
+            $block === "" ||
+            str_starts_with($block, "#") ||
+            str_starts_with($block, "![") ||
+            str_starts_with($block, "[![") ||
+            str_starts_with($block, "```")
+        ) {
+            continue;
+        }
+
+        $plain = markdownToPlainText(
+            $block
+        );
+
+        if ($plain === "") {
+            continue;
+        }
+
+        if (preg_match(
+            "/^(.+?[.!?])(?:\\s|$)/u",
+            $plain,
+            $matches
+        )) {
+            $plain = $matches[1];
+        }
+
+        $description = $plain;
+        break;
+    }
+
+    if ($description === "") {
+        $description =
+            $name .
+            " plugin for Moodle.";
+    }
+
+    return [
+        "name" =>
+            textLimit($name, 60),
+
+        "short_description" =>
+            textLimit(
+                $description,
+                256
+            ),
+    ];
+}
+
+function streamRepositoryAsset(
+    string $owner,
+    string $repository,
+    string $tag,
+    string $path
+): never {
+    $allowed = [
+        "pix/icon.svg" =>
+            "image/svg+xml",
+        "pix/icon.png" =>
+            "image/png",
+        "pix/icon.webp" =>
+            "image/webp",
+        "pix/icon.jpg" =>
+            "image/jpeg",
+        "pix/icon.jpeg" =>
+            "image/jpeg",
+        "pix/icon.gif" =>
+            "image/gif",
+    ];
+
+    if (!isset($allowed[$path])) {
+        jsonError(
+            "Asset path is not allowed.",
+            400
+        );
+    }
+
+    $info = getRepositoryInfo(
+        $owner,
+        $repository
+    );
+
+    if (
+        !isset($info["tag"]) ||
+        !hash_equals(
+            (string)$info["tag"],
+            $tag
+        )
+    ) {
+        jsonError(
+            "Requested tag is not the current cached release.",
+            409
+        );
+    }
+
+    $bytes = getRepositoryFileBytes(
+        $owner,
+        $repository,
+        $tag,
+        $path
+    );
+
+    header(
+        "Content-Type: " .
+        $allowed[$path]
+    );
+    header("Cache-Control: no-store");
+    header(
+        "Content-Length: " .
+        strlen($bytes)
+    );
+
+    echo $bytes;
+    exit;
 }
 
 function parseVersionPhp(string $contents): array {
