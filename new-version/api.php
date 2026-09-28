@@ -899,6 +899,11 @@ function githubRequest(
     string $url,
     bool $allowNotFound = false
 ): ?array {
+    $cacheFile =
+        getGithubResponseCacheFile(
+            $url
+        );
+
     $ch = curl_init();
 
     if ($ch === false) {
@@ -947,6 +952,21 @@ function githubRequest(
         return null;
     }
 
+    if ($status === 403) {
+        $cached =
+            readGithubResponseCache(
+                $cacheFile
+            );
+
+        if ($cached !== null) {
+            $cached["cached"] = true;
+            $cached["cache_fallback"] =
+                "github_http_403";
+
+            return $cached;
+        }
+    }
+
     if ($status < 200 || $status >= 300) {
         $message =
             "GitHub returned HTTP " .
@@ -972,10 +992,107 @@ function githubRequest(
         );
     }
 
-    return [
+    $response = [
         "status" => $status,
         "body" => $body,
     ];
+
+    writeGithubResponseCache(
+        $cacheFile,
+        $response
+    );
+
+    return $response;
+}
+
+function getGithubResponseCacheFile(
+    string $url
+): string {
+    return
+        getCacheDirectory() .
+        "/github-response-" .
+        hash(
+            "sha256",
+            $url
+        ) .
+        ".json";
+}
+
+function readGithubResponseCache(
+    string $filename
+): ?array {
+    if (!is_file($filename)) {
+        return null;
+    }
+
+    $contents =
+        file_get_contents(
+            $filename
+        );
+
+    if ($contents === false) {
+        return null;
+    }
+
+    $cached =
+        json_decode(
+            $contents,
+            true
+        );
+
+    if (
+        !is_array($cached) ||
+        !isset($cached["status"]) ||
+        !isset($cached["body"]) ||
+        !is_string($cached["body"])
+    ) {
+        return null;
+    }
+
+    $status =
+        (int)$cached["status"];
+
+    if ($status < 200 || $status >= 300) {
+        return null;
+    }
+
+    return [
+        "status" => $status,
+        "body" => $cached["body"],
+        "cached_at" =>
+            $cached["cached_at"] ??
+            null,
+    ];
+}
+
+function writeGithubResponseCache(
+    string $filename,
+    array $response
+): void {
+    if (
+        !isset($response["status"]) ||
+        !isset($response["body"]) ||
+        !is_string($response["body"])
+    ) {
+        return;
+    }
+
+    $status =
+        (int)$response["status"];
+
+    if ($status < 200 || $status >= 300) {
+        return;
+    }
+
+    writeCache(
+        $filename,
+        [
+            "status" => $status,
+            "body" => $response["body"],
+            "cached_at" =>
+                gmdate("c"),
+        ]
+    );
 }
 
 function githubHeaders(): array {
