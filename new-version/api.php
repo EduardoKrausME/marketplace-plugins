@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 $action = $_GET["action"] ?? "";
 $repo = trim($_GET["repo"] ?? "");
 
-if (!in_array($action, ["info", "zip", "asset", "catalog", "catalog_icon"], true)) {
+if (!in_array($action, ["info", "support", "zip", "asset", "catalog", "catalog_icon"], true)) {
     jsonError("Invalid action.", 400);
 }
 
@@ -55,6 +55,15 @@ if ($action === "catalog_icon") {
 }
 
 [$owner, $repository] = parseRepository($repo);
+
+if ($action === "support") {
+    jsonResponse(
+        getRepositorySupportInfo(
+            $owner,
+            $repository
+        )
+    );
+}
 
 if ($action === "asset") {
     $tag = trim($_GET["tag"] ?? "");
@@ -119,6 +128,122 @@ function parseRepository(string $repo): array {
     return [
         $matches[1],
         $matches[2],
+    ];
+}
+
+
+function getRepositorySupportInfo(
+    string $owner,
+    string $repository
+): array {
+    $apiBase =
+        "https://api.github.com/repos/" .
+        rawurlencode($owner) .
+        "/" .
+        rawurlencode($repository);
+
+    $repositoryInfo =
+        githubJsonRequest(
+            $apiBase
+        );
+
+    $defaultBranch =
+        trim(
+            (string)(
+                $repositoryInfo["default_branch"] ??
+                ""
+            )
+        );
+
+    $docsExists = false;
+
+    if ($defaultBranch !== "") {
+        $docs =
+            githubJsonRequestOptional(
+                $apiBase .
+                "/contents/docs?ref=" .
+                rawurlencode($defaultBranch)
+            );
+
+        if (is_array($docs)) {
+            $docsExists =
+                array_is_list($docs) ||
+                (
+                    isset($docs["type"]) &&
+                    $docs["type"] === "dir"
+                );
+        }
+    }
+
+    $hasPages =
+        (bool)(
+            $repositoryInfo["has_pages"] ??
+            false
+        );
+
+    $pagesUrl = "";
+
+    if ($hasPages) {
+        $pages =
+            githubJsonRequestOptional(
+                $apiBase .
+                "/pages"
+            );
+
+        $pagesUrl =
+            trim(
+                (string)(
+                    $pages["html_url"] ??
+                    ""
+                )
+            );
+
+        if ($pagesUrl === "") {
+            $pagesUrl =
+                "https://" .
+                strtolower($owner) .
+                ".github.io/" .
+                rawurlencode($repository) .
+                "/";
+        }
+    }
+
+    $repositoryUrl =
+        "https://github.com/" .
+        $owner .
+        "/" .
+        $repository;
+
+    return [
+        "repo" =>
+            $owner . "/" . $repository,
+
+        "repository_url" =>
+            $repositoryUrl,
+
+        "issues_url" =>
+            $repositoryUrl . "/issues",
+
+        "default_branch" =>
+            $defaultBranch,
+
+        "docs_exists" =>
+            $docsExists,
+
+        "has_pages" =>
+            $hasPages,
+
+        "pages_url" =>
+            $pagesUrl !== ""
+                ? $pagesUrl
+                : null,
+
+        "documentation_url" =>
+            $docsExists &&
+            $hasPages &&
+            $pagesUrl !== ""
+                ? $pagesUrl
+                : null,
     ];
 }
 
@@ -737,6 +862,13 @@ function githubJsonRequest(string $url): array {
         $url
     );
 
+    if ($response === null) {
+        throwApiError(
+            "GitHub resource was not found.",
+            404
+        );
+    }
+
     $data = json_decode(
         $response["body"],
         true
@@ -752,7 +884,39 @@ function githubJsonRequest(string $url): array {
     return $data;
 }
 
-function githubRequest(string $url): array {
+function githubJsonRequestOptional(
+    string $url
+): ?array {
+    $response =
+        githubRequest(
+            $url,
+            true
+        );
+
+    if ($response === null) {
+        return null;
+    }
+
+    $data =
+        json_decode(
+            $response["body"],
+            true
+        );
+
+    if (!is_array($data)) {
+        throwApiError(
+            "GitHub returned invalid JSON.",
+            502
+        );
+    }
+
+    return $data;
+}
+
+function githubRequest(
+    string $url,
+    bool $allowNotFound = false
+): ?array {
     $ch = curl_init();
 
     if ($ch === false) {
@@ -793,6 +957,13 @@ function githubRequest(string $url): array {
     );
 
     curl_close($ch);
+
+    if (
+        $status === 404 &&
+        $allowNotFound
+    ) {
+        return null;
+    }
 
     if ($status < 200 || $status >= 300) {
         $message =
