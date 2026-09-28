@@ -181,32 +181,14 @@ function getRepositorySupportInfo(
             false
         );
 
-    $pagesUrl = "";
-
-    if ($hasPages) {
-        $pages =
-            githubJsonRequestOptional(
-                $apiBase .
-                "/pages"
-            );
-
-        $pagesUrl =
-            trim(
-                (string)(
-                    $pages["html_url"] ??
-                    ""
-                )
-            );
-
-        if ($pagesUrl === "") {
-            $pagesUrl =
-                "https://" .
+    $pagesUrl =
+        $hasPages
+            ? "https://" .
                 strtolower($owner) .
                 ".github.io/" .
                 rawurlencode($repository) .
-                "/";
-        }
-    }
+                "/"
+            : "";
 
     $repositoryUrl =
         "https://github.com/" .
