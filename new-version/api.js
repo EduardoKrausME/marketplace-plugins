@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.10-preserve-overview";
+        "2026-09-28.11-support-all-plugins";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -2452,27 +2452,15 @@
             );
         }
 
+        /*
+         * O cache de versão não pode pular a página Support.
+         * Primeiro resolvemos/validamos o repositório e atualizamos
+         * /plugins/[id]/edit/support; só depois podemos retornar pelo cache.
+         */
         const cachedOk =
             plugin.needsChanges
                 ? null
                 : getPluginOkCache(plugin);
-
-        if (cachedOk !== null) {
-            const checkedAt =
-                new Date(cachedOk.checkedAt);
-
-            status.set(
-                "OK (cache local)",
-                `${cachedOk.release || "versÃ£o jÃ¡ conferida"} Â· ` +
-                `verificado ${checkedAt.toLocaleString()}`,
-                "success"
-            );
-
-            return {
-                state: "current",
-                clientCached: true,
-            };
-        }
 
         status.set(
             plugin.needsChanges
@@ -2538,6 +2526,58 @@
 
             return {
                 state: "skipped",
+            };
+        }
+
+        /*
+         * Support é mantido para todo plugin com repositório válido,
+         * independentemente de ser novo, Published, Changes needed,
+         * estar atualizado ou estar no cache local.
+         */
+        status.set(
+            "Consultando suporte no GitHub...",
+            repository.fullName
+        );
+
+        const supportInfo =
+            await apiSupport(
+                repository.fullName
+            );
+
+        status.set(
+            "Atualizando Support...",
+            `${supportInfo.repository_url} · issues · ${supportInfo.docs_exists && supportInfo.has_pages ? "GitHub Pages" : "sem Documentation"}`
+        );
+
+        const supportResult =
+            await submitMarketplaceSupport(
+                plugin,
+                repository,
+                supportInfo
+            );
+
+        status.set(
+            "Support atualizado",
+            `${supportResult.repositoryUrl} · ${supportResult.issueUrl} · Documentation: ${supportResult.documentationUrl || "vazia"} · ${supportResult.websiteUrl}`,
+            "success"
+        );
+
+        if (cachedOk !== null) {
+            const checkedAt =
+                new Date(cachedOk.checkedAt);
+
+            status.set(
+                "OK (cache local)",
+                `${cachedOk.release || "versão já conferida"} · ` +
+                `Support atualizado · verificado ${checkedAt.toLocaleString()}`,
+                "success"
+            );
+
+            return {
+                state: "current",
+                clientCached: true,
+                support:
+                    supportResult,
             };
         }
 
