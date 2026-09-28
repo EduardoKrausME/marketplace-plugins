@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.4-support-setup";
+        "2026-09-28.5-setup-overview-github-assets";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1983,6 +1983,10 @@
             catalog.iconUrl
         );
 
+        /*
+         * A mesma imagem definida por iconUrl no plugins.json é enviada
+         * para os campos Icon e Screenshots da página Overview.
+         */
         const setupImage =
             await getCatalogSetupImage(
                 plugin.component,
