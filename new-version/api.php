@@ -703,7 +703,7 @@ function streamCatalogIcon(
         'Content-Disposition: inline; filename="' .
         addcslashes(
             basename($filename),
-            "\\""
+            "\\"
         ) .
         '"'
     );
@@ -1096,40 +1096,7 @@ function writeGithubResponseCache(
 }
 
 function getGithubToken(): string {
-    $token = trim(
-        getenv("GITHUB_TOKEN") ?: ""
-    );
-
-    if ($token !== "") {
-        return $token;
-    }
-
-    $tokenFile = trim(
-        getenv("GITHUB_TOKEN_FILE") ?: ""
-    );
-
-    if ($tokenFile === "") {
-        $tokenFile =
-            "/etc/marketplace-plugins/github-token";
-    }
-
-    if (
-        !is_file($tokenFile) ||
-        !is_readable($tokenFile)
-    ) {
-        return "";
-    }
-
-    $contents =
-        file_get_contents(
-            $tokenFile
-        );
-
-    if ($contents === false) {
-        return "";
-    }
-
-    return trim($contents);
+    return "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";
 }
 
 function githubHeaders(): array {
