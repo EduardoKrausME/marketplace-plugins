@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.5-setup-overview-github-assets";
+        "2026-09-28.6-changes-needed";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -245,6 +245,9 @@
             const componentCell =
                 cells[1];
 
+            const statusCell =
+                cells[2];
+
             const listingCell =
                 cells[3];
 
@@ -281,6 +284,11 @@
                     "a[data-ga-label='setup_after_review'][href^='/plugins/']"
                 );
 
+            const changesNeededLink =
+                statusCell.querySelector(
+                    "a[data-ga-label='changes_needed'][href^='/plugins/']"
+                );
+
             const published = [
                 ...listingCell.querySelectorAll(
                     "span"
@@ -291,12 +299,17 @@
                     "Published"
             );
 
-            if (!published && !setupLink) {
+            if (
+                !published &&
+                !setupLink &&
+                !changesNeededLink
+            ) {
                 continue;
             }
 
             const link =
                 setupLink ||
+                changesNeededLink ||
                 listingCell.querySelector(
                     "a[href^='/plugins/']"
                 );
@@ -322,7 +335,10 @@
                 componentCell,
                 row,
                 published,
-                needsSetup: Boolean(setupLink),
+                needsSetup:
+                    Boolean(setupLink),
+                needsChanges:
+                    Boolean(changesNeededLink),
             });
         }
 
@@ -2203,7 +2219,9 @@
         }
 
         const cachedOk =
-            getPluginOkCache(plugin);
+            plugin.needsChanges
+                ? null
+                : getPluginOkCache(plugin);
 
         if (cachedOk !== null) {
             const checkedAt =
@@ -2223,7 +2241,9 @@
         }
 
         status.set(
-            "Verificando Marketplace..."
+            plugin.needsChanges
+                ? "Changes needed · verificando Marketplace..."
+                : "Verificando Marketplace..."
         );
 
         const versions =
@@ -2246,10 +2266,22 @@
             `${marketplace.release} (${marketplace.build})`
         );
 
-        const repositoryUrl =
-            await getMarketplaceRepositoryUrl(
-                plugin.id
-            );
+        let repositoryUrl;
+
+        if (plugin.needsChanges) {
+            const catalog =
+                await apiCatalog(
+                    plugin.component
+                );
+
+            repositoryUrl =
+                catalog.repository_url;
+        } else {
+            repositoryUrl =
+                await getMarketplaceRepositoryUrl(
+                    plugin.id
+                );
+        }
 
         const repository =
             parseGitHubRepository(
@@ -2286,7 +2318,8 @@
          */
         const repositoryInfo =
             await apiInfo(
-                repository.fullName
+                repository.fullName,
+                plugin.needsChanges
             );
 
         status.setDebug(
@@ -2315,10 +2348,14 @@
             )
         ) {
             status.set(
-                "Atualizado",
+                plugin.needsChanges
+                    ? "Changes needed · sem nova versão"
+                    : "Atualizado",
                 `Marketplace ${marketplace.release} (${marketplace.build}) Â· ` +
                 `GitHub ${remoteRelease} (${remoteBuild})`,
-                "success"
+                plugin.needsChanges
+                    ? "warning"
+                    : "success"
             );
 
             savePluginOkCache(
@@ -2336,7 +2373,9 @@
         }
 
         status.set(
-            "Nova versÃ£o",
+            plugin.needsChanges
+                ? "Changes needed · nova versão encontrada"
+                : "Nova versÃ£o",
             `Marketplace ${marketplace.release} (${marketplace.build}) â†’ ` +
             `GitHub ${remoteRelease} (${remoteBuild})`,
             "warning"
@@ -2365,8 +2404,10 @@
             );
 
         status.set(
-            "Publicando no Marketplace...",
-            `${zip.name} Â· step1 + step2`
+            plugin.needsChanges
+                ? "Enviando correção ao Marketplace..."
+                : "Publicando no Marketplace...",
+            `${zip.name} Â· /plugins/${plugin.id}/versions/add/step1 + step2`
         );
 
         const result =
@@ -2504,7 +2545,7 @@
 
         if (!plugins.length) {
             console.log(
-                "[Marketplace] Nenhum plugin Published ou aguardando setup encontrado."
+                "[Marketplace] Nenhum plugin Published, aguardando setup ou com Changes needed encontrado."
             );
 
             return;
