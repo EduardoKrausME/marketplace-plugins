@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.9-filepond-states";
+        "2026-09-28.10-preserve-overview";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1823,13 +1823,24 @@
                     .trim()
                     .slice(0, 60);
 
-            const shortDescription =
+            const existingShortDescription =
                 String(
-                    catalog.description ||
+                    descriptionInput.value ||
                     ""
-                )
-                    .trim()
-                    .slice(0, 256);
+                ).trim();
+
+            const shouldPopulateOverview =
+                existingShortDescription === "";
+
+            const shortDescription =
+                shouldPopulateOverview
+                    ? String(
+                        catalog.description ||
+                        ""
+                    )
+                        .trim()
+                        .slice(0, 256)
+                    : existingShortDescription;
 
             if (!name) {
                 throw new Error(
@@ -1837,7 +1848,10 @@
                 );
             }
 
-            if (!shortDescription) {
+            if (
+                shouldPopulateOverview &&
+                !shortDescription
+            ) {
                 throw new Error(
                     "Short description is empty."
                 );
@@ -1848,24 +1862,31 @@
                 name
             );
 
-            setFormValue(
-                descriptionInput,
-                shortDescription
-            );
+            /*
+             * Description, icon e screenshot só são preenchidos no primeiro
+             * setup, quando o shortDescription ainda está vazio. Se já existe
+             * descrição no Marketplace, preservamos todo o conteúdo visual.
+             */
+            if (shouldPopulateOverview) {
+                setFormValue(
+                    descriptionInput,
+                    shortDescription
+                );
 
-            await setFilePondFile(
-                iframe,
-                "plugin_edit_overview_form_icon",
-                "plugin_edit_overview_form[icon]",
-                setupImage.file
-            );
+                await setFilePondFile(
+                    iframe,
+                    "plugin_edit_overview_form_icon",
+                    "plugin_edit_overview_form[icon]",
+                    setupImage.file
+                );
 
-            await setFilePondFile(
-                iframe,
-                "plugin_edit_overview_form_screenshots",
-                "plugin_edit_overview_form[screenshots][]",
-                setupImage.file
-            );
+                await setFilePondFile(
+                    iframe,
+                    "plugin_edit_overview_form_screenshots",
+                    "plugin_edit_overview_form[screenshots][]",
+                    setupImage.file
+                );
+            }
 
             const submit =
                 form.querySelector(
@@ -1930,8 +1951,12 @@
                     resultWindow.location.href,
                 name,
                 shortDescription,
+                populatedOverview:
+                    shouldPopulateOverview,
                 imagePath:
-                    setupImage.path,
+                    shouldPopulateOverview
+                        ? setupImage.path
+                        : null,
             };
         } finally {
             iframe.remove();
@@ -2230,7 +2255,9 @@
 
         status.set(
             "Página 1 configurada",
-            `${overviewResult.name} · description do plugins.json · ${setupImage.converted ? "ícone convertido para PNG" : "arquivo original usado como ícone e screenshot"} · Save and next`,
+            overviewResult.populatedOverview
+                ? `${overviewResult.name} · description do plugins.json · ${setupImage.converted ? "ícone convertido para PNG" : "arquivo original usado como ícone e screenshot"} · Save and next`
+                : `${overviewResult.name} · description existente preservada · ícone e screenshot não alterados · Save and next`,
             "success"
         );
 
