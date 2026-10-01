@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-09-28.11-support-all-plugins";
+        "2026-10-01.01-submitted-review";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -289,6 +289,11 @@
                     "a[data-ga-label='changes_needed'][href^='/plugins/']"
                 );
 
+            const submittedForReviewLink =
+                statusCell.querySelector(
+                    "a[data-ga-label='submitted_for_review'][href^='/plugins/']"
+                );
+
             const published = [
                 ...listingCell.querySelectorAll(
                     "span"
@@ -302,7 +307,8 @@
             if (
                 !published &&
                 !setupLink &&
-                !changesNeededLink
+                !changesNeededLink &&
+                !submittedForReviewLink
             ) {
                 continue;
             }
@@ -310,6 +316,7 @@
             const link =
                 setupLink ||
                 changesNeededLink ||
+                submittedForReviewLink ||
                 listingCell.querySelector(
                     "a[href^='/plugins/']"
                 );
@@ -339,6 +346,8 @@
                     Boolean(setupLink),
                 needsChanges:
                     Boolean(changesNeededLink),
+                submittedForReview:
+                    Boolean(submittedForReviewLink),
             });
         }
 
@@ -496,6 +505,27 @@
     function parseMarketplaceVersion(
         documentObject
     ) {
+        const parseText = (text) => {
+            const match =
+                String(text || "")
+                    .trim()
+                    .match(
+                        /^(.*?)\s*\((\d+)\)\s*$/
+                    );
+
+            if (!match) {
+                return null;
+            }
+
+            return {
+                release:
+                    match[1].trim(),
+
+                build:
+                    Number(match[2]),
+            };
+        };
+
         const card =
             documentObject.querySelector(
                 "section[aria-labelledby='versions-heading'] .card .card"
@@ -504,33 +534,113 @@
         const heading =
             card?.querySelector("h2");
 
-        if (!heading) {
-            throw new Error(
-                "Marketplace version not found."
+        const primary =
+            parseText(
+                heading?.textContent
             );
+
+        if (primary) {
+            return primary;
         }
 
-        const text =
-            heading.textContent.trim();
+        /*
+         * /plugins/submit/step3/[id] uses a different layout.
+         * Prefer elements containing "release (build)" and require
+         * a long Moodle plugin build number in this fallback.
+         */
+        for (
+            const element
+            of documentObject.querySelectorAll(
+                "h1, h2, h3, h4, h5, h6, td, dd, strong, span"
+            )
+        ) {
+            const text =
+                element.textContent.trim();
 
-        const match =
-            text.match(
-                /^(.*?)\s*\((\d+)\)\s*$/
-            );
+            const match =
+                text.match(
+                    /^(.*?)\s*\((\d{8,14})\)\s*$/
+                );
 
-        if (!match) {
-            throw new Error(
-                `Unable to parse Marketplace version: ${text}`
-            );
+            if (
+                match &&
+                /\d/.test(match[1])
+            ) {
+                return {
+                    release:
+                        match[1].trim(),
+
+                    build:
+                        Number(match[2]),
+                };
+            }
         }
 
-        return {
-            release:
-                match[1].trim(),
+        /*
+         * Some summary pages render Release and Version/Build
+         * in separate table cells.
+         */
+        let release = null;
+        let build = null;
 
-            build:
-                Number(match[2]),
-        };
+        for (
+            const row
+            of documentObject.querySelectorAll(
+                "tr"
+            )
+        ) {
+            const cells =
+                row.querySelectorAll(
+                    "th, td"
+                );
+
+            if (cells.length < 2) {
+                continue;
+            }
+
+            const label =
+                cells[0]
+                    .textContent
+                    .trim()
+                    .replace(/:$/, "")
+                    .toLowerCase();
+
+            const value =
+                cells[cells.length - 1]
+                    .textContent
+                    .trim();
+
+            if (
+                label === "release" &&
+                value
+            ) {
+                release = value;
+            }
+
+            if (
+                (
+                    label === "version" ||
+                    label === "build"
+                ) &&
+                /^\d{8,14}$/.test(value)
+            ) {
+                build = Number(value);
+            }
+        }
+
+        if (
+            release &&
+            Number.isFinite(build)
+        ) {
+            return {
+                release,
+                build,
+            };
+        }
+
+        throw new Error(
+            "Marketplace version not found."
+        );
     }
 
     async function getMarketplaceRepositoryUrl(
@@ -2458,19 +2568,29 @@
          * /plugins/[id]/edit/support; só depois podemos retornar pelo cache.
          */
         const cachedOk =
-            plugin.needsChanges
+            (
+                plugin.needsChanges ||
+                plugin.submittedForReview
+            )
                 ? null
                 : getPluginOkCache(plugin);
 
         status.set(
             plugin.needsChanges
                 ? "Changes needed · verificando Marketplace..."
-                : "Verificando Marketplace..."
+                : plugin.submittedForReview
+                    ? "Submitted for review · verificando Marketplace..."
+                    : "Verificando Marketplace..."
         );
+
+        const versionsUrl =
+            plugin.submittedForReview
+                ? `/plugins/submit/step3/${plugin.id}`
+                : `/plugins/${plugin.id}/edit/versions`;
 
         const versions =
             await marketplaceHtml(
-                `/plugins/${plugin.id}/edit/versions`
+                versionsUrl
             );
 
         const marketplace =
@@ -2490,7 +2610,10 @@
 
         let repositoryUrl;
 
-        if (plugin.needsChanges) {
+        if (
+            plugin.needsChanges ||
+            plugin.submittedForReview
+        ) {
             const catalog =
                 await apiCatalog(
                     plugin.component
@@ -2534,33 +2657,37 @@
          * independentemente de ser novo, Published, Changes needed,
          * estar atualizado ou estar no cache local.
          */
-        status.set(
-            "Consultando suporte no GitHub...",
-            repository.fullName
-        );
+        let supportResult = null;
 
-        const supportInfo =
-            await apiSupport(
+        if (!plugin.submittedForReview) {
+            status.set(
+                "Consultando suporte no GitHub...",
                 repository.fullName
             );
 
-        status.set(
-            "Atualizando Support...",
-            `${supportInfo.repository_url} · issues · ${supportInfo.docs_exists && supportInfo.has_pages ? "GitHub Pages" : "sem Documentation"}`
-        );
+            const supportInfo =
+                await apiSupport(
+                    repository.fullName
+                );
 
-        const supportResult =
-            await submitMarketplaceSupport(
-                plugin,
-                repository,
-                supportInfo
+            status.set(
+                "Atualizando Support...",
+                `${supportInfo.repository_url} · issues · ${supportInfo.docs_exists && supportInfo.has_pages ? "GitHub Pages" : "sem Documentation"}`
             );
 
-        status.set(
-            "Support atualizado",
-            `${supportResult.repositoryUrl} · ${supportResult.issueUrl} · Documentation: ${supportResult.documentationUrl || "vazia"} · ${supportResult.websiteUrl}`,
-            "success"
-        );
+            supportResult =
+                await submitMarketplaceSupport(
+                    plugin,
+                    repository,
+                    supportInfo
+                );
+
+            status.set(
+                "Support atualizado",
+                `${supportResult.repositoryUrl} · ${supportResult.issueUrl} · Documentation: ${supportResult.documentationUrl || "vazia"} · ${supportResult.websiteUrl}`,
+                "success"
+            );
+        }
 
         if (cachedOk !== null) {
             const checkedAt =
@@ -2624,22 +2751,29 @@
             status.set(
                 plugin.needsChanges
                     ? "Changes needed · sem nova versão"
-                    : "Atualizado",
+                    : plugin.submittedForReview
+                        ? "Submitted for review · versão atual"
+                        : "Atualizado",
                 `Marketplace ${marketplace.release} (${marketplace.build}) Â· ` +
                 `GitHub ${remoteRelease} (${remoteBuild})`,
-                plugin.needsChanges
+                (
+                    plugin.needsChanges ||
+                    plugin.submittedForReview
+                )
                     ? "warning"
                     : "success"
             );
 
-            savePluginOkCache(
-                plugin,
-                {
-                    release: remoteRelease,
-                    build: remoteBuild,
-                    repository: repository.fullName,
-                }
-            );
+            if (!plugin.submittedForReview) {
+                savePluginOkCache(
+                    plugin,
+                    {
+                        release: remoteRelease,
+                        build: remoteBuild,
+                        repository: repository.fullName,
+                    }
+                );
+            }
 
             return {
                 state: "current",
@@ -2649,11 +2783,23 @@
         status.set(
             plugin.needsChanges
                 ? "Changes needed · nova versão encontrada"
-                : "Nova versÃ£o",
+                : plugin.submittedForReview
+                    ? "Submitted for review · nova versão no GitHub"
+                    : "Nova versÃ£o",
             `Marketplace ${marketplace.release} (${marketplace.build}) â†’ ` +
             `GitHub ${remoteRelease} (${remoteBuild})`,
             "warning"
         );
+
+        /*
+         * Initial submissions under review cannot use the normal
+         * /versions/add flow. Report the newer GitHub version only.
+         */
+        if (plugin.submittedForReview) {
+            return {
+                state: "outdated",
+            };
+        }
 
         if (!CONFIG.autoUpload) {
             return {
