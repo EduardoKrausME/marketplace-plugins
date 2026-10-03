@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once "config.php";
+
 const CACHE_TTL = 300;
 const ALLOWED_ORIGIN = "https://marketplace.moodle.com";
 const GITHUB_API_VERSION = "2026-03-10";
@@ -268,16 +270,9 @@ function getRepositoryInfo(
         }
     }
 
-    $releaseUrl =
-        "https://api.github.com/repos/" .
-        rawurlencode($owner) .
-        "/" .
-        rawurlencode($repository) .
-        "/releases/latest";
+    $releaseUrl = "https://api.github.com/repos/{$owner}/{$repository}/releases/latest";
 
-    $release = githubJsonRequest(
-        $releaseUrl
-    );
+    $release = githubJsonRequest($releaseUrl);
 
     $tag = trim(
         (string)($release["tag_name"] ?? "")
@@ -344,13 +339,7 @@ function getVersionPhp(
     string $repository,
     string $tag
 ): string {
-    $url =
-        "https://api.github.com/repos/" .
-        rawurlencode($owner) .
-        "/" .
-        rawurlencode($repository) .
-        "/contents/version.php?ref=" .
-        rawurlencode($tag);
+    $url = "https://api.github.com/repos/{$owner}/{$repository}/contents/version.php?ref={$tag}";
 
     $response = githubJsonRequest(
         $url
@@ -1093,10 +1082,6 @@ function writeGithubResponseCache(
                 gmdate("c"),
         ]
     );
-}
-
-function getGithubToken(): string {
-    return "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";
 }
 
 function githubHeaders(): array {
