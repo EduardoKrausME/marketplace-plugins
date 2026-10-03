@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-01.01-submitted-review";
+        "2026-10-03.01-manual-step2";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -167,6 +167,193 @@
 
     const sleep = (ms) =>
         new Promise((resolve) => setTimeout(resolve, ms));
+
+    function showStep2Popup(links) {
+        if (!Array.isArray(links) || !links.length) {
+            return;
+        }
+
+        document.getElementById(
+            "marketplace-step2-popup"
+        )?.remove();
+
+        const overlay =
+            document.createElement("div");
+
+        overlay.id =
+            "marketplace-step2-popup";
+
+        overlay.style.cssText = [
+            "position:fixed",
+            "inset:0",
+            "z-index:2147483647",
+            "background:rgba(0,0,0,.55)",
+            "display:flex",
+            "align-items:center",
+            "justify-content:center",
+            "padding:24px",
+        ].join(";");
+
+        const dialog =
+            document.createElement("div");
+
+        dialog.style.cssText = [
+            "width:min(900px,100%)",
+            "max-height:85vh",
+            "overflow:auto",
+            "background:#fff",
+            "color:#212529",
+            "border-radius:10px",
+            "box-shadow:0 20px 60px rgba(0,0,0,.35)",
+            "padding:24px",
+            "font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+        ].join(";");
+
+        const header =
+            document.createElement("div");
+
+        header.style.cssText = [
+            "display:flex",
+            "align-items:flex-start",
+            "justify-content:space-between",
+            "gap:16px",
+            "margin-bottom:18px",
+        ].join(";");
+
+        const heading =
+            document.createElement("div");
+
+        const title =
+            document.createElement("h2");
+
+        title.textContent =
+            `Step2 pendente (${links.length})`;
+
+        title.style.cssText =
+            "margin:0 0 6px;font-size:22px";
+
+        const description =
+            document.createElement("div");
+
+        description.textContent =
+            "Os ZIPs já foram enviados. Abra cada link em uma nova aba para revisar e executar o step2 manualmente.";
+
+        description.style.cssText =
+            "font-size:14px;color:#6c757d";
+
+        heading.append(
+            title,
+            description
+        );
+
+        const close =
+            document.createElement("button");
+
+        close.type = "button";
+        close.textContent = "Fechar";
+        close.style.cssText = [
+            "border:1px solid #ced4da",
+            "background:#fff",
+            "border-radius:6px",
+            "padding:7px 12px",
+            "cursor:pointer",
+        ].join(";");
+
+        close.addEventListener(
+            "click",
+            () => overlay.remove()
+        );
+
+        header.append(
+            heading,
+            close
+        );
+
+        dialog.appendChild(
+            header
+        );
+
+        const list =
+            document.createElement("div");
+
+        list.style.cssText =
+            "display:grid;gap:10px";
+
+        for (const item of links) {
+            const row =
+                document.createElement("div");
+
+            row.style.cssText = [
+                "border:1px solid #dee2e6",
+                "border-radius:8px",
+                "padding:12px 14px",
+            ].join(";");
+
+            const link =
+                document.createElement("a");
+
+            link.href =
+                item.url;
+
+            link.target =
+                "_blank";
+
+            link.rel =
+                "noopener noreferrer";
+
+            link.textContent =
+                `${item.component} · abrir step2`;
+
+            link.style.cssText = [
+                "display:inline-block",
+                "font-weight:700",
+                "text-decoration:none",
+                "margin-bottom:5px",
+            ].join(";");
+
+            const url =
+                document.createElement("div");
+
+            url.textContent =
+                item.url;
+
+            url.style.cssText = [
+                "font-size:12px",
+                "color:#6c757d",
+                "word-break:break-all",
+            ].join(";");
+
+            row.append(
+                link,
+                url
+            );
+
+            list.appendChild(
+                row
+            );
+        }
+
+        dialog.appendChild(
+            list
+        );
+
+        overlay.appendChild(
+            dialog
+        );
+
+        overlay.addEventListener(
+            "click",
+            (event) => {
+                if (event.target === overlay) {
+                    overlay.remove();
+                }
+            }
+        );
+
+        document.body.appendChild(
+            overlay
+        );
+    }
 
     function normalizeRelease(value) {
         return String(value || "")
@@ -2530,24 +2717,57 @@
         }
 
         /*
-         * STEP 2
+         * STEP 2 é manual.
          *
-         * O upload do ZIP deixa os dados preparados
-         * na sessÃ£o do Marketplace.
-         *
-         * Agora carregamos explicitamente o step2
-         * e submetemos o formulÃ¡rio existente.
+         * O POST do step1 normalmente termina na URL do step2 com cacheKey.
+         * Não fazemos uma nova requisição ao step2 e, principalmente, não
+         * submetemos esse formulário automaticamente. A URL é devolvida para
+         * ser exibida no popup ao final do processamento.
          */
-        const step2 =
-            await submitMarketplaceStep2(
-                pluginId,
-                repositoryInfo
+        const expectedStep2Path =
+            `/plugins/${pluginId}/versions/add/step2`;
+
+        let step2Url =
+            new URL(
+                uploadResponse.url,
+                location.origin
             );
 
+        if (
+            step2Url.pathname !==
+            expectedStep2Path
+        ) {
+            const step2Target =
+                uploadDocument.querySelector(
+                    `form[action*="${expectedStep2Path}"], a[href*="${expectedStep2Path}"]`
+                );
+
+            const targetUrl =
+                step2Target?.tagName === "FORM"
+                    ? step2Target.getAttribute(
+                        "action"
+                    )
+                    : step2Target?.getAttribute(
+                        "href"
+                    );
+
+            if (!targetUrl) {
+                throw new Error(
+                    "Step2 URL not found after step1 upload."
+                );
+            }
+
+            step2Url =
+                new URL(
+                    targetUrl,
+                    location.origin
+                );
+        }
+
         return {
-            url: step2.url,
-            document: step2.document,
-            html: step2.html,
+            url:
+                step2Url.toString(),
+            manualStep2: true,
         };
     }
 
@@ -2838,26 +3058,16 @@
             );
 
         status.set(
-            "Nova versÃ£o enviada",
-            `${remoteRelease} (${remoteBuild})`,
-            "success"
+            "ZIP enviado · Step2 manual",
+            `${remoteRelease} (${remoteBuild}) · abra o link no popup`,
+            "warning"
         );
 
-        status.set(
-            "ZIP enviado",
-            `${remoteRelease} (${remoteBuild})`,
-            "success"
-        );
-
-        savePluginOkCache(
-            plugin,
-            {
-                release: remoteRelease,
-                build: remoteBuild,
-                repository: repository.fullName,
-            }
-        );
-
+        /*
+         * Não salva no cache de plugin OK aqui. O step2 ainda depende de
+         * confirmação manual e marcar como OK faria uma próxima execução
+         * ignorar uma versão que ainda não foi efetivamente publicada.
+         */
         return {
             state: "uploaded",
             result,
@@ -2888,6 +3098,19 @@
                     "uploaded"
                 ) {
                     counters.uploaded++;
+
+                    if (
+                        result.result?.url
+                    ) {
+                        counters.step2Links.push({
+                            id:
+                                item.plugin.id,
+                            component:
+                                item.plugin.component,
+                            url:
+                                result.result.url,
+                        });
+                    }
                 }
 
                 if (
@@ -2992,6 +3215,8 @@
             skipped: 0,
 
             errors: 0,
+
+            step2Links: [],
         };
 
         const queue =
@@ -3037,6 +3262,10 @@
         console.log(
             "[Marketplace] Finalizado",
             counters
+        );
+
+        showStep2Popup(
+            counters.step2Links
         );
     }
 
