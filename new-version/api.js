@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-03.01-manual-step2";
+        "2026-10-03.02-upload-submitted-review";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3006,21 +3006,17 @@
                 : plugin.submittedForReview
                     ? "Submitted for review · nova versão no GitHub"
                     : "Nova versÃ£o",
-            `Marketplace ${marketplace.release} (${marketplace.build}) â†’ ` +
+            `Marketplace ${marketplace.release} (${marketplace.build}) → ` +
             `GitHub ${remoteRelease} (${remoteBuild})`,
             "warning"
         );
 
         /*
-         * Initial submissions under review cannot use the normal
-         * /versions/add flow. Report the newer GitHub version only.
+         * Mesmo quando a versão atual está "Submitted for review", tenta
+         * enviar a versão mais nova pelo fluxo normal. Se o Marketplace
+         * bloquear o upload nesse estado, uploadMarketplaceVersion() gera
+         * um erro explícito em vez de simplesmente ignorar a nova versão.
          */
-        if (plugin.submittedForReview) {
-            return {
-                state: "outdated",
-            };
-        }
-
         if (!CONFIG.autoUpload) {
             return {
                 state: "outdated",
@@ -3046,7 +3042,9 @@
         status.set(
             plugin.needsChanges
                 ? "Enviando correção ao Marketplace..."
-                : "Publicando no Marketplace...",
+                : plugin.submittedForReview
+                    ? "Atualizando versão em revisão..."
+                    : "Publicando no Marketplace...",
             `${zip.name} Â· /plugins/${plugin.id}/versions/add/step1 + step2`
         );
 
