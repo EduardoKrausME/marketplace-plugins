@@ -2531,7 +2531,7 @@
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h1 class=\"h2 fw-bold mb-3\">Case AI</h1>\n<p class=\"lead mb-4\">Create adaptive case-study activities in which learners make professional decisions and AI generates the next narrative turn without owning the authoritative state.</p>\n<h2 class=\"h4 fw-semibold mb-3\">What it does</h2>\n<ul class=\"mb-4\">\n<li class=\"mb-2\">Teacher-defined variables, immutable facts and deterministic end criteria remain controlled by PHP.</li>\n<li class=\"mb-2\">AI proposes narrative and state changes, while Moodle validates every change against the configured schema.</li>\n<li class=\"mb-2\">Attempt locking, optimistic state versions and unique round constraints protect against replay and double submission.</li>\n<li class=\"mb-2\">Teachers review the complete decision path and enter grades manually; AI can assist with summaries but cannot grade or mutate state.</li>\n</ul>\n<div class=\"card border\"><div class=\"card-body p-4\">\n<div class=\"small text-body-secondary mb-1\">Component</div>\n<code>mod_caseai</code>\n<div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-mod_caseai\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div>\n</div></div>\n</div></div></div>",
     "screenshots": [],
-    "iconUrl": ""
+    "iconUrl": "/marketplace-plugins/icon/mod_caseai/mod_caseai.png"
   },
   {
     "id": null,
@@ -2544,7 +2544,7 @@
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h1 class=\"h2 fw-bold mb-3\">Personal Progress</h1>\n<p class=\"lead mb-4\">Combine the learner's own progress into a compact Moodle dashboard without leaderboards, percentiles or comparisons with classmates.</p>\n<h2 class=\"h4 fw-semibold mb-3\">What it does</h2>\n<ul class=\"mb-4\">\n<li class=\"mb-2\">Shows Personal XP level, next-level progress, weekly evolution and an eight-week personal history.</li>\n<li class=\"mb-2\">Can aggregate streaks, goals, quests, milestones, reward credits and course completion when companion plugins are available.</li>\n<li class=\"mb-2\">Uses public plugin APIs rather than reading another plugin's database tables directly.</li>\n<li class=\"mb-2\">Loads all visible cards through one aggregated request and keeps optional integrations independent.</li>\n</ul>\n<div class=\"card border\"><div class=\"card-body p-4\">\n<div class=\"small text-body-secondary mb-1\">Component</div>\n<code>block_personalprogress</code>\n<div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-block_personalprogress\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div>\n</div></div>\n</div></div></div>",
     "screenshots": [],
-    "iconUrl": ""
+    "iconUrl": "/marketplace-plugins/icon/block_personalprogress/block_personalprogress.png"
   },
   {
     "id": null,
@@ -2557,7 +2557,7 @@
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h1 class=\"h2 fw-bold mb-3\">Personal Study Streak</h1>\n<p class=\"lead mb-4\">Track study consistency as a private learner signal, using real Moodle learning events instead of simple login counts.</p>\n<h2 class=\"h4 fw-semibold mb-3\">What it does</h2>\n<ul class=\"mb-4\">\n<li class=\"mb-2\">Consolidates qualifying study actions into one daily record per learner and course.</li>\n<li class=\"mb-2\">Calculates streaks in the learner's Moodle timezone and supports ignored weekdays and protected missed days.</li>\n<li class=\"mb-2\">Supports configurable milestones with optional XP, credits, badges and Moodle events.</li>\n<li class=\"mb-2\">Exposes a public API so companion plugins can read streak state or contribute trusted activity signals.</li>\n</ul>\n<div class=\"card border\"><div class=\"card-body p-4\">\n<div class=\"small text-body-secondary mb-1\">Component</div>\n<code>block_personalstreak</code>\n<div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-block_personalstreak\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div>\n</div></div>\n</div></div></div>",
     "screenshots": [],
-    "iconUrl": ""
+    "iconUrl": "/marketplace-plugins/icon/block_personalstreak/block_personalstreak.png"
   },
   {
     "id": null,
@@ -2570,7 +2570,7 @@
     "moodle": "4.1+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h1 class=\"h2 fw-bold mb-3\">Personal Goals</h1>\n<p class=\"lead mb-4\">Support learner self-regulation with private course goals that can be measured through Moodle state and extended by other plugins.</p>\n<h2 class=\"h4 fw-semibold mb-3\">What it does</h2>\n<ul class=\"mb-4\">\n<li class=\"mb-2\">Tracks active, completed, expired and cancelled goals without comparing learners.</li>\n<li class=\"mb-2\">Provides extensible goal types through a public interface and plugin callback.</li>\n<li class=\"mb-2\">Verifies current progress before completion and keeps completion operations idempotent.</li>\n<li class=\"mb-2\">Can integrate with Personal XP, XP Celebration and Reward Shop through public APIs when those plugins are available.</li>\n</ul>\n<div class=\"card border\"><div class=\"card-body p-4\">\n<div class=\"small text-body-secondary mb-1\">Component</div>\n<code>local_personalgoals</code>\n<div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-local_personalgoals\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div>\n</div></div>\n</div></div></div>",
     "screenshots": [],
-    "iconUrl": ""
+    "iconUrl": "/marketplace-plugins/icon/local_personalgoals/local_personalgoals.png"
   },
   {
     "id": null,
@@ -2583,7 +2583,7 @@
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h1 class=\"h2 fw-bold mb-3\">Reward Shop</h1>\n<p class=\"lead mb-4\">Add a non-competitive Moodle reward store in which historical XP remains untouched while a separate credit balance can be earned and spent.</p>\n<h2 class=\"h4 fw-semibold mb-3\">What it does</h2>\n<ul class=\"mb-4\">\n<li class=\"mb-2\">Keeps one wallet per learner and course plus an immutable ledger of earnings, spending, refunds and adjustments.</li>\n<li class=\"mb-2\">Uses Moodle locks, database transactions and idempotency tokens to prevent double spending and duplicate purchases.</li>\n<li class=\"mb-2\">Supports rewards such as badges, content entitlements, hints and teacher-approved custom requests.</li>\n<li class=\"mb-2\">Can convert Personal XP milestones into credits without turning XP itself into a spendable currency.</li>\n</ul>\n<div class=\"card border\"><div class=\"card-body p-4\">\n<div class=\"small text-body-secondary mb-1\">Component</div>\n<code>local_rewardshop</code>\n<div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-local_rewardshop\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div>\n</div></div>\n</div></div></div>",
     "screenshots": [],
-    "iconUrl": ""
+    "iconUrl": "/marketplace-plugins/icon/local_rewardshop/local_rewardshop.png"
   },
   {
     "id": null,
@@ -2596,7 +2596,7 @@
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h1 class=\"h2 fw-bold mb-3\">XP Celebration</h1>\n<p class=\"lead mb-4\">Give learners positive personal feedback for meaningful progress while keeping celebration state server-side and avoiding competitive mechanics.</p>\n<h2 class=\"h4 fw-semibold mb-3\">What it does</h2>\n<ul class=\"mb-4\">\n<li class=\"mb-2\">Queues level-ups, XP milestones, goals, streaks, quests, rewards and course-progress celebrations.</li>\n<li class=\"mb-2\">Claims one persisted celebration at a time so page reloads do not replay or silently consume the queue.</li>\n<li class=\"mb-2\">Supports modal, toast and achievement presentations with configurable visual themes.</li>\n<li class=\"mb-2\">Respects reduced-motion preferences and keeps sound disabled by default.</li>\n</ul>\n<div class=\"card border\"><div class=\"card-body p-4\">\n<div class=\"small text-body-secondary mb-1\">Component</div>\n<code>local_xpcelebration</code>\n<div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-local_xpcelebration\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div>\n</div></div>\n</div></div></div>",
     "screenshots": [],
-    "iconUrl": ""
+    "iconUrl": "/marketplace-plugins/icon/local_xpcelebration/local_xpcelebration.png"
   },
   {
     "id": null,
@@ -2609,7 +2609,7 @@
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h1 class=\"h2 fw-bold mb-3\">XP Quests</h1>\n<p class=\"lead mb-4\">Create private learning quests from Moodle actions, with sequential or any-order progression and no learner-to-learner ranking.</p>\n<h2 class=\"h4 fw-semibold mb-3\">What it does</h2>\n<ul class=\"mb-4\">\n<li class=\"mb-2\">Supports activity views and completion, quiz attempts, forum posts, assignment submissions, XP targets and manual confirmation.</li>\n<li class=\"mb-2\">Stores each repeatable quest run separately and keeps step completion and reward delivery idempotent.</li>\n<li class=\"mb-2\">Automatic steps are completed only by Moodle events or server-side state checks, never by a learner-supplied completion assertion.</li>\n<li class=\"mb-2\">Awards XP through Personal XP and can integrate with Reward Shop and XP Celebration without reading their database tables.</li>\n</ul>\n<div class=\"card border\"><div class=\"card-body p-4\">\n<div class=\"small text-body-secondary mb-1\">Component</div>\n<code>local_xpquests</code>\n<div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-local_xpquests\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div>\n</div></div>\n</div></div></div>",
     "screenshots": [],
-    "iconUrl": ""
+    "iconUrl": "/marketplace-plugins/icon/local_xpquests/local_xpquests.png"
   },
   {
     "id": null,
