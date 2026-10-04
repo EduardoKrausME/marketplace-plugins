@@ -2610,5 +2610,31 @@
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h1 class=\"h2 fw-bold mb-3\">XP Quests</h1>\n<p class=\"lead mb-4\">Create private learning quests from Moodle actions, with sequential or any-order progression and no learner-to-learner ranking.</p>\n<h2 class=\"h4 fw-semibold mb-3\">What it does</h2>\n<ul class=\"mb-4\">\n<li class=\"mb-2\">Supports activity views and completion, quiz attempts, forum posts, assignment submissions, XP targets and manual confirmation.</li>\n<li class=\"mb-2\">Stores each repeatable quest run separately and keeps step completion and reward delivery idempotent.</li>\n<li class=\"mb-2\">Automatic steps are completed only by Moodle events or server-side state checks, never by a learner-supplied completion assertion.</li>\n<li class=\"mb-2\">Awards XP through Personal XP and can integrate with Reward Shop and XP Celebration without reading their database tables.</li>\n</ul>\n<div class=\"card border\"><div class=\"card-body p-4\">\n<div class=\"small text-body-secondary mb-1\">Component</div>\n<code>local_xpquests</code>\n<div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-local_xpquests\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div>\n</div></div>\n</div></div></div>",
     "screenshots": [],
     "iconUrl": ""
+  },
+  {
+    "id": null,
+    "name": "OabFlix",
+    "component": "theme_oabflix",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-theme_oabflix",
+    "branch": "master",
+    "category": "themes",
+    "description": "OAB-focused streaming-style Moodle child theme built on EadFlix, with featured content, continue watching, curated course rows, Areas of Law and live editorial content.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h1 class=\"h2 fw-bold mb-3\">OabFlix</h1><p class=\"lead mb-4\">A Moodle child theme built on EadFlix for OAB preparation, combining a streaming-inspired front page with native Moodle courses, categories, enrolments and completion data.</p><h2 class=\"h4 fw-semibold mb-3\">What it does</h2><ul class=\"mb-4\"><li class=\"mb-2\">Featured hero backed by manual content or a Moodle course.</li><li class=\"mb-2\">Continue-watching row based on the current user's enrolments, last access and course completion.</li><li class=\"mb-2\">Curated highlights, OAB preparation courses and Areas of Law sections.</li><li class=\"mb-2\">Configurable OabFlix Live editorial block and native Moodle course search.</li></ul><div class=\"card border\"><div class=\"card-body p-4\"><div class=\"small text-body-secondary mb-1\">Component</div><code>theme_oabflix</code><div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-theme_oabflix\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div></div></div></div></div></div>",
+    "screenshots": [],
+    "iconUrl": "/marketplace-plugins/icon/theme_oabflix/theme_oabflix.png"
+  },
+  {
+    "id": null,
+    "name": "Roleplay",
+    "component": "mod_roleplay",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_roleplay",
+    "branch": "master",
+    "category": "integrations",
+    "description": "Run structured AI roleplay activities where learners interact with a configured character through guided turns and teacher-defined assessment criteria.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h1 class=\"h2 fw-bold mb-3\">Roleplay</h1><p class=\"lead mb-4\">Create structured roleplay activities in which learners interact with an AI character through guided turns while the teacher controls the scenario, instructions and evaluation criteria.</p><h2 class=\"h4 fw-semibold mb-3\">What it does</h2><ul class=\"mb-4\"><li class=\"mb-2\">Teacher-defined character, scenario and learning objectives.</li><li class=\"mb-2\">Turn-based learner interaction with contextual AI responses.</li><li class=\"mb-2\">Explicit criteria keep the activity focused on the intended competencies.</li><li class=\"mb-2\">Designed as a Moodle activity so permissions, attempts and course context remain inside Moodle.</li></ul><div class=\"card border\"><div class=\"card-body p-4\"><div class=\"small text-body-secondary mb-1\">Component</div><code>mod_roleplay</code><div class=\"mt-3\"><a href=\"https://github.com/EduardoKrausME/moodle-mod_roleplay\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a></div></div></div></div></div></div>",
+    "screenshots": [],
+    "iconUrl": "/marketplace-plugins/icon/mod_roleplay/mod_roleplay.png"
   }
 ]
