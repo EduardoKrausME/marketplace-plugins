@@ -30,7 +30,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "GET") {
 $action = $_GET["action"] ?? "";
 $repo = trim($_GET["repo"] ?? "");
 
-if (!in_array($action, ["info", "support", "zip", "asset", "catalog", "catalog_icon"], true)) {
+if (!in_array($action, ["info", "support", "zip", "asset", "catalog", "catalog_icon", "catalog_screenshot"], true)) {
     jsonError("Invalid action.", 400);
 }
 
@@ -53,6 +53,20 @@ if ($action === "catalog_icon") {
 
     streamCatalogIcon(
         $component
+    );
+}
+
+if ($action === "catalog_screenshot") {
+    $component = trim(
+        $_GET["component"] ?? ""
+    );
+    $filename = trim(
+        $_GET["filename"] ?? ""
+    );
+
+    streamCatalogScreenshot(
+        $component,
+        $filename
     );
 }
 
@@ -455,6 +469,112 @@ function getRepositoryFileBytes(
     return $decoded;
 }
 
+
+function getCatalogScreenshotFiles(
+    string $component
+): array {
+    if (!preg_match(
+        "/^[a-z][a-z0-9]*_[a-z0-9_]+$/i",
+        $component
+    )) {
+        jsonError(
+            "Invalid plugin component.",
+            400
+        );
+    }
+
+    $screenshotsRoot =
+        realpath(
+            dirname(__DIR__) .
+            "/screenshots"
+        );
+
+    $directory =
+        realpath(
+            dirname(__DIR__) .
+            "/screenshots/" .
+            $component
+        );
+
+    if (
+        $screenshotsRoot === false ||
+        $directory === false ||
+        !str_starts_with(
+            $directory,
+            $screenshotsRoot .
+            DIRECTORY_SEPARATOR
+        ) ||
+        !is_dir($directory)
+    ) {
+        return [];
+    }
+
+    $entries =
+        scandir(
+            $directory
+        );
+
+    if ($entries === false) {
+        throwApiError(
+            "Unable to read screenshots for " .
+            $component .
+            ".",
+            500
+        );
+    }
+
+    $files = [];
+
+    foreach ($entries as $entry) {
+        if (
+            $entry === "." ||
+            $entry === ".." ||
+            !preg_match(
+                "/\.(png|jpe?g|webp|gif)$/i",
+                $entry
+            ) ||
+            !is_file(
+                $directory .
+                DIRECTORY_SEPARATOR .
+                $entry
+            )
+        ) {
+            continue;
+        }
+
+        $files[] =
+            $entry;
+    }
+
+    usort(
+        $files,
+        "strnatcasecmp"
+    );
+
+    /*
+     * Os screenshots novos seguem new-1.png, new-2.png...
+     * Quando eles existem, são os arquivos usados no novo cadastro.
+     * Isso evita reenviar imagens antigas ou assets auxiliares da pasta.
+     */
+    $newFiles =
+        array_values(
+            array_filter(
+                $files,
+                static fn(string $filename): bool =>
+                    preg_match(
+                        "/^new-\d+\.(png|jpe?g|webp|gif)$/i",
+                        $filename
+                    ) === 1
+            )
+        );
+
+    return
+        $newFiles !== []
+            ? $newFiles
+            : $files;
+}
+
+
 function getCatalogPlugin(
     string $component
 ): array {
@@ -555,6 +675,22 @@ function getCatalogPlugin(
             "description" =>
                 $description,
 
+            "screenshots" =>
+                array_map(
+                    static fn(string $filename): array => [
+                        "filename" =>
+                            $filename,
+                        "url" =>
+                            "/marketplace-plugins/screenshots/" .
+                            $component .
+                            "/" .
+                            rawurlencode($filename),
+                    ],
+                    getCatalogScreenshotFiles(
+                        $component
+                    )
+                ),
+
             "iconUrl" =>
                 $iconUrl,
 
@@ -574,6 +710,154 @@ function getCatalogPlugin(
         404
     );
 }
+
+
+function streamCatalogScreenshot(
+    string $component,
+    string $requestedFilename
+): never {
+    if (
+        $requestedFilename === "" ||
+        basename($requestedFilename) !==
+            $requestedFilename ||
+        str_contains(
+            $requestedFilename,
+            ".."
+        )
+    ) {
+        jsonError(
+            "Invalid screenshot filename.",
+            400
+        );
+    }
+
+    $files =
+        getCatalogScreenshotFiles(
+            $component
+        );
+
+    if (!in_array(
+        $requestedFilename,
+        $files,
+        true
+    )) {
+        jsonError(
+            "Catalog screenshot was not found.",
+            404
+        );
+    }
+
+    $screenshotsRoot =
+        realpath(
+            dirname(__DIR__) .
+            "/screenshots"
+        );
+
+    $filename =
+        realpath(
+            dirname(__DIR__) .
+            "/screenshots/" .
+            $component .
+            "/" .
+            $requestedFilename
+        );
+
+    if (
+        $screenshotsRoot === false ||
+        $filename === false ||
+        !str_starts_with(
+            $filename,
+            $screenshotsRoot .
+            DIRECTORY_SEPARATOR
+        ) ||
+        !is_file($filename)
+    ) {
+        jsonError(
+            "Catalog screenshot file was not found.",
+            404
+        );
+    }
+
+    $extension =
+        strtolower(
+            pathinfo(
+                $filename,
+                PATHINFO_EXTENSION
+            )
+        );
+
+    $types = [
+        "png" =>
+            "image/png",
+        "webp" =>
+            "image/webp",
+        "jpg" =>
+            "image/jpeg",
+        "jpeg" =>
+            "image/jpeg",
+        "gif" =>
+            "image/gif",
+    ];
+
+    if (!isset(
+        $types[$extension]
+    )) {
+        jsonError(
+            "Unsupported catalog screenshot type.",
+            415
+        );
+    }
+
+    $size =
+        filesize(
+            $filename
+        );
+
+    header(
+        "Content-Type: " .
+        $types[$extension]
+    );
+    header(
+        'Content-Disposition: inline; filename="' .
+        addcslashes(
+            basename($filename),
+            "\\"
+        ) .
+        '"'
+    );
+    header(
+        "X-Asset-Filename: " .
+        basename($filename)
+    );
+    header(
+        "X-Asset-Path: /marketplace-plugins/screenshots/" .
+        $component .
+        "/" .
+        rawurlencode(
+            basename($filename)
+        )
+    );
+    header(
+        "Access-Control-Expose-Headers: X-Asset-Filename, X-Asset-Path"
+    );
+    header(
+        "Cache-Control: no-store"
+    );
+
+    if ($size !== false) {
+        header(
+            "Content-Length: " .
+            $size
+        );
+    }
+
+    readfile(
+        $filename
+    );
+
+    exit;
+}
+
 
 function streamCatalogIcon(
     string $component
