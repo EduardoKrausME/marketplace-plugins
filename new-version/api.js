@@ -1307,7 +1307,10 @@
             !data ||
             data.component !== component ||
             !data.description ||
-            !data.iconUrl
+            !data.iconUrl ||
+            !Array.isArray(
+                data.screenshots
+            )
         ) {
             throw new Error(
                 `plugins.json entry is incomplete for ${component}.`
@@ -1366,6 +1369,64 @@
 
         return response;
     }
+
+
+    async function apiCatalogScreenshot(
+        component,
+        filename
+    ) {
+        const url =
+            new URL(
+                CONFIG.apiUrl
+            );
+
+        url.searchParams.set(
+            "action",
+            "catalog_screenshot"
+        );
+
+        url.searchParams.set(
+            "component",
+            component
+        );
+
+        url.searchParams.set(
+            "filename",
+            filename
+        );
+
+        const response =
+            await fetch(
+                url.toString(),
+                {
+                    cache: "no-store",
+                }
+            );
+
+        if (!response.ok) {
+            let message =
+                `Catalog screenshot HTTP ${response.status}`;
+
+            try {
+                const data =
+                    await response.json();
+
+                if (data.error) {
+                    message =
+                        data.error;
+                }
+            } catch (_) {
+                // Image errors may not be JSON.
+            }
+
+            throw new Error(
+                message
+            );
+        }
+
+        return response;
+    }
+
 
     async function imageBlobToPngFile(
         blob,
@@ -1560,6 +1621,86 @@
         };
     }
 
+
+    async function getCatalogSetupScreenshots(
+        component,
+        catalog
+    ) {
+        const screenshots =
+            Array.isArray(
+                catalog.screenshots
+            )
+                ? catalog.screenshots
+                : [];
+
+        if (!screenshots.length) {
+            throw new Error(
+                `No screenshot files found for ${component}.`
+            );
+        }
+
+        const files = [];
+
+        for (const screenshot of screenshots) {
+            const filename =
+                String(
+                    screenshot?.filename ||
+                    ""
+                ).trim();
+
+            if (!filename) {
+                continue;
+            }
+
+            const response =
+                await apiCatalogScreenshot(
+                    component,
+                    filename
+                );
+
+            const blob =
+                await response.blob();
+
+            const contentType =
+                String(
+                    blob.type ||
+                    response.headers.get(
+                        "Content-Type"
+                    ) ||
+                    "application/octet-stream"
+                )
+                    .split(";")[0]
+                    .trim();
+
+            files.push({
+                filename,
+                path:
+                    screenshot.url ||
+                    `/marketplace-plugins/screenshots/${component}/${encodeURIComponent(filename)}`,
+                file:
+                    new File(
+                        [
+                            blob,
+                        ],
+                        filename,
+                        {
+                            type:
+                                contentType,
+                        }
+                    ),
+            });
+        }
+
+        if (!files.length) {
+            throw new Error(
+                `No valid screenshot files found for ${component}.`
+            );
+        }
+
+        return files;
+    }
+
+
     async function waitForCondition(
         callback,
         description,
@@ -1706,6 +1847,146 @@
             )
         );
     }
+
+
+    async function clearFilePondFiles(
+        iframe,
+        rootId
+    ) {
+        const frameWindow =
+            iframe.contentWindow;
+
+        const frameDocument =
+            iframe.contentDocument;
+
+        if (
+            !frameWindow ||
+            !frameDocument
+        ) {
+            throw new Error(
+                "Marketplace setup iframe is unavailable."
+            );
+        }
+
+        const root =
+            await waitForCondition(
+                () =>
+                    frameDocument.getElementById(
+                        rootId
+                    ),
+                rootId
+            );
+
+        const browser =
+            await waitForCondition(
+                () =>
+                    root.querySelector(
+                        "input.filepond--browser[type='file']"
+                    ),
+                `${rootId} file input`
+            );
+
+        const FilePondApi =
+            frameWindow.FilePond;
+
+        let pond = null;
+
+        if (
+            FilePondApi &&
+            typeof FilePondApi.find ===
+                "function"
+        ) {
+            const candidates = [
+                browser,
+                browser.closest(
+                    ".filepond--root"
+                ),
+                root,
+                root.querySelector(
+                    ".filepond--root"
+                ),
+                root.querySelector(
+                    ".filepond"
+                ),
+                ...root.querySelectorAll(
+                    "input[type='file']"
+                ),
+            ].filter(Boolean);
+
+            for (const candidate of candidates) {
+                try {
+                    pond =
+                        FilePondApi.find(
+                            candidate
+                        );
+
+                    if (pond) {
+                        break;
+                    }
+                } catch (_) {
+                    // Tenta o próximo elemento.
+                }
+            }
+        }
+
+        let removed = 0;
+
+        if (
+            pond &&
+            typeof pond.getFiles ===
+                "function" &&
+            typeof pond.removeFile ===
+                "function"
+        ) {
+            const files = [
+                ...pond.getFiles(),
+            ];
+
+            for (const item of files) {
+                await Promise.resolve(
+                    pond.removeFile(
+                        item?.id ||
+                        item
+                    )
+                );
+
+                removed++;
+            }
+        } else {
+            /*
+             * Fallback para FilePond não exposto globalmente.
+             * Remove os itens existentes pela própria ação visual do pond.
+             */
+            while (true) {
+                const button =
+                    root.querySelector(
+                        ".filepond--action-remove-item"
+                    );
+
+                if (!button) {
+                    break;
+                }
+
+                button.click();
+                removed++;
+
+                await sleep(50);
+            }
+        }
+
+        if (removed) {
+            await waitForCondition(
+                () =>
+                    !root.querySelector(
+                        "[data-filepond-item-state]"
+                    ),
+                `${rootId} clear`
+            );
+        }
+
+        return removed;
+    }
+
 
     async function setFilePondFile(
         iframe,
@@ -2063,7 +2344,8 @@
     async function submitMarketplaceOverview(
         plugin,
         catalog,
-        setupImage
+        setupIcon,
+        setupScreenshots
     ) {
         const overviewUrl =
             `/plugins/${plugin.id}/edit/overview`;
@@ -2160,9 +2442,9 @@
             );
 
             /*
-             * Description, icon e screenshot só são preenchidos no primeiro
-             * setup, quando o shortDescription ainda está vazio. Se já existe
-             * descrição no Marketplace, preservamos todo o conteúdo visual.
+             * Description, icon e screenshots só são preenchidos no primeiro
+             * setup. O campo Screenshots é limpo antes para remover qualquer
+             * ícone/imagem que tenha sido colocado nele pelo fluxo antigo.
              */
             if (shouldPopulateOverview) {
                 setFormValue(
@@ -2174,15 +2456,25 @@
                     iframe,
                     "plugin_edit_overview_form_icon",
                     "plugin_edit_overview_form[icon]",
-                    setupImage.file
+                    setupIcon.file
                 );
 
-                await setFilePondFile(
+                await clearFilePondFiles(
                     iframe,
-                    "plugin_edit_overview_form_screenshots",
-                    "plugin_edit_overview_form[screenshots][]",
-                    setupImage.file
+                    "plugin_edit_overview_form_screenshots"
                 );
+
+                for (
+                    const screenshot
+                    of setupScreenshots
+                ) {
+                    await setFilePondFile(
+                        iframe,
+                        "plugin_edit_overview_form_screenshots",
+                        "plugin_edit_overview_form[screenshots][]",
+                        screenshot.file
+                    );
+                }
             }
 
             const submit =
@@ -2250,10 +2542,17 @@
                 shortDescription,
                 populatedOverview:
                     shouldPopulateOverview,
-                imagePath:
+                iconPath:
                     shouldPopulateOverview
-                        ? setupImage.path
+                        ? setupIcon.path
                         : null,
+                screenshotPaths:
+                    shouldPopulateOverview
+                        ? setupScreenshots.map(
+                            (screenshot) =>
+                                screenshot.path
+                        )
+                        : [],
             };
         } finally {
             iframe.remove();
@@ -2524,37 +2823,40 @@
             );
 
         status.set(
-            "Preparando ícone e screenshot...",
-            catalog.iconUrl
+            "Preparando ícone e screenshots...",
+            `${catalog.iconUrl} · ${catalog.screenshots.length} arquivo(s)`
         );
 
-        /*
-         * A mesma imagem definida por iconUrl no plugins.json é enviada
-         * para os campos Icon e Screenshots da página Overview.
-         */
-        const setupImage =
+        const setupIcon =
             await getCatalogSetupImage(
+                plugin.component,
+                catalog
+            );
+
+        const setupScreenshots =
+            await getCatalogSetupScreenshots(
                 plugin.component,
                 catalog
             );
 
         status.set(
             "Preenchendo Overview...",
-            `${catalog.name || plugin.component} · ${catalog.description.slice(0, 80)} · ${catalog.iconUrl}`
+            `${catalog.name || plugin.component} · ${catalog.description.slice(0, 80)} · ${setupScreenshots.length} screenshot(s)`
         );
 
         const overviewResult =
             await submitMarketplaceOverview(
                 plugin,
                 catalog,
-                setupImage
+                setupIcon,
+                setupScreenshots
             );
 
         status.set(
             "Página 1 configurada",
             overviewResult.populatedOverview
-                ? `${overviewResult.name} · description do plugins.json · ${setupImage.converted ? "ícone convertido para PNG" : "arquivo original usado como ícone e screenshot"} · Save and next`
-                : `${overviewResult.name} · description existente preservada · ícone e screenshot não alterados · Save and next`,
+                ? `${overviewResult.name} · description do plugins.json · ícone no campo Icon · ${setupScreenshots.length} screenshot(s) reais enviados · Save and next`
+                : `${overviewResult.name} · description existente preservada · ícone e screenshots não alterados · Save and next`,
             "success"
         );
 
