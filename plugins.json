@@ -2208,14 +2208,14 @@
   },
   {
     "id": null,
-    "name": "Flexbook",
-    "component": "mod_flexbook",
-    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_flexbook",
-    "branch": "main",
+    "name": "BookFlow",
+    "component": "mod_bookflow",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_bookflow",
+    "branch": "master",
     "category": "administration",
-    "description": "Public repository reserved for the Flexbook activity; the repository is currently empty and does not publish plugin code yet.",
-    "moodle": "Not specified",
-    "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-secondary\">Activity module</span>\n<span class=\"badge text-bg-light border\">Administration</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">Flexbook</h2>\n<p class=\"lead text-body-secondary mb-0\">Public repository reserved for the Flexbook activity; the repository is currently empty and does not publish plugin code yet.</p>\n<div class=\"alert alert-warning mt-4 mb-0\" role=\"alert\">\n<strong>Repository placeholder.</strong> The public repository currently has no published plugin code, so compatibility and implementation details are not available yet.\n</div>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>mod_flexbook</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">Not specified</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-mod_flexbook\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
+    "description": "Interactive book activity with chapters, rich content blocks, reading progress, completion rules, bookmarks, notes, search, reports, import/export, and backup/restore support.",
+    "moodle": "4.4+",
+    "description_html": "<div class=\"container-fluid px-0\">\n<div class=\"row g-4 align-items-stretch\">\n<div class=\"col-12 col-lg-8\">\n<div class=\"card border-0 shadow-sm h-100\">\n<div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\">\n<span class=\"badge text-bg-secondary\">Activity module</span>\n<span class=\"badge text-bg-light border\">Administration</span>\n</div>\n<h2 class=\"h3 fw-bold mb-3\">BookFlow</h2>\n<p class=\"lead text-body-secondary mb-0\">Interactive book activity with chapters, rich content blocks, reading progress, completion rules, bookmarks, notes, search, reports, import/export, and backup/restore support.</p>\n<div class=\"alert alert-info mt-4 mb-0\" role=\"alert\">\n<strong>Interactive reading.</strong> BookFlow combines structured chapters with rich content blocks, reading-state tracking, weighted progress and Moodle activity completion.\n</div>\n</div>\n</div>\n</div>\n<div class=\"col-12 col-lg-4\">\n<div class=\"card border h-100\">\n<div class=\"card-body p-4\">\n<h3 class=\"h5 fw-semibold mb-3\">Plugin details</h3>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Component</div>\n<code>mod_bookflow</code>\n</div>\n<div class=\"mb-3\">\n<div class=\"small text-body-secondary\">Moodle</div>\n<span class=\"fw-semibold\">4.4+</span>\n</div>\n<div class=\"mb-4\">\n<div class=\"small text-body-secondary\">Source</div>\n<span class=\"fw-semibold\">Public GitHub repository</span>\n</div>\n<a class=\"btn btn-outline-primary w-100\" href=\"https://github.com/EduardoKrausME/moodle-mod_bookflow\" rel=\"noopener noreferrer\" target=\"_blank\">View source on GitHub</a>\n</div>\n</div>\n</div>\n</div>\n</div>",
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_flexbook/new-1.png"
