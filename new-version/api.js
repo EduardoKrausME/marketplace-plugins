@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-03.02-upload-submitted-review";
+        "2026-10-05.01-step2-github-url";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -236,7 +236,7 @@
             document.createElement("div");
 
         description.textContent =
-            "Os ZIPs já foram enviados. Abra cada link em uma nova aba para revisar e executar o step2 manualmente.";
+            "Os ZIPs já foram enviados. A URL do GitHub foi conferida no step2; abra cada link para revisar e concluir manualmente.";
 
         description.style.cssText =
             "font-size:14px;color:#6c757d";
@@ -323,9 +323,30 @@
                 "word-break:break-all",
             ].join(";");
 
+            const repositoryValidation =
+                document.createElement("div");
+
+            const validation =
+                item.repositoryValidation;
+
+            repositoryValidation.textContent =
+                validation?.message ||
+                "Validação da URL do GitHub indisponível.";
+
+            repositoryValidation.style.cssText = [
+                "margin-top:7px",
+                "font-size:12px",
+                "font-weight:600",
+                validation?.valid
+                    ? "color:#198754"
+                    : "color:#dc3545",
+                "word-break:break-word",
+            ].join(";");
+
             row.append(
                 link,
-                url
+                url,
+                repositoryValidation
             );
 
             list.appendChild(
@@ -878,6 +899,279 @@
             repository: match[2],
             fullName:
                 `${match[1]}/${match[2]}`,
+        };
+    }
+
+    function canonicalGitHubRepositoryUrl(value) {
+        let parsedUrl;
+
+        try {
+            parsedUrl =
+                new URL(
+                    String(value || "").trim()
+                );
+        } catch (_) {
+            return null;
+        }
+
+        if (
+            parsedUrl.protocol !== "https:" ||
+            parsedUrl.hostname.toLowerCase() !==
+            "github.com" ||
+            parsedUrl.search ||
+            parsedUrl.hash
+        ) {
+            return null;
+        }
+
+        const parts =
+            parsedUrl.pathname
+                .replace(/\/+$/, "")
+                .split("/")
+                .filter(Boolean);
+
+        if (parts.length !== 2) {
+            return null;
+        }
+
+        const owner =
+            parts[0];
+
+        const repository =
+            parts[1]
+                .replace(
+                    /\.git$/i,
+                    ""
+                );
+
+        if (
+            !/^[A-Za-z0-9_.-]+$/.test(owner) ||
+            !/^[A-Za-z0-9_.-]+$/.test(repository)
+        ) {
+            return null;
+        }
+
+        return {
+            owner,
+            repository,
+            fullName:
+                `${owner}/${repository}`,
+            url:
+                `https://github.com/${owner}/${repository}`,
+        };
+    }
+
+    function expectedStep2GitHubRepository(
+        repositoryInfo
+    ) {
+        const fullName =
+            String(
+                repositoryInfo?.repo ||
+                (
+                    repositoryInfo?.owner &&
+                    repositoryInfo?.repository
+                        ? `${repositoryInfo.owner}/${repositoryInfo.repository}`
+                        : ""
+                )
+            ).trim();
+
+        const match =
+            fullName.match(
+                /^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/
+            );
+
+        if (!match) {
+            throw new Error(
+                "Unable to determine expected GitHub repository for step2."
+            );
+        }
+
+        return {
+            owner:
+                match[1],
+            repository:
+                match[2],
+            fullName:
+                `${match[1]}/${match[2]}`,
+            url:
+                `https://github.com/${match[1]}/${match[2]}`,
+        };
+    }
+
+    function findStep2RepositoryInput(
+        documentObject
+    ) {
+        const form =
+            documentObject.querySelector(
+                "form[name='plugin_version_file_form']"
+            ) ||
+            documentObject.querySelector(
+                "form"
+            );
+
+        if (!form) {
+            return null;
+        }
+
+        const preferredSelectors = [
+            "#plugin_version_file_form_repositoryUrl",
+            "#plugin_version_file_form_sourceControlUrl",
+            "input[name='plugin_version_file_form[repositoryUrl]']",
+            "input[name='plugin_version_file_form[sourceControlUrl]']",
+            "input[name*='repository' i]",
+            "input[id*='repository' i]",
+            "input[name*='sourcecontrol' i]",
+            "input[id*='sourcecontrol' i]",
+        ];
+
+        for (
+            const selector
+            of preferredSelectors
+        ) {
+            const input =
+                form.querySelector(
+                    selector
+                );
+
+            if (input) {
+                return input;
+            }
+        }
+
+        for (
+            const input
+            of form.querySelectorAll(
+                "input[type='url'], input[type='text']"
+            )
+        ) {
+            const labels =
+                input.labels
+                    ? [
+                        ...input.labels,
+                    ]
+                        .map(
+                            (label) =>
+                                label.textContent
+                                    .trim()
+                        )
+                        .join(" ")
+                    : "";
+
+            const identity =
+                [
+                    input.id,
+                    input.name,
+                    labels,
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+
+            if (
+                /github|repository|source\s*control|source\s*code|vcs/.test(
+                    identity
+                ) ||
+                /github\.com/i.test(
+                    input.value || ""
+                )
+            ) {
+                return input;
+            }
+        }
+
+        return null;
+    }
+
+    function validateStep2GitHubRepository(
+        documentObject,
+        repositoryInfo
+    ) {
+        const expected =
+            expectedStep2GitHubRepository(
+                repositoryInfo
+            );
+
+        const input =
+            findStep2RepositoryInput(
+                documentObject
+            );
+
+        if (!input) {
+            return {
+                valid: false,
+                reason:
+                    "field_not_found",
+                actual: "",
+                expected:
+                    expected.url,
+                message:
+                    `Campo da URL do repositório não encontrado no step2. Esperado: ${expected.url}`,
+            };
+        }
+
+        const actualValue =
+            String(
+                input.value || ""
+            ).trim();
+
+        const actual =
+            canonicalGitHubRepositoryUrl(
+                actualValue
+            );
+
+        if (!actual) {
+            return {
+                valid: false,
+                reason:
+                    "invalid_url",
+                actual:
+                    actualValue,
+                expected:
+                    expected.url,
+                field:
+                    input.name ||
+                    input.id ||
+                    "",
+                message:
+                    `URL do GitHub inválida no step2: "${actualValue || "(vazia)"}". Esperado: ${expected.url}`,
+            };
+        }
+
+        if (
+            actual.fullName.toLowerCase() !==
+            expected.fullName.toLowerCase()
+        ) {
+            return {
+                valid: false,
+                reason:
+                    "wrong_repository",
+                actual:
+                    actual.url,
+                expected:
+                    expected.url,
+                field:
+                    input.name ||
+                    input.id ||
+                    "",
+                message:
+                    `URL do GitHub aponta para ${actual.fullName}, mas esta versão veio de ${expected.fullName}.`,
+            };
+        }
+
+        return {
+            valid: true,
+            reason:
+                "ok",
+            actual:
+                actual.url,
+            expected:
+                expected.url,
+            field:
+                input.name ||
+                input.id ||
+                "",
+            message:
+                `GitHub OK: ${expected.url}`,
         };
     }
 
@@ -3035,6 +3329,9 @@
                 location.origin
             );
 
+        let step2Document =
+            uploadDocument;
+
         if (
             step2Url.pathname !==
             expectedStep2Path
@@ -3064,12 +3361,38 @@
                     targetUrl,
                     location.origin
                 );
+
+            const step2 =
+                await marketplaceHtml(
+                    step2Url.toString()
+                );
+
+            step2Document =
+                step2.document;
+
+            step2Url =
+                new URL(
+                    step2.response.url,
+                    location.origin
+                );
         }
+
+        const repositoryValidation =
+            validateStep2GitHubRepository(
+                step2Document,
+                repositoryInfo
+            );
+
+        console.log(
+            "[Marketplace] Step2 GitHub:",
+            repositoryValidation
+        );
 
         return {
             url:
                 step2Url.toString(),
             manualStep2: true,
+            repositoryValidation,
         };
     }
 
@@ -3357,10 +3680,21 @@
                 repositoryInfo
             );
 
+        const repositoryValidation =
+            result.repositoryValidation;
+
         status.set(
-            "ZIP enviado · Step2 manual",
-            `${remoteRelease} (${remoteBuild}) · abra o link no popup`,
-            "warning"
+            repositoryValidation?.valid
+                ? "ZIP enviado · Step2 GitHub OK"
+                : "ZIP enviado · Step2: conferir GitHub",
+            `${remoteRelease} (${remoteBuild}) · ` +
+            (
+                repositoryValidation?.message ||
+                "validação da URL do GitHub indisponível"
+            ),
+            repositoryValidation?.valid
+                ? "success"
+                : "warning"
         );
 
         /*
@@ -3409,6 +3743,10 @@
                                 item.plugin.component,
                             url:
                                 result.result.url,
+                            repositoryValidation:
+                                result.result
+                                    .repositoryValidation ||
+                                null,
                         });
                     }
                 }
