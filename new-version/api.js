@@ -3316,9 +3316,9 @@
          * STEP 2 é manual.
          *
          * O POST do step1 normalmente termina na URL do step2 com cacheKey.
-         * Não fazemos uma nova requisição ao step2 e, principalmente, não
-         * submetemos esse formulário automaticamente. A URL é devolvida para
-         * ser exibida no popup ao final do processamento.
+         * Quando o HTML final já é o step2, validamos esse próprio documento;
+         * se ele só trouxer o destino, fazemos apenas o GET necessário para
+         * conferir a URL do GitHub. O formulário continua sempre manual.
          */
         const expectedStep2Path =
             `/plugins/${pluginId}/versions/add/step2`;
