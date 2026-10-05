@@ -1381,6 +1381,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_kopere_proctoring/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_kopere_proctoring/new-2.png"
       }
     ]
   },
@@ -1397,6 +1400,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoprogress/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoprogress/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoprogress/icon.png"
@@ -1414,6 +1420,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_kopere_recert/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_kopere_recert/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_kopere_recert/icon.png"
@@ -1430,6 +1439,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/h5plib_vh5prime/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/h5plib_vh5prime/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/h5plib_vh5prime/icon.png"
@@ -1447,6 +1459,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_missingstudents/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_missingstudents/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_missingstudents/icon.png"
@@ -1464,6 +1479,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_privatenotes/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_privatenotes/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_privatenotes/icon.png"
@@ -1481,6 +1499,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videobranch/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videobranch/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videobranch/icon.png"
@@ -1498,6 +1519,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_geniai/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_geniai/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_geniai/icon.png"
@@ -1515,6 +1539,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_phrasewall/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_phrasewall/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_phrasewall/icon.png"
@@ -1532,6 +1559,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_ajaxchat/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_ajaxchat/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_ajaxchat/icon.png"
@@ -1549,6 +1579,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_checkin/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_checkin/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_checkin/icon.png"
@@ -1566,6 +1599,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_linkcollection/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_linkcollection/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_linkcollection/icon.png"
@@ -1583,6 +1619,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videocompare/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videocompare/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videocompare/icon.png"
@@ -1600,6 +1639,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_exiticket/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_exiticket/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_exiticket/icon.png"
@@ -1617,6 +1659,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_kopere_trail/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_kopere_trail/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_kopere_trail/icon.png"
@@ -1634,6 +1679,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoannotation/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoannotation/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoannotation/icon.png"
@@ -1651,6 +1699,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videodebate/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videodebate/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videodebate/icon.png"
@@ -1668,6 +1719,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoanswer/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoanswer/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoanswer/icon.png"
@@ -1685,6 +1739,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_confidence/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_confidence/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_confidence/icon.png"
@@ -1702,6 +1759,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_beforeafter/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_beforeafter/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_beforeafter/icon.png"
@@ -1719,6 +1779,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_audioanswer/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_audioanswer/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_audioanswer/icon.png"
@@ -1736,6 +1799,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videobook/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videobook/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videobook/icon.png"
@@ -1753,6 +1819,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videocheck/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videocheck/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videocheck/icon.png"
@@ -1770,6 +1839,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videopractice/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videopractice/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videopractice/icon.png"
@@ -1787,6 +1859,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_statistics/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_statistics/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_statistics/icon.png"
@@ -1804,6 +1879,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_ruleofthree/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_ruleofthree/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_ruleofthree/icon.png"
@@ -1821,6 +1899,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_massmailenrol/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_massmailenrol/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_massmailenrol/icon.png"
@@ -1838,6 +1919,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_rank/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_rank/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_rank/icon.png"
@@ -1855,6 +1939,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoevidence/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoevidence/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoevidence/icon.png"
@@ -1872,6 +1959,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videosequence/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videosequence/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videosequence/icon.png"
@@ -1889,6 +1979,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_qrcodecheck/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_qrcodecheck/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_qrcodecheck/icon.png"
@@ -1906,6 +1999,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_pair/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_pair/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_pair/icon.png"
@@ -1923,6 +2019,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_simplejournal/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_simplejournal/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_simplejournal/icon.png"
@@ -1940,6 +2039,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videodiscussion/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videodiscussion/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videodiscussion/icon.png"
@@ -1957,6 +2059,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_signup/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_signup/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_signup/icon.png"
@@ -1974,6 +2079,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_requesthelp/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_requesthelp/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_requesthelp/icon.png"
@@ -1991,6 +2099,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_forumreactions/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_forumreactions/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_forumreactions/icon.png"
@@ -2008,6 +2119,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_triangle/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_triangle/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_triangle/icon.png"
@@ -2025,6 +2139,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videosummary/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videosummary/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videosummary/icon.png"
@@ -2042,6 +2159,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videomission/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videomission/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videomission/icon.png"
@@ -2059,6 +2179,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videointerview/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videointerview/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videointerview/icon.png"
@@ -2076,6 +2199,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoquiz/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoquiz/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoquiz/icon.png"
@@ -2093,6 +2219,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_flexbook/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_flexbook/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_flexbook/icon.png"
@@ -2110,6 +2239,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_agreement/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_agreement/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_agreement/icon.png"
@@ -2127,6 +2259,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videopredict/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videopredict/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videopredict/icon.png"
@@ -2144,6 +2279,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_handraise/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_handraise/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_handraise/icon.png"
@@ -2161,6 +2299,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_trigonometry/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_trigonometry/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_trigonometry/icon.png"
@@ -2178,6 +2319,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_fraction/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_fraction/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_fraction/icon.png"
@@ -2195,6 +2339,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoreflection/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoreflection/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoreflection/icon.png"
@@ -2212,6 +2359,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_lessonvideo/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_lessonvideo/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_lessonvideo/icon.png"
@@ -2229,6 +2379,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videomarker/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videomarker/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videomarker/icon.png"
@@ -2246,6 +2399,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_probability/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_probability/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_probability/icon.png"
@@ -2263,6 +2419,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_subcourse/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_subcourse/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_subcourse/icon.png"
@@ -2280,6 +2439,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_trafficlight/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_trafficlight/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_trafficlight/icon.png"
@@ -2297,6 +2459,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_rewards/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_rewards/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_rewards/icon.png"
@@ -2314,6 +2479,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoreview/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoreview/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoreview/icon.png"
@@ -2331,6 +2499,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_decision/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_decision/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_decision/icon.png"
@@ -2348,6 +2519,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_classpulse/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_classpulse/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_classpulse/icon.png"
@@ -2365,6 +2539,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_ohmslaw/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_ohmslaw/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_ohmslaw/icon.png"
@@ -2382,6 +2559,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videodiagnostic/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videodiagnostic/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videodiagnostic/icon.png"
@@ -2399,6 +2579,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoplaylist/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoplaylist/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoplaylist/icon.png"
@@ -2416,6 +2599,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_moodtracker/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_moodtracker/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_moodtracker/icon.png"
@@ -2433,6 +2619,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_minute/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_minute/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_minute/icon.png"
@@ -2450,6 +2639,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_matrixcalc/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_matrixcalc/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_matrixcalc/icon.png"
@@ -2467,6 +2659,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_percentage/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_percentage/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_percentage/icon.png"
@@ -2484,6 +2679,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videonotes/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videonotes/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videonotes/icon.png"
@@ -2501,6 +2699,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_chat/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_chat/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_chat/icon.png"
@@ -2518,6 +2719,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoobserve/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoobserve/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoobserve/icon.png"
@@ -2535,6 +2739,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_topicchoice/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_topicchoice/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_topicchoice/icon.png"
@@ -2552,6 +2759,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_finance/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_finance/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_finance/icon.png"
@@ -2569,6 +2779,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_videoerrorhunt/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoerrorhunt/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_videoerrorhunt/icon.png"
@@ -2586,6 +2799,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_status/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_status/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_status/icon.png"
@@ -2603,6 +2819,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_completionboard/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_completionboard/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_completionboard/icon.png"
@@ -2620,6 +2839,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_rubricassistant/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_rubricassistant/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_rubricassistant/icon.png"
@@ -2637,6 +2859,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_courseaudit/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_courseaudit/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_courseaudit/icon.png"
@@ -2654,6 +2879,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_geniaicourse/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_geniaicourse/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_geniaicourse/icon.png"
@@ -2671,6 +2899,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_plainlanguage/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_plainlanguage/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_plainlanguage/icon.png"
@@ -2688,6 +2919,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_roleexplainer/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_roleexplainer/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_roleexplainer/icon.png"
@@ -2705,6 +2939,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_coursestartnotify/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_coursestartnotify/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_coursestartnotify/icon.png"
@@ -2722,6 +2959,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/qbank_questionaudit/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/qbank_questionaudit/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/qbank_questionaudit/icon.png"
@@ -2739,6 +2979,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_gradebookdoctor/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_gradebookdoctor/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_gradebookdoctor/icon.png"
@@ -2756,6 +2999,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_ai_bridge/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_ai_bridge/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_ai_bridge/icon.png"
@@ -2773,6 +3019,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_personalxp/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_personalxp/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_personalxp/icon.png"
@@ -2790,6 +3039,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/qbank_duplicate/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/qbank_duplicate/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/qbank_duplicate/icon.png"
@@ -2807,6 +3059,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_feedbackinsights/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_feedbackinsights/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_feedbackinsights/icon.png"
@@ -2824,6 +3079,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_accessibilityai/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_accessibilityai/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_accessibilityai/icon.png"
@@ -2841,6 +3099,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_oralassessment/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_oralassessment/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_oralassessment/icon.png"
@@ -2858,6 +3119,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_outcomemapper/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_outcomemapper/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_outcomemapper/icon.png"
@@ -2875,6 +3139,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_coursetranslate/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_coursetranslate/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_coursetranslate/icon.png"
@@ -2892,6 +3159,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/tool_moodledoctor/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/tool_moodledoctor/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/tool_moodledoctor/icon.png"
@@ -2909,6 +3179,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/qbank_distractorcheck/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/qbank_distractorcheck/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/qbank_distractorcheck/icon.png"
@@ -2926,6 +3199,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_contentfreshness/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_contentfreshness/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_contentfreshness/icon.png"
@@ -2943,6 +3219,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_socratic/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_socratic/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_socratic/icon.png"
@@ -2960,6 +3239,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/report_forumtriage/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/report_forumtriage/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/report_forumtriage/icon.png"
@@ -2977,6 +3259,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_logexplainer/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_logexplainer/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_logexplainer/icon.png"
@@ -2994,6 +3279,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_pluginvalidator/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_pluginvalidator/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_pluginvalidator/icon.png"
@@ -3011,6 +3299,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_caseai/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_caseai/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_caseai/icon.png"
@@ -3028,6 +3319,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/block_personalprogress/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/block_personalprogress/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/block_personalprogress/icon.png"
@@ -3045,6 +3339,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/block_personalstreak/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/block_personalstreak/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/block_personalstreak/icon.png"
@@ -3062,6 +3359,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_personalgoals/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_personalgoals/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_personalgoals/icon.png"
@@ -3079,6 +3379,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_rewardshop/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_rewardshop/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_rewardshop/icon.png"
@@ -3096,6 +3399,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_xpcelebration/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_xpcelebration/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_xpcelebration/icon.png"
@@ -3113,6 +3419,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/local_xpquests/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_xpquests/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_xpquests/icon.png"
@@ -3130,6 +3439,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/theme_oabflix/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_oabflix/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/theme_oabflix/icon.png"
@@ -3147,6 +3459,9 @@
     "screenshots": [
       {
         "url": "/marketplace-plugins/screenshots/mod_roleplay/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_roleplay/new-2.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_roleplay/icon.png"
