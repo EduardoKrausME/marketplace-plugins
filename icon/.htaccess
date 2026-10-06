@@ -1,0 +1,12 @@
+Options -Indexes
+
+RewriteEngine On
+
+# Cache files are already generated thumbnails and can be served directly.
+RewriteRule ^_cache(?:/|$) - [L]
+
+# Prevent the internal rewrite from looping.
+RewriteRule ^\.index\.php$ - [L]
+
+# Every icon request is handled by the thumbnail endpoint.
+RewriteRule ^(.+)$ .index.php?file=$1 [QSA,L]
