@@ -3494,8 +3494,8 @@
         ].join("\n");
 
         return (
-            notice +
-            "\n" +
+          //  notice +
+          //  "\n" +
             String(
                 descriptionHtml ||
                 ""
