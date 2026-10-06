@@ -12,7 +12,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-06.02-live-step2-popup";
+        "2026-10-06.03-submitted-review-step3";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -4241,6 +4241,545 @@
     }
 
 
+    async function submitMarketplaceReviewDetails(
+        plugin,
+        catalog,
+        setupScreenshots
+    ) {
+        const reviewUrl =
+            `/plugins/submit/step3/${plugin.id}`;
+
+        const iframe =
+            await createSetupIframe(
+                reviewUrl
+            );
+
+        try {
+            /*
+             * Submitted for review usa uma página própria. Nela o Marketplace
+             * permite atualizar Description e Screenshots, enquanto o nome
+             * continua presente apenas como campo obrigatório do formulário.
+             * Não tentamos alterar Overview, ícone ou Support neste estado.
+             */
+            const context =
+                await waitForCondition(
+                    () => {
+                        const currentWindow =
+                            iframe.contentWindow;
+
+                        const currentDocument =
+                            iframe.contentDocument;
+
+                        if (
+                            !currentWindow ||
+                            !currentDocument ||
+                            !currentDocument.documentElement ||
+                            currentDocument.readyState ===
+                                "loading"
+                        ) {
+                            return false;
+                        }
+
+                        let pathname = "";
+
+                        try {
+                            pathname =
+                                currentWindow.location.pathname;
+                        } catch (_) {
+                            return false;
+                        }
+
+                        if (
+                            pathname !== reviewUrl &&
+                            !pathname.endsWith(
+                                `/plugins/submit/step3/${plugin.id}`
+                            )
+                        ) {
+                            return false;
+                        }
+
+                        const form =
+                            currentDocument.querySelector(
+                                "#plugin_step3_form"
+                            ) ||
+                            currentDocument.querySelector(
+                                "form[name='plugin_update_form']"
+                            );
+
+                        if (!form) {
+                            return false;
+                        }
+
+                        return {
+                            frameDocument:
+                                currentDocument,
+                            frameWindow:
+                                currentWindow,
+                            form,
+                        };
+                    },
+                    "submitted review step3 form"
+                );
+
+            const {
+                frameDocument,
+                form,
+            } = context;
+
+            const nameInput =
+                form.querySelector(
+                    "#plugin_update_form_name"
+                );
+
+            const descriptionInput =
+                form.querySelector(
+                    "#plugin_update_form_description"
+                );
+
+            const screenshotsInput =
+                form.querySelector(
+                    "#plugin_update_form_screenshots"
+                );
+
+            const tokenInput =
+                form.querySelector(
+                    "input[name='plugin_update_form[_token]']"
+                );
+
+            if (
+                !nameInput ||
+                !descriptionInput ||
+                !screenshotsInput ||
+                !tokenInput?.value
+            ) {
+                throw new Error(
+                    "Submitted review step3 name/description/screenshots/token fields were not found."
+                );
+            }
+
+            const preservedName =
+                String(
+                    nameInput.value ||
+                    plugin.component
+                ).trim();
+
+            if (!preservedName) {
+                throw new Error(
+                    "Submitted review step3 plugin name is empty."
+                );
+            }
+
+            const html =
+                buildMarketplaceDescriptionHtml(
+                    plugin.component,
+                    catalog.description_html
+                );
+
+            const maxLength =
+                Number(
+                    descriptionInput.getAttribute(
+                        "maxlength"
+                    )
+                );
+
+            /*
+             * Atualiza somente Description. O nome existente é preservado e
+             * seguirá no FormData porque é required no formulário do step3.
+             */
+            setFormValue(
+                descriptionInput,
+                html
+            );
+
+            const existingScreenshotFiles =
+                getFilePondExistingFiles(
+                    screenshotsInput
+                );
+
+            const catalogScreenshotNames =
+                new Set(
+                    setupScreenshots
+                        .map(
+                            (screenshot) =>
+                                normalizeAssetFilename(
+                                    screenshot.filename ||
+                                    screenshot.file?.name
+                                )
+                        )
+                        .filter(Boolean)
+                );
+
+            const existingScreenshotNames =
+                new Set(
+                    existingScreenshotFiles
+                        .map(
+                            (item) =>
+                                normalizeAssetFilename(
+                                    item?.originalName ||
+                                    item?.filename
+                                )
+                        )
+                        .filter(Boolean)
+                );
+
+            const obsoleteScreenshotFiles =
+                existingScreenshotFiles.filter(
+                    (item) => {
+                        const filename =
+                            normalizeAssetFilename(
+                                item?.originalName ||
+                                item?.filename
+                            );
+
+                        return (
+                            !filename ||
+                            !catalogScreenshotNames.has(
+                                filename
+                            )
+                        );
+                    }
+                );
+
+            const obsoleteScreenshotNames =
+                obsoleteScreenshotFiles
+                    .map(
+                        (item) =>
+                            String(
+                                item?.originalName ||
+                                item?.filename ||
+                                ""
+                            ).trim()
+                    )
+                    .filter(Boolean);
+
+            let screenshotsReset =
+                false;
+
+            if (
+                obsoleteScreenshotFiles.length
+            ) {
+                const hasUnnamedObsolete =
+                    obsoleteScreenshotFiles.some(
+                        (item) =>
+                            !normalizeAssetFilename(
+                                item?.originalName ||
+                                item?.filename
+                            )
+                    );
+
+                if (hasUnnamedObsolete) {
+                    await clearFilePondFiles(
+                        iframe,
+                        "plugin_update_form_screenshots"
+                    );
+
+                    screenshotsReset =
+                        true;
+                } else {
+                    const removal =
+                        await removeFilePondFilesByNames(
+                            iframe,
+                            "plugin_update_form_screenshots",
+                            obsoleteScreenshotNames
+                        );
+
+                    screenshotsReset =
+                        removal.clearedAll;
+                }
+            }
+
+            const keptScreenshotNames =
+                screenshotsReset
+                    ? new Set()
+                    : new Set(
+                        [
+                            ...existingScreenshotNames,
+                        ].filter(
+                            (filename) =>
+                                catalogScreenshotNames.has(
+                                    filename
+                                )
+                        )
+                    );
+
+            const keptScreenshotCount =
+                screenshotsReset
+                    ? 0
+                    : existingScreenshotFiles.filter(
+                        (item) => {
+                            const filename =
+                                normalizeAssetFilename(
+                                    item?.originalName ||
+                                    item?.filename
+                                );
+
+                            return (
+                                filename &&
+                                catalogScreenshotNames.has(
+                                    filename
+                                )
+                            );
+                        }
+                    ).length;
+
+            const missingScreenshots =
+                setupScreenshots.filter(
+                    (screenshot) =>
+                        !keptScreenshotNames.has(
+                            normalizeAssetFilename(
+                                screenshot.filename ||
+                                screenshot.file?.name
+                            )
+                        )
+                );
+
+            const configuredMaxFiles =
+                Number(
+                    screenshotsInput.getAttribute(
+                        "data-filepond-max-files-value"
+                    )
+                );
+
+            const maxFiles =
+                Number.isFinite(
+                    configuredMaxFiles
+                ) &&
+                configuredMaxFiles > 0
+                    ? configuredMaxFiles
+                    : 10;
+
+            const availableSlots =
+                Math.max(
+                    0,
+                    maxFiles -
+                    keptScreenshotCount
+                );
+
+            const screenshotsToUpload =
+                missingScreenshots.slice(
+                    0,
+                    availableSlots
+                );
+
+            const skippedScreenshots =
+                missingScreenshots.slice(
+                    availableSlots
+                );
+
+            for (
+                const screenshot
+                of screenshotsToUpload
+            ) {
+                await setFilePondFile(
+                    iframe,
+                    "plugin_update_form_screenshots",
+                    "plugin_update_form[screenshots][]",
+                    screenshot.file
+                );
+            }
+
+            /*
+             * new FormData(form) imita o submit real da página e, diferente
+             * de formToFormData(), também preserva File inputs caso esta
+             * instalação do FilePond esteja usando storeAsFile/fallback
+             * nativo em vez de server.process.
+             */
+            const formData =
+                new FormData(
+                    form
+                );
+
+            /*
+             * Garante explicitamente o valor atualizado da Description caso
+             * algum controller do editor tenha mantido estado próprio.
+             */
+            formData.set(
+                "plugin_update_form[description]",
+                html
+            );
+
+            formData.set(
+                "plugin_update_form[name]",
+                preservedName
+            );
+
+            const action =
+                form.getAttribute(
+                    "action"
+                );
+
+            const postUrl =
+                action
+                    ? new URL(
+                        action,
+                        location.origin
+                    ).toString()
+                    : new URL(
+                        reviewUrl,
+                        location.origin
+                    ).toString();
+
+            const response =
+                await marketplaceFetch(
+                    postUrl,
+                    {
+                        method: "POST",
+                        body: formData,
+                    }
+                );
+
+            const responseHtml =
+                await response.text();
+
+            const resultDocument =
+                new DOMParser()
+                    .parseFromString(
+                        responseHtml,
+                        "text/html"
+                    );
+
+            const errors = [
+                ...resultDocument.querySelectorAll(
+                    [
+                        ".alert-danger",
+                        ".alert-error",
+                        ".form-error-message",
+                        ".invalid-feedback",
+                        "[aria-invalid='true'] + .invalid-feedback",
+                    ].join(",")
+                ),
+            ]
+                .map(
+                    (element) =>
+                        element.textContent.trim()
+                )
+                .filter(Boolean);
+
+            if (errors.length) {
+                throw new Error(
+                    "Submitted review step3: " +
+                    errors.join(" | ")
+                );
+            }
+
+            const resultTextarea =
+                resultDocument.querySelector(
+                    "#plugin_update_form_description"
+                );
+
+            if (
+                resultTextarea &&
+                !isDescriptionSemanticallyPersisted(
+                    html,
+                    resultTextarea.value ||
+                        ""
+                )
+            ) {
+                throw new Error(
+                    "Submitted review step3 Description was not persisted with the expected content."
+                );
+            }
+
+            return {
+                url:
+                    response.url,
+                htmlLength:
+                    html.length,
+                configuredMaxLength:
+                    Number.isFinite(
+                        maxLength
+                    )
+                        ? maxLength
+                        : null,
+                exceedsDeclaredMaxLength:
+                    Number.isFinite(
+                        maxLength
+                    ) &&
+                    maxLength > 0 &&
+                    html.length > maxLength,
+                existingScreenshotNames:
+                    [
+                        ...existingScreenshotNames,
+                    ],
+                deletedScreenshotNames:
+                    obsoleteScreenshotNames,
+                screenshotsReset,
+                uploadedScreenshotNames:
+                    screenshotsToUpload.map(
+                        (screenshot) =>
+                            screenshot.filename
+                    ),
+                skippedScreenshotNames:
+                    skippedScreenshots.map(
+                        (screenshot) =>
+                            screenshot.filename
+                    ),
+            };
+        } finally {
+            iframe.remove();
+        }
+    }
+
+
+    async function syncMarketplaceReviewDetails(
+        plugin,
+        status,
+        catalog
+    ) {
+        status.set(
+            "Preparando Description e Screenshots da revisão...",
+            plugin.component
+        );
+
+        const setupScreenshots =
+            await getCatalogSetupScreenshots(
+                plugin.component,
+                catalog
+            );
+
+        status.set(
+            "Sincronizando Submitted for review...",
+            `${setupScreenshots.length} screenshot(s) · Description HTML`
+        );
+
+        const result =
+            await submitMarketplaceReviewDetails(
+                plugin,
+                catalog,
+                setupScreenshots
+            );
+
+        status.set(
+            "Submitted for review sincronizado",
+            [
+                `Description HTML · ${result.htmlLength} caracteres`,
+                result.deletedScreenshotNames.length
+                    ? `${result.deletedScreenshotNames.length} screenshot(s) removida(s): ${result.deletedScreenshotNames.join(", ")}`
+                    : null,
+                result.uploadedScreenshotNames.length
+                    ? `${result.uploadedScreenshotNames.length} screenshot(s) adicionada(s): ${result.uploadedScreenshotNames.join(", ")}`
+                    : "screenshots já sincronizadas",
+                result.skippedScreenshotNames.length
+                    ? `limite do Marketplace impediu: ${result.skippedScreenshotNames.join(", ")}`
+                    : null,
+                result.exceedsDeclaredMaxLength
+                    ? `campo declara limite de ${result.configuredMaxLength}`
+                    : null,
+            ]
+                .filter(Boolean)
+                .join(" · "),
+            (
+                result.skippedScreenshotNames.length ||
+                result.exceedsDeclaredMaxLength
+            )
+                ? "warning"
+                : "success"
+        );
+
+        return result;
+    }
+
+
     async function syncMarketplaceOverviewAssets(
         plugin,
         status,
@@ -4635,27 +5174,37 @@
         }
 
         /*
-         * Published e Changes needed também precisam passar pelo Overview.
-         * Antes isso acontecia somente em needsSetup, deixando ícone e
-         * screenshots antigos nos plugins já publicados.
+         * O estado Submitted for review possui uma tela própria:
+         * /plugins/submit/step3/[id].
          *
-         * Submitted for review fica de fora porque o Marketplace pode bloquear
-         * edição do Overview enquanto a submissão está em revisão.
+         * Nessa tela sincronizamos somente Description e Screenshots.
+         * Published/Hidden/Changes needed continuam usando as páginas de
+         * edição normais de Overview e Description.
          */
         let overviewSync = null;
         let descriptionResult = null;
+        let reviewDetailsResult = null;
 
-        if (!plugin.submittedForReview) {
-            status.set(
-                "Lendo plugins.json para Overview e Description...",
+        status.set(
+            plugin.submittedForReview
+                ? "Lendo plugins.json para Step3..."
+                : "Lendo plugins.json para Overview e Description...",
+            plugin.component
+        );
+
+        const catalog =
+            await apiCatalog(
                 plugin.component
             );
 
-            const catalog =
-                await apiCatalog(
-                    plugin.component
+        if (plugin.submittedForReview) {
+            reviewDetailsResult =
+                await syncMarketplaceReviewDetails(
+                    plugin,
+                    status,
+                    catalog
                 );
-
+        } else {
             overviewSync =
                 await syncMarketplaceOverviewAssets(
                     plugin,
@@ -4716,11 +5265,6 @@
             plugin.needsChanges ||
             plugin.submittedForReview
         ) {
-            const catalog =
-                await apiCatalog(
-                    plugin.component
-                );
-
             repositoryUrl =
                 catalog.repository_url;
         } else {
@@ -4855,6 +5399,8 @@
                     null,
                 description:
                     descriptionResult,
+                reviewDetails:
+                    reviewDetailsResult,
             };
         }
 
@@ -4870,10 +5416,9 @@
         );
 
         /*
-         * Mesmo quando a versão atual está "Submitted for review", tenta
-         * enviar a versão mais nova pelo fluxo normal. Se o Marketplace
-         * bloquear o upload nesse estado, uploadMarketplaceVersion() gera
-         * um erro explícito em vez de simplesmente ignorar a nova versão.
+         * Submitted for review também aceita nova versão. O próprio step3
+         * aponta para /plugins/[id]/versions/add/step1; portanto o upload
+         * continua pelo mesmo fluxo step1 -> step2 usado nos demais estados.
          */
         if (!CONFIG.autoUpload) {
             return {
