@@ -1510,7 +1510,7 @@ function streamZip(
 function getCacheDirectory(): string {
     $directory =
         __DIR__ .
-        "/cache";
+        "/_cache";
 
     if (!is_dir($directory)) {
         if (
