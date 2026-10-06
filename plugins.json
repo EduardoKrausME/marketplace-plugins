@@ -3447,5 +3447,285 @@
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/local_video_bridge/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Forum",
+    "component": "mod_videoforum",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoforum",
+    "branch": "master",
+    "category": "video",
+    "description": "Create asynchronous video discussions where teachers and learners publish short videos and reply with video in a Reels-style experience.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Forum</h2><p class=\"lead text-body-secondary\">Run asynchronous discussions through short video posts and video replies instead of adapting the traditional text forum.</p><p>Learners can record directly in the browser or upload supported video files, while teachers control topic creation, replies, deadlines, groups and participation requirements.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoforum/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoforum/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videoforum/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Reactions",
+    "component": "mod_videoreactions",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoreactions",
+    "branch": "master",
+    "category": "video",
+    "description": "Let learners attach reactions to exact moments in a video timeline and explore individual or class-level reaction patterns.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Reactions</h2><p class=\"lead text-body-secondary\">Attach lightweight learner reactions to exact timestamps in a video.</p><p>Reactions can be grouped around nearby moments, viewed individually or across the class and displayed during playback without turning the activity into a quiz.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoreactions/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videoreactions/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videoreactions/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Rubric",
+    "component": "mod_videorubric",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videorubric",
+    "branch": "master",
+    "category": "video",
+    "description": "Collect learner video submissions and grade them with a rubric permanently visible beside the player, including timestamped and audio feedback.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Rubric</h2><p class=\"lead text-body-secondary\">Evaluate learner video submissions without leaving the playback screen.</p><p>The grading workspace keeps the player and timeline on one side and the rubric, scores and feedback on the other, with AJAX saving and support for timestamped and audio feedback.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videorubric/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videorubric/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videorubric/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Screen Recorder",
+    "component": "tiny_screenrecorder",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-tiny_screenrecorder",
+    "branch": "master",
+    "category": "integrations",
+    "description": "Add browser-based screen recording to Moodle TinyMCE with configurable duration, webcam and microphone permissions and Moodle File API storage.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Screen Recorder</h2><p class=\"lead text-body-secondary\">Record the screen directly from TinyMCE and insert the resulting video into Moodle content.</p><p>Administrators can control recording duration and whether webcam or microphone capture is allowed, while uploaded recordings use Moodle capabilities, context checks and the File API.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/tiny_screenrecorder/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/tiny_screenrecorder/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/tiny_screenrecorder/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Tracker Pro",
+    "component": "mod_videotrackerpro",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerpro",
+    "branch": "master",
+    "category": "video",
+    "description": "Inspect detailed video playback analytics per learner and session, including watched segments, pauses, seeks, rates, abandonment and completion.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Tracker Pro</h2><p class=\"lead text-body-secondary\">Understand exactly how each learner consumed a video across one or more playback sessions.</p><p>Reports expose effective watch time, viewed and repeated segments, pauses, seeks, playback speed, abandonment points, session duration and whether the learner reached the end.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerpro/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerpro/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videotrackerpro/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Tracker Ultra",
+    "component": "mod_videotrackerultra",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerultra",
+    "branch": "master",
+    "category": "video",
+    "description": "Validate video consumption against configurable rules such as minimum coverage, real watch time, playback speed, seeks and required segments.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Tracker Ultra</h2><p class=\"lead text-body-secondary\">Decide whether a learner's video consumption satisfies explicit validity rules instead of relying on a single progress percentage.</p><p>Teachers can require minimum watched coverage and real playback time, constrain seeks and playback speed and require specific timeline segments, including the beginning or end of the video.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerultra/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerultra/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videotrackerultra/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Tracker Max",
+    "component": "mod_videotrackermax",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackermax",
+    "branch": "master",
+    "category": "video",
+    "description": "Analyze collective video consumption through class heatmaps, retention curves and group comparisons built from shared Video Bridge telemetry.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Tracker Max</h2><p class=\"lead text-body-secondary\">See how the class is consuming a video rather than inspecting only isolated learner sessions.</p><p>Collective analytics include timeline heatmaps, reach percentages, retention patterns and comparisons between groups or cohorts using normalized Video Bridge telemetry.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackermax/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackermax/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videotrackermax/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Tracker Prime",
+    "component": "mod_videotrackerprime",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerprime",
+    "branch": "master",
+    "category": "video",
+    "description": "Place lightweight pedagogical checkpoints on a video timeline using messages, confirmations, short reflections and simple scale interactions.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Tracker Prime</h2><p class=\"lead text-body-secondary\">Turn selected timeline moments into lightweight pedagogical checkpoints without building a full video quiz.</p><p>Checkpoints can present information, request confirmation, collect a short reflection or ask for a simple scale response while playback position and control remain handled by Video Bridge.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerprime/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerprime/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videotrackerprime/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Tracker Ultimate",
+    "component": "mod_videotrackerultimate",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerultimate",
+    "branch": "master",
+    "category": "video",
+    "description": "Combine advanced video evidence into a configurable and explainable engagement score with weighted indicators and transparent scoring reasons.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Tracker Ultimate</h2><p class=\"lead text-body-secondary\">Build an explainable engagement score from real playback evidence instead of hiding learner behavior behind a magic number.</p><p>Teachers choose indicators and weights for coverage, effective time, required segments, completion, replay, seeks, playback speed and other normalized facts supplied by Video Bridge.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerultimate/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerultimate/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videotrackerultimate/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Super Video Tracker",
+    "component": "mod_supervideotracker",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_supervideotracker",
+    "branch": "master",
+    "category": "video",
+    "description": "Track a package of multiple videos inside one Moodle activity, including item-level progress and an overall consumption or compliance percentage.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Super Video Tracker</h2><p class=\"lead text-body-secondary\">Track several videos as one learning or compliance package rather than treating them as an ordinary playlist.</p><p>Each item can use a different Video Bridge provider while the activity reports individual video progress and the learner's overall package completion.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_supervideotracker/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_supervideotracker/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_supervideotracker/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Video Tracker Premium",
+    "component": "mod_videotrackerpremium",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerpremium",
+    "branch": "master",
+    "category": "video",
+    "description": "Manage operational video compliance with start dates, deadlines, grace periods, reminders, overdue learners and completion follow-up.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Video Tracker Premium</h2><p class=\"lead text-body-secondary\">Answer who must watch, who already watched and who needs to be reminded.</p><p>The activity combines Video Bridge progress with deadlines, grace periods, configurable reminders, overdue follow-up and operational compliance reporting.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerpremium/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_videotrackerpremium/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_videotrackerpremium/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Authorship",
+    "component": "proctoringpolicy_authorship",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-proctoringpolicy_authorship",
+    "branch": "master",
+    "category": "integrations",
+    "description": "Record evidence about how textual answers were produced during proctored attempts, including typing, paste, deletion and editing behavior.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Authorship</h2><p class=\"lead text-body-secondary\">Capture factual evidence about how textual answers were produced during a proctored attempt.</p><p>The policy records active writing time, typed, pasted and removed characters and significant insertion or deletion events without claiming to detect whether an answer was written by AI.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/proctoringpolicy_authorship/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/proctoringpolicy_authorship/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/proctoringpolicy_authorship/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Mastery Practice",
+    "component": "mod_masterypractice",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_masterypractice",
+    "branch": "master",
+    "category": "integrations",
+    "description": "Create adaptive practice sessions from Moodle Question Bank content, prioritizing weak or fading knowledge through mastery and spaced repetition.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Mastery Practice</h2><p class=\"lead text-body-secondary\">Use Moodle Question Bank content for adaptive practice focused on what each learner currently knows and what is beginning to fade.</p><p>The activity reuses Moodle questions, categories, tags and the Question Engine while prioritizing weaker topics and spaced review instead of randomly drawing every topic equally.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_masterypractice/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_masterypractice/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_masterypractice/icon.png"
+  },
+  {
+    "id": null,
+    "name": "Moodle MCP",
+    "component": "local_mcp",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-local_mcp",
+    "branch": "master",
+    "category": "integrations",
+    "description": "Expose Moodle through a secure and extensible Model Context Protocol server with OAuth 2.1, PKCE, manual tokens and separated read/write APIs.",
+    "moodle": "4.5+",
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Moodle MCP</h2><p class=\"lead text-body-secondary\">Turn Moodle into a secure Model Context Protocol server for MCP clients, agents and future ChatGPT integrations.</p><p>The plugin provides its own OAuth 2.1 authorization model with Authorization Code and PKCE, refresh tokens, manual integration tokens, discovery endpoints and deliberately separated read and write APIs.</p></div></div></div>",
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_mcp/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_mcp/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_mcp/icon.png"
   }
 ]
