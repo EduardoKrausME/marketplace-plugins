@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.04-screenshot-name-sync";
+        "2026-10-05.05-overview-assets-all-published";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3540,6 +3540,77 @@
         };
     }
 
+    async function syncMarketplaceOverviewAssets(
+        plugin,
+        status,
+        catalog = null
+    ) {
+        const overviewCatalog =
+            catalog ||
+            await apiCatalog(
+                plugin.component
+            );
+
+        status.set(
+            "Preparando ícone e screenshots...",
+            `${overviewCatalog.iconUrl} · ${overviewCatalog.screenshots.length} arquivo(s)`
+        );
+
+        const setupIcon =
+            await getCatalogSetupImage(
+                plugin.component,
+                overviewCatalog
+            );
+
+        const setupScreenshots =
+            await getCatalogSetupScreenshots(
+                plugin.component,
+                overviewCatalog
+            );
+
+        status.set(
+            "Sincronizando Overview...",
+            `${overviewCatalog.name || plugin.component} · ${setupScreenshots.length} screenshot(s)`
+        );
+
+        const overviewResult =
+            await submitMarketplaceOverview(
+                plugin,
+                overviewCatalog,
+                setupIcon,
+                setupScreenshots
+            );
+
+        status.set(
+            "Overview sincronizado",
+            [
+                "ícone substituído",
+                overviewResult.deletedScreenshotNames.length
+                    ? `${overviewResult.deletedScreenshotNames.length} screenshot(s) removida(s): ${overviewResult.deletedScreenshotNames.join(", ")}`
+                    : null,
+                overviewResult.uploadedScreenshotNames.length
+                    ? `${overviewResult.uploadedScreenshotNames.length} screenshot(s) adicionada(s): ${overviewResult.uploadedScreenshotNames.join(", ")}`
+                    : "screenshots já sincronizadas",
+                overviewResult.skippedScreenshotNames.length
+                    ? `limite do Marketplace impediu: ${overviewResult.skippedScreenshotNames.join(", ")}`
+                    : null,
+            ]
+                .filter(Boolean)
+                .join(" · "),
+            overviewResult.skippedScreenshotNames.length
+                ? "warning"
+                : "success"
+        );
+
+        return {
+            catalog:
+                overviewCatalog,
+            result:
+                overviewResult,
+        };
+    }
+
+
     async function setupMarketplacePlugin(
         plugin,
         status
@@ -3589,61 +3660,15 @@
                 repository.fullName
             );
 
-        status.set(
-            "Preparando ícone e screenshots...",
-            `${catalog.iconUrl} · ${catalog.screenshots.length} arquivo(s)`
-        );
-
-        const setupIcon =
-            await getCatalogSetupImage(
-                plugin.component,
+        const overviewSync =
+            await syncMarketplaceOverviewAssets(
+                plugin,
+                status,
                 catalog
             );
-
-        const setupScreenshots =
-            await getCatalogSetupScreenshots(
-                plugin.component,
-                catalog
-            );
-
-        status.set(
-            "Preenchendo Overview...",
-            `${catalog.name || plugin.component} · ${catalog.description.slice(0, 80)} · ${setupScreenshots.length} screenshot(s)`
-        );
 
         const overviewResult =
-            await submitMarketplaceOverview(
-                plugin,
-                catalog,
-                setupIcon,
-                setupScreenshots
-            );
-
-        status.set(
-            "Página 1 configurada",
-            [
-                overviewResult.name,
-                overviewResult.populatedOverview
-                    ? "description do plugins.json"
-                    : "description existente preservada",
-                "ícone substituído",
-                overviewResult.deletedScreenshotNames.length
-                    ? `${overviewResult.deletedScreenshotNames.length} screenshot(s) removida(s): ${overviewResult.deletedScreenshotNames.join(", ")}`
-                    : null,
-                overviewResult.uploadedScreenshotNames.length
-                    ? `${overviewResult.uploadedScreenshotNames.length} screenshot(s) adicionada(s): ${overviewResult.uploadedScreenshotNames.join(", ")}`
-                    : "nenhuma screenshot nova faltando",
-                overviewResult.skippedScreenshotNames.length
-                    ? `limite do Marketplace impediu: ${overviewResult.skippedScreenshotNames.join(", ")}`
-                    : null,
-                "Save and next",
-            ]
-                .filter(Boolean)
-                .join(" · "),
-            overviewResult.skippedScreenshotNames.length
-                ? "warning"
-                : "success"
-        );
+            overviewSync.result;
 
         status.set(
             "Preenchendo Support...",
@@ -3899,6 +3924,29 @@
         }
 
         /*
+         * Published e Changes needed também precisam passar pelo Overview.
+         * Antes isso acontecia somente em needsSetup, deixando ícone e
+         * screenshots antigos nos plugins já publicados.
+         *
+         * Submitted for review fica de fora porque o Marketplace pode bloquear
+         * edição do Overview enquanto a submissão está em revisão.
+         */
+        let overviewSync = null;
+
+        if (!plugin.submittedForReview) {
+            status.set(
+                "Lendo plugins.json para Overview...",
+                plugin.component
+            );
+
+            overviewSync =
+                await syncMarketplaceOverviewAssets(
+                    plugin,
+                    status
+                );
+        }
+
+        /*
          * O cache de versão não pode pular a página Support.
          * Primeiro resolvemos/validamos o repositório e atualizamos
          * /plugins/[id]/edit/support; só depois podemos retornar pelo cache.
@@ -4041,6 +4089,9 @@
                 clientCached: true,
                 support:
                     supportResult,
+                overview:
+                    overviewSync?.result ||
+                    null,
             };
         }
 
@@ -4113,6 +4164,9 @@
 
             return {
                 state: "current",
+                overview:
+                    overviewSync?.result ||
+                    null,
             };
         }
 
