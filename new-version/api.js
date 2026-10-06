@@ -12,7 +12,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.09-overview-iframe-ready";
+        "2026-10-06.01-hidden-overview-filepond";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -480,9 +480,9 @@
             }
 
             /*
-             * Processa tanto plugins publicados quanto
-             * plugins aprovados que ainda precisam passar
-             * pelo wizard "Set up plugin page".
+             * Processa plugins publicados, ocultos e plugins
+             * em estados administrativos que ainda exigem
+             * atualização ou configuração.
              */
             const setupLink =
                 listingCell.querySelector(
@@ -499,6 +499,11 @@
                     "a[data-ga-label='submitted_for_review'][href^='/plugins/']"
                 );
 
+            const hiddenLink =
+                listingCell.querySelector(
+                    "a[data-ga-label='hidden_plugin'][href^='/plugins/']"
+                );
+
             const published = [
                 ...listingCell.querySelectorAll(
                     "span"
@@ -513,7 +518,8 @@
                 !published &&
                 !setupLink &&
                 !changesNeededLink &&
-                !submittedForReviewLink
+                !submittedForReviewLink &&
+                !hiddenLink
             ) {
                 continue;
             }
@@ -522,6 +528,7 @@
                 setupLink ||
                 changesNeededLink ||
                 submittedForReviewLink ||
+                hiddenLink ||
                 listingCell.querySelector(
                     "a[href^='/plugins/']"
                 );
@@ -547,6 +554,8 @@
                 componentCell,
                 row,
                 published,
+                hidden:
+                    Boolean(hiddenLink),
                 needsSetup:
                     Boolean(setupLink),
                 needsChanges:
@@ -2613,6 +2622,78 @@
 
         await waitForCondition(
             () => {
+                /*
+                 * Quando usamos a API pública do FilePond, o FileItem é uma
+                 * fonte mais confiável do que o markup interno. O Marketplace
+                 * pode mudar classes/estados do DOM sem mudar a API.
+                 */
+                if (
+                    pond &&
+                    addedItem
+                ) {
+                    const currentItem =
+                        typeof pond.getFile ===
+                        "function"
+                            ? (
+                                pond.getFile(
+                                    addedItem.id
+                                ) ||
+                                addedItem
+                            )
+                            : addedItem;
+
+                    const FileStatus =
+                        FilePondApi?.FileStatus ||
+                        {};
+
+                    const apiStatus =
+                        currentItem?.status;
+
+                    const processingComplete =
+                        FileStatus.PROCESSING_COMPLETE ??
+                        5;
+
+                    const errorStatuses =
+                        [
+                            FileStatus.LOAD_ERROR,
+                            FileStatus.PROCESSING_ERROR,
+                            FileStatus.PROCESSING_REVERT_ERROR,
+                        ].filter(
+                            (status) =>
+                                status !== undefined
+                        );
+
+                    if (
+                        errorStatuses.includes(
+                            apiStatus
+                        )
+                    ) {
+                        throw new Error(
+                            `FilePond failed for ${rootId}: status=${apiStatus}`
+                        );
+                    }
+
+                    if (
+                        currentItem?.serverId ||
+                        (
+                            processWithServer &&
+                            apiStatus ===
+                                processingComplete
+                        )
+                    ) {
+                        return true;
+                    }
+
+                    /*
+                     * addFile() já resolveu o carregamento local. Sem endpoint
+                     * server.process não precisamos esperar um estado visual
+                     * específico para considerar o campo pronto.
+                     */
+                    if (!processWithServer) {
+                        return true;
+                    }
+                }
+
                 const item =
                     pondScope?.querySelector?.(
                         "[data-filepond-item-state]"
@@ -2643,6 +2724,29 @@
                     throw new Error(
                         `FilePond failed for ${rootId}: ${statusText}`
                     );
+                }
+
+                /*
+                 * Fallback nativo: se não há instância FilePond acessível e
+                 * também não existe item visual, confirme o File diretamente
+                 * no input que recebeu o DataTransfer.
+                 */
+                if (
+                    !pond &&
+                    !state &&
+                    browser.files?.length
+                ) {
+                    const nativeFile =
+                        browser.files[0];
+
+                    if (
+                        nativeFile?.name ===
+                            frameFile.name &&
+                        nativeFile?.size ===
+                            frameFile.size
+                    ) {
+                        return true;
+                    }
                 }
 
                 const exactValues = [
@@ -2710,18 +2814,6 @@
                     return true;
                 }
 
-                /*
-                 * A chamada addFile/processFile resolveu e o FilePond não
-                 * expôs estado DOM. Nesse caso a própria API é a confirmação.
-                 */
-                if (
-                    addedItem &&
-                    !processWithServer &&
-                    !state
-                ) {
-                    return true;
-                }
-
                 return false;
             },
             `${rootId} file ready`
@@ -2771,12 +2863,15 @@
 
         try {
             /*
-             * O evento load do iframe pode ocorrer antes de contentDocument
-             * estar utilizável (ou ainda refletir about:blank). Não guardamos
-             * uma referência antecipada ao Document porque a navegação troca
-             * esse objeto. Esperamos o documento definitivo do Overview.
+             * O iframe pode navegar ou reconstruir o documento enquanto a
+             * página inicializa. Por isso cada tentativa consulta novamente
+             * contentDocument e só devolve o contexto quando o formulário
+             * definitivo do Overview realmente estiver disponível.
+             *
+             * Não dependemos apenas do atributo name do form: o Marketplace
+             * já alterou detalhes desse markup sem alterar os ids dos campos.
              */
-            const frameDocument =
+            const overviewContext =
                 await waitForCondition(
                     () => {
                         const currentWindow =
@@ -2818,25 +2913,39 @@
                             return false;
                         }
 
-                        return currentDocument;
+                        const form =
+                            currentDocument.querySelector(
+                                "#plugin_edit_overview_form"
+                            ) ||
+                            currentDocument.querySelector(
+                                "form[name='plugin_edit_overview_form']"
+                            ) ||
+                            currentDocument
+                                .querySelector(
+                                    "#plugin_edit_overview_form_name"
+                                )
+                                ?.closest("form");
+
+                        if (!form) {
+                            return false;
+                        }
+
+                        return {
+                            frameDocument:
+                                currentDocument,
+                            frameWindow:
+                                currentWindow,
+                            form,
+                        };
                     },
-                    "marketplace overview document"
-                );
-
-            const frameWindow =
-                await waitForCondition(
-                    () => iframe.contentWindow,
-                    "marketplace overview window"
-                );
-
-            const form =
-                await waitForCondition(
-                    () =>
-                        frameDocument.querySelector(
-                            "form[name='plugin_edit_overview_form']"
-                        ),
                     "overview form"
                 );
+
+            const {
+                frameDocument,
+                frameWindow,
+                form,
+            } = overviewContext;
 
             const nameInput =
                 form.querySelector(
