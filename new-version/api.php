@@ -82,6 +82,9 @@ if ($action === "support") {
 }
 
 if ($action === "asset") {
+    $component = normalizePluginComponent(
+        (string)($_GET["component"] ?? "")
+    );
     $tag = trim($_GET["tag"] ?? "");
     $path = trim($_GET["path"] ?? "");
 
@@ -96,17 +99,22 @@ if ($action === "asset") {
     streamRepositoryAsset(
         $owner,
         $repository,
+        $component,
         $tag,
         $path
     );
 }
 
 if ($action === "info") {
+    $component = normalizePluginComponent(
+        (string)($_GET["component"] ?? "")
+    );
     $force = ($_GET["force"] ?? "") === "1";
 
     $info = getRepositoryInfo(
         $owner,
         $repository,
+        $component,
         $force
     );
 
@@ -114,6 +122,9 @@ if ($action === "info") {
 }
 
 if ($action === "zip") {
+    $component = normalizePluginComponent(
+        (string)($_GET["component"] ?? "")
+    );
     $tag = trim($_GET["tag"] ?? "");
 
     if ($tag === "") {
@@ -123,6 +134,7 @@ if ($action === "zip") {
     streamZip(
         $owner,
         $repository,
+        $component,
         $tag
     );
 }
@@ -245,30 +257,45 @@ function getRepositorySupportInfo(
     ];
 }
 
+function normalizePluginComponent(
+    string $component
+): string {
+    $component = strtolower(
+        trim($component)
+    );
+
+    if (!preg_match(
+        "/^[a-z][a-z0-9]*_[a-z0-9_]+$/",
+        $component
+    )) {
+        jsonError(
+            "Invalid plugin component.",
+            400
+        );
+    }
+
+    return $component;
+}
+
 function getRepositoryInfo(
     string $owner,
     string $repository,
+    string $component,
     bool $force = false
 ): array {
-    $cacheDir = getCacheDirectory();
-
-    $cacheKey = strtolower(
-        $owner . "/" . $repository
-    );
-
     $cacheFile =
-        $cacheDir .
+        getCacheDirectory() .
         "/" .
-        hash("sha256", $cacheKey) .
+        $component .
         ".json";
 
     if (
         !$force &&
-        is_file($cacheFile) &&
-        filemtime($cacheFile) !== false &&
-        filemtime($cacheFile) >= time() - CACHE_TTL
+        is_file($cacheFile)
     ) {
-        $contents = file_get_contents($cacheFile);
+        $contents = file_get_contents(
+            $cacheFile
+        );
 
         if ($contents !== false) {
             $cached = json_decode(
@@ -277,11 +304,31 @@ function getRepositoryInfo(
             );
 
             if (is_array($cached)) {
-                $cached["cached"] = true;
+                $fetchedAt =
+                    strtotime(
+                        (string)(
+                            $cached["fetched_at"] ??
+                            ""
+                        )
+                    );
 
-                return $cached;
+                if (
+                    $fetchedAt !== false &&
+                    $fetchedAt >=
+                        time() - CACHE_TTL
+                ) {
+                    $cached["cached"] = true;
+
+                    return $cached;
+                }
             }
         }
+
+        /*
+         * Cache expirado, sem timestamp ou inválido:
+         * descarta o arquivo e obtém os dados novamente.
+         */
+        @unlink($cacheFile);
     }
 
     $releaseUrl = "https://api.github.com/repos/{$owner}/{$repository}/releases/latest";
@@ -310,6 +357,8 @@ function getRepositoryInfo(
     );
 
     $result = [
+        "component" => $component,
+
         "repo" => $owner . "/" . $repository,
 
         "owner" => $owner,
@@ -1018,6 +1067,7 @@ function streamCatalogIcon(
 function streamRepositoryAsset(
     string $owner,
     string $repository,
+    string $component,
     string $tag,
     string $path
 ): never {
@@ -1045,7 +1095,8 @@ function streamRepositoryAsset(
 
     $info = getRepositoryInfo(
         $owner,
-        $repository
+        $repository,
+        $component
     );
 
     if (
@@ -1396,6 +1447,7 @@ function githubHeaders(): array {
 function streamZip(
     string $owner,
     string $repository,
+    string $component,
     string $tag
 ): never {
     /*
@@ -1405,7 +1457,8 @@ function streamZip(
      */
     $info = getRepositoryInfo(
         $owner,
-        $repository
+        $repository,
+        $component
     );
 
     if (
