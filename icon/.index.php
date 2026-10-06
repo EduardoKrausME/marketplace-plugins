@@ -44,7 +44,7 @@ if (
 }
 
 $extension = strtolower(pathinfo($source, PATHINFO_EXTENSION));
-if (!in_array($extension, ['png', 'jpg', 'jpeg', 'gif', 'webp'], true)) {
+if (!in_array($extension, ['png'], true)) {
     http_response_code(404);
     exit('Unsupported icon format.');
 }
@@ -68,16 +68,6 @@ if (!is_file($cachefile) || filemtime($cachefile) < filemtime($source)) {
     switch ($extension) {
         case 'png':
             $image = @imagecreatefrompng($source);
-            break;
-        case 'jpg':
-        case 'jpeg':
-            $image = @imagecreatefromjpeg($source);
-            break;
-        case 'gif':
-            $image = @imagecreatefromgif($source);
-            break;
-        case 'webp':
-            $image = function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($source) : false;
             break;
         default:
             $image = false;
