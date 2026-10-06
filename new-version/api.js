@@ -11,7 +11,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-06.05-overview-form-detection";
+        "2026-10-06.06-overview-direct-post";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3560,68 +3560,122 @@
                 );
             }
 
-            progress(
-                8,
-                "salvando Overview",
-                "clicando em Save and next"
-            );
-
-            const submitted =
-                waitForIframeLoad(
-                    iframe,
-                    "overview submit"
+            const formData =
+                new FormData(
+                    form
                 );
 
-            submit.click();
+            if (submit.name) {
+                formData.append(
+                    submit.name,
+                    submit.value || ""
+                );
+            }
+
+            const action =
+                form.getAttribute(
+                    "action"
+                );
+
+            const postUrl =
+                action
+                    ? new URL(
+                        action,
+                        location.origin
+                    ).toString()
+                    : new URL(
+                        overviewUrl,
+                        location.origin
+                    ).toString();
+
+            const formEntries =
+                [
+                    ...formData.entries(),
+                ];
+
+            const fileEntries =
+                formEntries.filter(
+                    ([, value]) =>
+                        value instanceof File
+                );
+
+            progress(
+                8,
+                "enviando Overview",
+                [
+                    `POST ${new URL(postUrl).pathname}`,
+                    `${formEntries.length} campo(s)`,
+                    `${fileEntries.length} arquivo(s)`,
+                ].join(" · ")
+            );
+
+            /*
+             * O Overview não usa mais submit.click() dentro do iframe.
+             * Essa abordagem podia ser bloqueada pela validação/eventos da
+             * página sem gerar qualquer POST. Aqui enviamos exatamente o
+             * formulário montado, incluindo FilePond/storeAsFile e o valor
+             * do botão save_and_next.
+             */
+            const responsePromise =
+                marketplaceFetch(
+                    postUrl,
+                    {
+                        method: "POST",
+                        body: formData,
+                    }
+                );
 
             progress(
                 9,
                 "aguardando resposta",
-                "formulário enviado; aguardando navegação do Marketplace"
+                `POST disparado para ${new URL(postUrl).pathname}`
             );
 
-            await submitted;
+            const response =
+                await responsePromise;
+
+            const responseHtml =
+                await response.text();
 
             const resultDocument =
-                iframe.contentDocument;
+                new DOMParser()
+                    .parseFromString(
+                        responseHtml,
+                        "text/html"
+                    );
 
-            const resultWindow =
-                iframe.contentWindow;
+            const errors =
+                getOverviewErrors(
+                    resultDocument
+                );
 
-            if (
-                !resultDocument ||
-                !resultWindow
-            ) {
+            if (errors.length) {
                 throw new Error(
-                    "Marketplace overview result is unavailable."
+                    "Overview: " +
+                    errors.join(" | ")
                 );
             }
 
-            const path =
-                resultWindow.location.pathname;
+            const resultUrl =
+                new URL(
+                    response.url,
+                    location.origin
+                );
 
             if (
-                path === overviewUrl ||
-                path.endsWith(
+                resultUrl.pathname === overviewUrl ||
+                resultUrl.pathname.endsWith(
                     `/plugins/${plugin.id}/edit/overview`
                 )
             ) {
-                const errors =
-                    getOverviewErrors(
-                        resultDocument
-                    );
-
                 throw new Error(
-                    errors.length
-                        ? "Overview: " +
-                            errors.join(" | ")
-                        : "Overview form remained on the same page after submit."
+                    "Overview form remained on the same page after POST."
                 );
             }
 
             return {
                 url:
-                    resultWindow.location.href,
+                    response.url,
                 name,
                 shortDescription,
                 populatedOverview:
