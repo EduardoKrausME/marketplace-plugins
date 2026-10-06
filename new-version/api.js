@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.03-always-replace-icon";
+        "2026-10-05.04-screenshot-name-sync";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -2042,153 +2042,6 @@
     }
 
 
-    async function getNormalizedImagePixels(
-        blob
-    ) {
-        const objectUrl =
-            URL.createObjectURL(
-                blob
-            );
-
-        try {
-            const image =
-                new Image();
-
-            await new Promise(
-                (resolve, reject) => {
-                    image.onload =
-                        () => resolve();
-
-                    image.onerror =
-                        () => reject(
-                            new Error(
-                                "Unable to decode image for comparison."
-                            )
-                        );
-
-                    image.src =
-                        objectUrl;
-                }
-            );
-
-            const size =
-                CONFIG.setupImageSize;
-
-            const canvas =
-                document.createElement(
-                    "canvas"
-                );
-
-            canvas.width = size;
-            canvas.height = size;
-
-            const context =
-                canvas.getContext(
-                    "2d",
-                    {
-                        willReadFrequently:
-                            true,
-                    }
-                );
-
-            if (!context) {
-                throw new Error(
-                    "Canvas 2D is unavailable for image comparison."
-                );
-            }
-
-            context.clearRect(
-                0,
-                0,
-                size,
-                size
-            );
-
-            const sourceWidth =
-                image.naturalWidth ||
-                size;
-
-            const sourceHeight =
-                image.naturalHeight ||
-                size;
-
-            const scale =
-                Math.min(
-                    size / sourceWidth,
-                    size / sourceHeight
-                );
-
-            const width =
-                sourceWidth * scale;
-
-            const height =
-                sourceHeight * scale;
-
-            context.drawImage(
-                image,
-                (size - width) / 2,
-                (size - height) / 2,
-                width,
-                height
-            );
-
-            return context
-                .getImageData(
-                    0,
-                    0,
-                    size,
-                    size
-                )
-                .data;
-        } finally {
-            URL.revokeObjectURL(
-                objectUrl
-            );
-        }
-    }
-
-
-    async function imageBlobsHaveSamePixels(
-        first,
-        second
-    ) {
-        const [
-            firstPixels,
-            secondPixels,
-        ] =
-            await Promise.all([
-                getNormalizedImagePixels(
-                    first
-                ),
-                getNormalizedImagePixels(
-                    second
-                ),
-            ]);
-
-        if (
-            firstPixels.length !==
-            secondPixels.length
-        ) {
-            return false;
-        }
-
-        for (
-            let i = 0;
-            i < firstPixels.length;
-            i++
-        ) {
-            if (
-                firstPixels[i] !==
-                secondPixels[i]
-            ) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-
     async function waitForCondition(
         callback,
         description,
@@ -2473,6 +2326,184 @@
         }
 
         return removed;
+    }
+
+
+    async function removeFilePondFilesByNames(
+        iframe,
+        rootId,
+        filenames
+    ) {
+        const targets =
+            new Set(
+                filenames
+                    .map(
+                        (filename) =>
+                            normalizeAssetFilename(
+                                filename
+                            )
+                    )
+                    .filter(Boolean)
+            );
+
+        if (!targets.size) {
+            return {
+                removedNames: [],
+                clearedAll: false,
+            };
+        }
+
+        const frameWindow =
+            iframe.contentWindow;
+
+        const frameDocument =
+            iframe.contentDocument;
+
+        if (
+            !frameWindow ||
+            !frameDocument
+        ) {
+            throw new Error(
+                "Marketplace setup iframe is unavailable."
+            );
+        }
+
+        const root =
+            await waitForCondition(
+                () =>
+                    frameDocument.getElementById(
+                        rootId
+                    ),
+                rootId
+            );
+
+        const browser =
+            await waitForCondition(
+                () =>
+                    root.querySelector(
+                        "input.filepond--browser[type='file']"
+                    ),
+                `${rootId} file input`
+            );
+
+        const FilePondApi =
+            frameWindow.FilePond;
+
+        let pond = null;
+
+        if (
+            FilePondApi &&
+            typeof FilePondApi.find ===
+                "function"
+        ) {
+            const candidates = [
+                browser,
+                browser.closest(
+                    ".filepond--root"
+                ),
+                root,
+                root.querySelector(
+                    ".filepond--root"
+                ),
+                root.querySelector(
+                    ".filepond"
+                ),
+                ...root.querySelectorAll(
+                    "input[type='file']"
+                ),
+            ].filter(Boolean);
+
+            for (const candidate of candidates) {
+                try {
+                    pond =
+                        FilePondApi.find(
+                            candidate
+                        );
+
+                    if (pond) {
+                        break;
+                    }
+                } catch (_) {
+                    // Tenta o próximo elemento.
+                }
+            }
+        }
+
+        const removedNames = [];
+
+        if (
+            pond &&
+            typeof pond.getFiles ===
+                "function" &&
+            typeof pond.removeFile ===
+                "function"
+        ) {
+            const files = [
+                ...pond.getFiles(),
+            ];
+
+            for (const item of files) {
+                const itemName =
+                    normalizeAssetFilename(
+                        item?.filename ||
+                        item?.file?.name ||
+                        item?.source?.originalName ||
+                        item?.source?.filename ||
+                        ""
+                    );
+
+                if (
+                    !itemName ||
+                    !targets.has(
+                        itemName
+                    )
+                ) {
+                    continue;
+                }
+
+                await Promise.resolve(
+                    pond.removeFile(
+                        item?.id ||
+                        item
+                    )
+                );
+
+                removedNames.push(
+                    itemName
+                );
+            }
+
+            if (
+                targets.size ===
+                new Set(
+                    removedNames
+                ).size
+            ) {
+                return {
+                    removedNames,
+                    clearedAll: false,
+                };
+            }
+        }
+
+        /*
+         * Se a versão do FilePond não expuser o filename dos arquivos
+         * existentes de forma confiável, faz reset completo. Assim o estado
+         * final continua sendo exatamente o conjunto definido no catálogo,
+         * em vez de deixar screenshot antiga perdida no Marketplace.
+         */
+        await clearFilePondFiles(
+            iframe,
+            rootId
+        );
+
+        return {
+            removedNames:
+                [
+                    ...targets,
+                ],
+            clearedAll: true,
+        };
     }
 
 
@@ -2974,14 +3005,31 @@
                 true;
 
             /*
-             * Para screenshots, o próprio Marketplace informa o nome original
-             * em data-filepond-existing-files-value. Mantemos tudo que já está
-             * lá e enviamos somente os arquivos do catálogo cujo nome ainda
-             * não existe.
+             * Screenshots são sincronizadas pelos nomes do plugins.json.
+             *
+             * - nome existente e presente no catálogo: mantém;
+             * - nome existente e ausente do catálogo: remove;
+             * - nome do catálogo ainda ausente: envia.
+             *
+             * O nome confiável do Marketplace é originalName dentro de
+             * data-filepond-existing-files-value.
              */
             const existingScreenshotFiles =
                 getFilePondExistingFiles(
                     screenshotsInput
+                );
+
+            const catalogScreenshotNames =
+                new Set(
+                    setupScreenshots
+                        .map(
+                            (screenshot) =>
+                                normalizeAssetFilename(
+                                    screenshot.filename ||
+                                    screenshot.file?.name
+                                )
+                        )
+                        .filter(Boolean)
                 );
 
             const existingScreenshotNames =
@@ -2997,10 +3045,114 @@
                         .filter(Boolean)
                 );
 
+            const obsoleteScreenshotFiles =
+                existingScreenshotFiles.filter(
+                    (item) => {
+                        const filename =
+                            normalizeAssetFilename(
+                                item?.originalName ||
+                                item?.filename
+                            );
+
+                        return (
+                            !filename ||
+                            !catalogScreenshotNames.has(
+                                filename
+                            )
+                        );
+                    }
+                );
+
+            const obsoleteScreenshotNames =
+                obsoleteScreenshotFiles
+                    .map(
+                        (item) =>
+                            String(
+                                item?.originalName ||
+                                item?.filename ||
+                                ""
+                            ).trim()
+                    )
+                    .filter(Boolean);
+
+            let screenshotsReset =
+                false;
+
+            if (
+                obsoleteScreenshotFiles.length
+            ) {
+                /*
+                 * Se houver item sem nome, não existe uma chave segura para
+                 * remoção seletiva; nesse caso resetamos o FilePond inteiro.
+                 */
+                const hasUnnamedObsolete =
+                    obsoleteScreenshotFiles.some(
+                        (item) =>
+                            !normalizeAssetFilename(
+                                item?.originalName ||
+                                item?.filename
+                            )
+                    );
+
+                if (hasUnnamedObsolete) {
+                    await clearFilePondFiles(
+                        iframe,
+                        "plugin_edit_overview_form_screenshots"
+                    );
+
+                    screenshotsReset =
+                        true;
+                } else {
+                    const removal =
+                        await removeFilePondFilesByNames(
+                            iframe,
+                            "plugin_edit_overview_form_screenshots",
+                            obsoleteScreenshotNames
+                        );
+
+                    screenshotsReset =
+                        removal.clearedAll;
+                }
+            }
+
+            const keptScreenshotNames =
+                screenshotsReset
+                    ? new Set()
+                    : new Set(
+                        [
+                            ...existingScreenshotNames,
+                        ].filter(
+                            (filename) =>
+                                catalogScreenshotNames.has(
+                                    filename
+                                )
+                        )
+                    );
+
+            const keptScreenshotCount =
+                screenshotsReset
+                    ? 0
+                    : existingScreenshotFiles.filter(
+                        (item) => {
+                            const filename =
+                                normalizeAssetFilename(
+                                    item?.originalName ||
+                                    item?.filename
+                                );
+
+                            return (
+                                filename &&
+                                catalogScreenshotNames.has(
+                                    filename
+                                )
+                            );
+                        }
+                    ).length;
+
             const missingScreenshots =
                 setupScreenshots.filter(
                     (screenshot) =>
-                        !existingScreenshotNames.has(
+                        !keptScreenshotNames.has(
                             normalizeAssetFilename(
                                 screenshot.filename ||
                                 screenshot.file?.name
@@ -3027,7 +3179,7 @@
                 Math.max(
                     0,
                     maxFiles -
-                    existingScreenshotFiles.length
+                    keptScreenshotCount
                 );
 
             const screenshotsToUpload =
@@ -3061,6 +3213,9 @@
                         [
                             ...existingScreenshotNames,
                         ],
+                    deletedScreenshots:
+                        obsoleteScreenshotNames,
+                    screenshotsReset,
                     uploadedScreenshots:
                         screenshotsToUpload.map(
                             (screenshot) =>
@@ -3148,6 +3303,9 @@
                     [
                         ...existingScreenshotNames,
                     ],
+                deletedScreenshotNames:
+                    obsoleteScreenshotNames,
+                screenshotsReset,
                 screenshotPaths:
                     screenshotsToUpload.map(
                         (screenshot) =>
@@ -3469,6 +3627,9 @@
                     ? "description do plugins.json"
                     : "description existente preservada",
                 "ícone substituído",
+                overviewResult.deletedScreenshotNames.length
+                    ? `${overviewResult.deletedScreenshotNames.length} screenshot(s) removida(s): ${overviewResult.deletedScreenshotNames.join(", ")}`
+                    : null,
                 overviewResult.uploadedScreenshotNames.length
                     ? `${overviewResult.uploadedScreenshotNames.length} screenshot(s) adicionada(s): ${overviewResult.uploadedScreenshotNames.join(", ")}`
                     : "nenhuma screenshot nova faltando",
