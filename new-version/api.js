@@ -11,7 +11,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-06.06-overview-direct-post";
+        "2026-10-06.07-refresh-screenshots";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3301,14 +3301,12 @@
                 true;
 
             /*
-             * Screenshots são sincronizadas pelos nomes do plugins.json.
+             * Screenshots são sempre reenviadas a partir do catálogo.
              *
-             * - nome existente e presente no catálogo: mantém;
-             * - nome existente e ausente do catálogo: remove;
-             * - nome do catálogo ainda ausente: envia.
-             *
-             * O nome confiável do Marketplace é originalName dentro de
-             * data-filepond-existing-files-value.
+             * Não dá para considerar um screenshot atualizado apenas porque
+             * o filename é igual: new-1.png pode ter sido regenerado mantendo
+             * exatamente o mesmo nome. Por isso removemos as imagens atuais e
+             * enviamos novamente os bytes do catálogo.
              */
             progress(
                 6,
@@ -3347,23 +3345,12 @@
                         .filter(Boolean)
                 );
 
+            /*
+             * Todo screenshot já existente é considerado substituível,
+             * inclusive quando o nome continua igual ao arquivo do catálogo.
+             */
             const obsoleteScreenshotFiles =
-                existingScreenshotFiles.filter(
-                    (item) => {
-                        const filename =
-                            normalizeAssetFilename(
-                                item?.originalName ||
-                                item?.filename
-                            );
-
-                        return (
-                            !filename ||
-                            !catalogScreenshotNames.has(
-                                filename
-                            )
-                        );
-                    }
-                );
+                existingScreenshotFiles;
 
             const obsoleteScreenshotNames =
                 obsoleteScreenshotFiles
@@ -3417,39 +3404,16 @@
                 }
             }
 
+            /*
+             * Como os arquivos existentes acabaram de ser removidos, nenhum
+             * filename pode ser tratado como já sincronizado. Assim um
+             * new-1.png novo substitui de fato o new-1.png antigo.
+             */
             const keptScreenshotNames =
-                screenshotsReset
-                    ? new Set()
-                    : new Set(
-                        [
-                            ...existingScreenshotNames,
-                        ].filter(
-                            (filename) =>
-                                catalogScreenshotNames.has(
-                                    filename
-                                )
-                        )
-                    );
+                new Set();
 
             const keptScreenshotCount =
-                screenshotsReset
-                    ? 0
-                    : existingScreenshotFiles.filter(
-                        (item) => {
-                            const filename =
-                                normalizeAssetFilename(
-                                    item?.originalName ||
-                                    item?.filename
-                                );
-
-                            return (
-                                filename &&
-                                catalogScreenshotNames.has(
-                                    filename
-                                )
-                            );
-                        }
-                    ).length;
+                0;
 
             const missingScreenshots =
                 setupScreenshots.filter(
@@ -4542,23 +4506,12 @@
                         .filter(Boolean)
                 );
 
+            /*
+             * Todo screenshot já existente é considerado substituível,
+             * inclusive quando o nome continua igual ao arquivo do catálogo.
+             */
             const obsoleteScreenshotFiles =
-                existingScreenshotFiles.filter(
-                    (item) => {
-                        const filename =
-                            normalizeAssetFilename(
-                                item?.originalName ||
-                                item?.filename
-                            );
-
-                        return (
-                            !filename ||
-                            !catalogScreenshotNames.has(
-                                filename
-                            )
-                        );
-                    }
-                );
+                existingScreenshotFiles;
 
             const obsoleteScreenshotNames =
                 obsoleteScreenshotFiles
@@ -4608,39 +4561,16 @@
                 }
             }
 
+            /*
+             * Como os arquivos existentes acabaram de ser removidos, nenhum
+             * filename pode ser tratado como já sincronizado. Assim um
+             * new-1.png novo substitui de fato o new-1.png antigo.
+             */
             const keptScreenshotNames =
-                screenshotsReset
-                    ? new Set()
-                    : new Set(
-                        [
-                            ...existingScreenshotNames,
-                        ].filter(
-                            (filename) =>
-                                catalogScreenshotNames.has(
-                                    filename
-                                )
-                        )
-                    );
+                new Set();
 
             const keptScreenshotCount =
-                screenshotsReset
-                    ? 0
-                    : existingScreenshotFiles.filter(
-                        (item) => {
-                            const filename =
-                                normalizeAssetFilename(
-                                    item?.originalName ||
-                                    item?.filename
-                                );
-
-                            return (
-                                filename &&
-                                catalogScreenshotNames.has(
-                                    filename
-                                )
-                            );
-                        }
-                    ).length;
+                0;
 
             const missingScreenshots =
                 setupScreenshots.filter(
