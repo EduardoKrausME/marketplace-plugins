@@ -9,13 +9,10 @@
         autoUpload: true,
         concurrency: 2,
         delayBetweenPluginsMs: 500,
-        clientCacheTtlMs: 24 * 60 * 60 * 1000,
-        clientCachePrefix: "marketplace-github-info:v1:",
-        pluginOkCachePrefix: "marketplace-plugin-ok:v1:",
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.07-filepond-description-fixes";
+        "2026-10-05.08-php-only-cache";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1175,182 +1172,10 @@
         };
     }
 
-    function apiInfoCacheKey(repository) {
-        return (
-            CONFIG.clientCachePrefix +
-            String(repository)
-                .trim()
-                .toLowerCase()
-        );
-    }
-
-
-    function pluginOkCacheKey(plugin) {
-        return (
-            CONFIG.pluginOkCachePrefix +
-            plugin.id + ":" +
-            String(plugin.component || "")
-                .trim()
-                .toLowerCase()
-        );
-    }
-
-    function getPluginOkCache(plugin) {
-        try {
-            const key =
-                pluginOkCacheKey(plugin);
-
-            const raw =
-                localStorage.getItem(key);
-
-            if (!raw) {
-                return null;
-            }
-
-            const entry = JSON.parse(raw);
-            const checkedAt = Number(
-                entry?.checkedAt
-            );
-
-            if (
-                !Number.isFinite(checkedAt) ||
-                Date.now() - checkedAt >=
-                CONFIG.clientCacheTtlMs
-            ) {
-                localStorage.removeItem(key);
-
-                return null;
-            }
-
-            return entry;
-        } catch (error) {
-            console.warn(
-                "[Marketplace] Falha ao ler cache OK do plugin:",
-                error
-            );
-
-            return null;
-        }
-    }
-
-    function savePluginOkCache(
-        plugin,
-        details
-    ) {
-        try {
-            localStorage.setItem(
-                pluginOkCacheKey(plugin),
-                JSON.stringify({
-                    checkedAt: Date.now(),
-                    ...details,
-                })
-            );
-        } catch (error) {
-            console.warn(
-                "[Marketplace] Falha ao salvar cache OK do plugin:",
-                error
-            );
-        }
-    }
-
-    function getCachedApiInfo(repository) {
-        try {
-            const raw = localStorage.getItem(
-                apiInfoCacheKey(repository)
-            );
-
-            if (!raw) {
-                return null;
-            }
-
-            const entry = JSON.parse(raw);
-            const savedAt = Number(
-                entry?.savedAt
-            );
-
-            if (
-                !Number.isFinite(savedAt) ||
-                !entry?.data ||
-                typeof entry.data !== "object"
-            ) {
-                localStorage.removeItem(
-                    apiInfoCacheKey(repository)
-                );
-
-                return null;
-            }
-
-            if (
-                Date.now() - savedAt >=
-                CONFIG.clientCacheTtlMs
-            ) {
-                localStorage.removeItem(
-                    apiInfoCacheKey(repository)
-                );
-
-                return null;
-            }
-
-            return {
-                ...entry.data,
-                client_cached: true,
-                client_cached_at:
-                    new Date(savedAt)
-                        .toISOString(),
-            };
-        } catch (error) {
-            console.warn(
-                "[Marketplace] Falha ao ler cache local:",
-                error
-            );
-
-            return null;
-        }
-    }
-
-    function saveApiInfoCache(
-        repository,
-        data
-    ) {
-        try {
-            localStorage.setItem(
-                apiInfoCacheKey(repository),
-                JSON.stringify({
-                    savedAt: (() => {
-                        const fetchedAt = Date.parse(
-                            data?.fetched_at || ""
-                        );
-
-                        return Number.isFinite(fetchedAt)
-                            ? fetchedAt
-                            : Date.now();
-                    })(),
-                    data,
-                })
-            );
-        } catch (error) {
-            console.warn(
-                "[Marketplace] Falha ao salvar cache local:",
-                error
-            );
-        }
-    }
-
     async function apiInfo(
         repository,
         force = false
     ) {
-        const cached =
-            force
-                ? null
-                : getCachedApiInfo(
-                    repository
-                );
-
-        if (cached !== null) {
-            return cached;
-        }
-
         const url =
             new URL(
                 CONFIG.apiUrl
@@ -1410,13 +1235,9 @@
         }
 
         /*
-         * Somente respostas vÃ¡lidas/OK entram no localStorage.
-         * Erros nunca sÃ£o cacheados no navegador.
+         * Não há cache no navegador. O api.php é a única camada de cache
+         * e decide quando reutilizar ou atualizar os dados do GitHub.
          */
-        saveApiInfoCache(
-            repository,
-            data
-        );
 
         return data;
     }
@@ -4480,17 +4301,10 @@
         }
 
         /*
-         * O cache de versão não pode pular a página Support.
-         * Primeiro resolvemos/validamos o repositório e atualizamos
-         * /plugins/[id]/edit/support; só depois podemos retornar pelo cache.
+         * Não existe cache de estado do plugin no navegador.
+         * A versão do Marketplace é conferida em toda execução; para dados
+         * do GitHub, a única camada de cache é o api.php.
          */
-        const cachedOk =
-            (
-                plugin.needsChanges ||
-                plugin.submittedForReview
-            )
-                ? null
-                : getPluginOkCache(plugin);
 
         status.set(
             plugin.needsChanges
@@ -4606,30 +4420,6 @@
             );
         }
 
-        if (cachedOk !== null) {
-            const checkedAt =
-                new Date(cachedOk.checkedAt);
-
-            status.set(
-                "OK (cache local)",
-                `${cachedOk.release || "versão já conferida"} · ` +
-                `Support atualizado · verificado ${checkedAt.toLocaleString()}`,
-                "success"
-            );
-
-            return {
-                state: "current",
-                clientCached: true,
-                support:
-                    supportResult,
-                overview:
-                    overviewSync?.result ||
-                    null,
-                description:
-                    descriptionResult,
-            };
-        }
-
         status.set(
             "Consultando GitHub...",
             repository.fullName
@@ -4650,10 +4440,10 @@
             repositoryInfo
         );
 
-        if (repositoryInfo.client_cached) {
+        if (repositoryInfo.cached) {
             status.set(
-                "GitHub em cache local",
-                `${repository.fullName} Â· vÃ¡lido por 24h`
+                "GitHub via cache PHP",
+                repository.fullName
             );
         }
 
@@ -4685,17 +4475,6 @@
                     ? "warning"
                     : "success"
             );
-
-            if (!plugin.submittedForReview) {
-                savePluginOkCache(
-                    plugin,
-                    {
-                        release: remoteRelease,
-                        build: remoteBuild,
-                        repository: repository.fullName,
-                    }
-                );
-            }
 
             return {
                 state: "current",
