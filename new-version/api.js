@@ -11,7 +11,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-06.03-submitted-review-step3";
+        "2026-10-06.04-overview-progress";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1849,7 +1849,8 @@
 
     async function getCatalogSetupScreenshots(
         component,
-        catalog
+        catalog,
+        onProgress = null
     ) {
         const screenshots =
             Array.isArray(
@@ -1865,8 +1866,19 @@
         }
 
         const files = [];
+        let screenshotIndex = 0;
 
         for (const screenshot of screenshots) {
+            screenshotIndex++;
+
+            if (onProgress) {
+                onProgress(
+                    screenshotIndex,
+                    screenshots.length,
+                    screenshot?.filename ||
+                    `screenshot ${screenshotIndex}`
+                );
+            }
             const filename =
                 String(
                     screenshot?.filename ||
@@ -2950,15 +2962,45 @@
         plugin,
         catalog,
         setupIcon,
-        setupScreenshots
+        setupScreenshots,
+        onProgress = null
     ) {
         const overviewUrl =
             `/plugins/${plugin.id}/edit/overview`;
+
+        const progressTotal = 9;
+
+        const progress = (
+            step,
+            label,
+            details = ""
+        ) => {
+            if (onProgress) {
+                onProgress(
+                    step,
+                    progressTotal,
+                    label,
+                    details
+                );
+            }
+        };
+
+        progress(
+            1,
+            "abrindo formulário",
+            overviewUrl
+        );
 
         const iframe =
             await createSetupIframe(
                 overviewUrl
             );
+
+        progress(
+            2,
+            "aguardando formulário",
+            "iframe carregado; aguardando campos do Overview"
+        );
 
         try {
             /*
@@ -3045,6 +3087,12 @@
                 frameWindow,
                 form,
             } = overviewContext;
+
+            progress(
+                3,
+                "preenchendo campos",
+                catalog.name || plugin.component
+            );
 
             const nameInput =
                 form.querySelector(
@@ -3136,9 +3184,21 @@
              * O ícone é sempre substituído pelo arquivo atual do catálogo.
              * Não compara nome, tamanho, hash ou pixels com o Marketplace.
              */
+            progress(
+                4,
+                "removendo ícone anterior",
+                setupIcon.file?.name || setupIcon.path || ""
+            );
+
             await clearFilePondFiles(
                 iframe,
                 "plugin_edit_overview_form_icon"
+            );
+
+            progress(
+                5,
+                "enviando ícone",
+                `${setupIcon.file?.name || "ícone"} · ${setupIcon.file?.size || 0} bytes`
             );
 
             await setFilePondFile(
@@ -3161,6 +3221,12 @@
              * O nome confiável do Marketplace é originalName dentro de
              * data-filepond-existing-files-value.
              */
+            progress(
+                6,
+                "analisando screenshots",
+                `${setupScreenshots.length} screenshot(s) no catálogo`
+            );
+
             const existingScreenshotFiles =
                 getFilePondExistingFiles(
                     screenshotsInput
@@ -3340,10 +3406,28 @@
                     availableSlots
                 );
 
+            if (!screenshotsToUpload.length) {
+                progress(
+                    7,
+                    "screenshots sincronizadas",
+                    "nenhum upload necessário"
+                );
+            }
+
+            let screenshotUploadIndex = 0;
+
             for (
                 const screenshot
                 of screenshotsToUpload
             ) {
+                screenshotUploadIndex++;
+
+                progress(
+                    7,
+                    "enviando screenshots",
+                    `${screenshotUploadIndex}/${screenshotsToUpload.length} · ${screenshot.filename || screenshot.file?.name || "screenshot"}`
+                );
+
                 await setFilePondFile(
                     iframe,
                     "plugin_edit_overview_form_screenshots",
@@ -3387,6 +3471,12 @@
                 );
             }
 
+            progress(
+                8,
+                "salvando Overview",
+                "clicando em Save and next"
+            );
+
             const submitted =
                 waitForIframeLoad(
                     iframe,
@@ -3394,6 +3484,12 @@
                 );
 
             submit.click();
+
+            progress(
+                9,
+                "aguardando resposta",
+                "formulário enviado; aguardando navegação do Marketplace"
+            );
 
             await submitted;
 
@@ -4686,11 +4782,21 @@
         const setupScreenshots =
             await getCatalogSetupScreenshots(
                 plugin.component,
-                overviewCatalog
+                overviewCatalog,
+                (
+                    current,
+                    total,
+                    filename
+                ) => {
+                    status.set(
+                        `Preparando screenshots ${current}/${total}`,
+                        filename
+                    );
+                }
             );
 
         status.set(
-            "Sincronizando Overview...",
+            "Overview 0/9 · iniciando sincronização",
             `${overviewCatalog.name || plugin.component} · ${setupScreenshots.length} screenshot(s)`
         );
 
@@ -4699,7 +4805,18 @@
                 plugin,
                 overviewCatalog,
                 setupIcon,
-                setupScreenshots
+                setupScreenshots,
+                (
+                    current,
+                    total,
+                    label,
+                    details
+                ) => {
+                    status.set(
+                        `Overview ${current}/${total} · ${label}`,
+                        details
+                    );
+                }
             );
 
         status.set(
