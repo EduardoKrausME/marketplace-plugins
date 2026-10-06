@@ -675,6 +675,12 @@ function getCatalogPlugin(
             "description" =>
                 $description,
 
+            "description_html" =>
+                (string)(
+                    $plugin["description_html"] ??
+                    ""
+                ),
+
             "screenshots" =>
                 array_map(
                     static fn(string $filename): array => [
