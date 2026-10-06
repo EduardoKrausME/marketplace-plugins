@@ -5,7 +5,6 @@
         apiUrl: "https://eduardokraus.com/marketplace-plugins/new-version/api.php",
         githubOwner: "EduardoKrausME",
         setupPageTimeoutMs: 4500000,
-        setupImageSize: 512,
         autoUpload: true,
         concurrency: 2,
         delayBetweenPluginsMs: 500,
@@ -1776,132 +1775,17 @@
         blob,
         filename
     ) {
-        const objectUrl =
-            URL.createObjectURL(
-                blob
-            );
-
-        try {
-            const image =
-                new Image();
-
-            await new Promise(
-                (resolve, reject) => {
-                    image.onload =
-                        () => resolve();
-
-                    image.onerror =
-                        () => reject(
-                            new Error(
-                                "Unable to decode catalog icon."
-                            )
-                        );
-
-                    image.src =
-                        objectUrl;
-                }
-            );
-
-            const size =
-                CONFIG.setupImageSize;
-
-            const canvas =
-                document.createElement(
-                    "canvas"
-                );
-
-            canvas.width = size;
-            canvas.height = size;
-
-            const context =
-                canvas.getContext("2d");
-
-            if (!context) {
-                throw new Error(
-                    "Canvas 2D is unavailable."
-                );
+        return new File(
+            [
+                blob,
+            ],
+            filename,
+            {
+                type:
+                    blob.type ||
+                    "application/octet-stream",
             }
-
-            context.clearRect(
-                0,
-                0,
-                size,
-                size
-            );
-
-            const sourceWidth =
-                image.naturalWidth ||
-                size;
-
-            const sourceHeight =
-                image.naturalHeight ||
-                size;
-
-            const scale =
-                Math.min(
-                    size / sourceWidth,
-                    size / sourceHeight
-                );
-
-            const width =
-                sourceWidth * scale;
-
-            const height =
-                sourceHeight * scale;
-
-            const x =
-                (size - width) / 2;
-
-            const y =
-                (size - height) / 2;
-
-            context.drawImage(
-                image,
-                x,
-                y,
-                width,
-                height
-            );
-
-            const pngBlob =
-                await new Promise(
-                    (resolve, reject) => {
-                        canvas.toBlob(
-                            (result) => {
-                                if (result) {
-                                    resolve(
-                                        result
-                                    );
-                                } else {
-                                    reject(
-                                        new Error(
-                                            "Unable to rasterize catalog icon."
-                                        )
-                                    );
-                                }
-                            },
-                            "image/png"
-                        );
-                    }
-                );
-
-            return new File(
-                [
-                    pngBlob,
-                ],
-                filename.replace(
-                    /\.[^.]+$/,
-                    ""
-                ) + ".png",
-                {
-                    type: "image/png",
-                }
-            );
-        } finally {
-            URL.revokeObjectURL(
-                objectUrl
-            );
-        }
+        );
     }
 
     async function getCatalogSetupImage(
@@ -1940,9 +1824,8 @@
             `${component}.png`;
 
         /*
-         * Sempre normaliza a imagem pelo canvas. Antes, PNG/JPEG/WebP/GIF
-         * eram enviados no tamanho original, apesar de setupImageSize existir.
-         * Isso deixa ícones grandes sujeitos aos limites do FilePond/Marketplace.
+         * Mantém o arquivo original exatamente como foi recebido.
+         * Não redimensiona, não rasteriza e não converte o formato.
          */
         const file =
             await imageBlobToPngFile(
@@ -1955,9 +1838,7 @@
             path:
                 catalog.iconUrl,
             converted:
-                contentType !== "image/png" ||
-                file.name !== filename ||
-                file.size !== blob.size,
+                false,
             originalSize:
                 blob.size,
             normalizedSize:
