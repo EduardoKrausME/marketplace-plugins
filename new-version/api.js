@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.05-overview-assets-all-published";
+        "2026-10-05.06-description-html-sync";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1601,6 +1601,8 @@
             !data ||
             data.component !== component ||
             !data.description ||
+            typeof data.description_html !== "string" ||
+            !data.description_html.trim() ||
             !data.iconUrl ||
             !Array.isArray(
                 data.screenshots
@@ -3540,6 +3542,263 @@
         };
     }
 
+    function buildMarketplaceDescriptionHtml(
+        component,
+        descriptionHtml
+    ) {
+        const publicUrl =
+            `https://eduardokraus.com/marketplace-plugins/plugin/${component}`;
+
+        const notice = [
+            "<mark>",
+            "Como toda a formatação foi comprometida e as imagens foram perdidos, acesse a visualização melhor em: ",
+            `<a href="${publicUrl}">${publicUrl}</a>`,
+            "</mark>",
+        ].join("\n");
+
+        return (
+            notice +
+            "\n" +
+            String(
+                descriptionHtml ||
+                ""
+            ).trim()
+        );
+    }
+
+
+    async function submitMarketplaceDescription(
+        plugin,
+        catalog
+    ) {
+        const descriptionUrl =
+            `/plugins/${plugin.id}/edit/description`;
+
+        const page =
+            await marketplaceHtml(
+                descriptionUrl
+            );
+
+        const form =
+            page.document.querySelector(
+                "form[name='plugin_edit_description_form']"
+            );
+
+        const descriptionInput =
+            form?.querySelector(
+                "#plugin_edit_description_form_description"
+            );
+
+        const tokenInput =
+            form?.querySelector(
+                "input[name='plugin_edit_description_form[_token]']"
+            );
+
+        if (
+            !form ||
+            !descriptionInput ||
+            !tokenInput?.value
+        ) {
+            throw new Error(
+                "Marketplace Description form/textarea/token was not found."
+            );
+        }
+
+        const html =
+            buildMarketplaceDescriptionHtml(
+                plugin.component,
+                catalog.description_html
+            );
+
+        const maxLength =
+            Number(
+                descriptionInput.getAttribute(
+                    "maxlength"
+                )
+            );
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "plugin_edit_description_form[description]",
+            html
+        );
+
+        formData.append(
+            "plugin_edit_description_form[_token]",
+            tokenInput.value
+        );
+
+        /*
+         * Equivale ao botão Save. Não dependemos do TinyMCE porque o valor
+         * persistido pelo formulário é o HTML bruto do textarea.
+         */
+        formData.append(
+            "save",
+            ""
+        );
+
+        const action =
+            form.getAttribute(
+                "action"
+            );
+
+        const postUrl =
+            action
+                ? new URL(
+                    action,
+                    location.origin
+                ).toString()
+                : new URL(
+                    descriptionUrl,
+                    location.origin
+                ).toString();
+
+        const response =
+            await marketplaceFetch(
+                postUrl,
+                {
+                    method:
+                        "POST",
+                    body:
+                        formData,
+                }
+            );
+
+        const responseHtml =
+            await response.text();
+
+        const resultDocument =
+            new DOMParser()
+                .parseFromString(
+                    responseHtml,
+                    "text/html"
+                );
+
+        const resultTextarea =
+            resultDocument.querySelector(
+                "#plugin_edit_description_form_description"
+            );
+
+        const errors = [
+            ...resultDocument.querySelectorAll(
+                [
+                    ".alert-danger",
+                    ".alert-error",
+                    ".form-error-message",
+                    "[aria-invalid='true'] + .invalid-feedback",
+                ].join(",")
+            ),
+        ]
+            .map(
+                (element) =>
+                    element.textContent.trim()
+            )
+            .filter(Boolean);
+
+        if (errors.length) {
+            throw new Error(
+                "Description: " +
+                errors.join(" | ")
+            );
+        }
+
+        /*
+         * Quando permanece na mesma página, confirma pelo valor retornado
+         * pelo textarea que o HTML realmente foi persistido.
+         */
+        if (
+            resultTextarea &&
+            String(
+                resultTextarea.value ||
+                ""
+            ) !== html
+        ) {
+            throw new Error(
+                "Description was not persisted with the expected HTML."
+            );
+        }
+
+        return {
+            url:
+                response.url,
+            htmlLength:
+                html.length,
+            configuredMaxLength:
+                Number.isFinite(
+                    maxLength
+                )
+                    ? maxLength
+                    : null,
+            exceedsDeclaredMaxLength:
+                Number.isFinite(
+                    maxLength
+                ) &&
+                maxLength > 0 &&
+                html.length > maxLength,
+            publicUrl:
+                `https://eduardokraus.com/marketplace-plugins/plugin/${plugin.component}`,
+        };
+    }
+
+
+    async function syncMarketplaceDescription(
+        plugin,
+        status,
+        catalog
+    ) {
+        status.set(
+            "Sincronizando Description...",
+            plugin.component
+        );
+
+        try {
+            const result =
+                await submitMarketplaceDescription(
+                    plugin,
+                    catalog
+                );
+
+            status.set(
+                "Description sincronizada",
+                result.exceedsDeclaredMaxLength
+                    ? `HTML salvo com ${result.htmlLength} caracteres; o campo declara limite de ${result.configuredMaxLength}`
+                    : `HTML do plugins.json + aviso no topo · ${result.htmlLength} caracteres`,
+                result.exceedsDeclaredMaxLength
+                    ? "warning"
+                    : "success"
+            );
+
+            return {
+                ok: true,
+                ...result,
+            };
+        } catch (error) {
+            console.error(
+                `[Marketplace] Falha sincronizando Description de ${plugin.component}:`,
+                error
+            );
+
+            status.set(
+                "Description não sincronizada",
+                marketplaceErrorMessage(
+                    error
+                ),
+                "warning"
+            );
+
+            return {
+                ok: false,
+                error:
+                    marketplaceErrorMessage(
+                        error
+                    ),
+            };
+        }
+    }
+
+
     async function syncMarketplaceOverviewAssets(
         plugin,
         status,
@@ -3670,6 +3929,13 @@
         const overviewResult =
             overviewSync.result;
 
+        const descriptionResult =
+            await syncMarketplaceDescription(
+                plugin,
+                status,
+                catalog
+            );
+
         status.set(
             "Preenchendo Support...",
             `${supportInfo.repository_url} · issues · ${supportInfo.docs_exists && supportInfo.has_pages ? "GitHub Pages" : "sem Documentation"}`
@@ -3693,6 +3959,9 @@
             result: {
                 overview:
                     overviewResult,
+
+                description:
+                    descriptionResult,
 
                 support:
                     supportResult,
@@ -3932,17 +4201,31 @@
          * edição do Overview enquanto a submissão está em revisão.
          */
         let overviewSync = null;
+        let descriptionResult = null;
 
         if (!plugin.submittedForReview) {
             status.set(
-                "Lendo plugins.json para Overview...",
+                "Lendo plugins.json para Overview e Description...",
                 plugin.component
             );
+
+            const catalog =
+                await apiCatalog(
+                    plugin.component
+                );
 
             overviewSync =
                 await syncMarketplaceOverviewAssets(
                     plugin,
-                    status
+                    status,
+                    catalog
+                );
+
+            descriptionResult =
+                await syncMarketplaceDescription(
+                    plugin,
+                    status,
+                    catalog
                 );
         }
 
@@ -4092,6 +4375,8 @@
                 overview:
                     overviewSync?.result ||
                     null,
+                description:
+                    descriptionResult,
             };
         }
 
@@ -4167,6 +4452,8 @@
                 overview:
                     overviewSync?.result ||
                     null,
+                description:
+                    descriptionResult,
             };
         }
 
