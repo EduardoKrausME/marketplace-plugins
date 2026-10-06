@@ -645,7 +645,8 @@
              */
             if (
                 component.endsWith("_videofront") ||
-                component.endsWith("_cloudstudio")
+                component.endsWith("_cloudstudio") ||
+                component.endsWith("_pandavideo")
             ) {
                 continue;
             }
