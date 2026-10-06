@@ -11,7 +11,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-06.04-overview-progress";
+        "2026-10-06.05-overview-form-detection";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -2964,18 +2964,92 @@
         progress(
             2,
             "aguardando formulário",
-            "iframe carregado; aguardando campos do Overview"
+            "iframe carregado; procurando campos do Overview"
         );
+
+        const overviewWaitStarted =
+            Date.now();
+
+        let lastOverviewWaitSecond =
+            -1;
+
+        const reportOverviewWait = (
+            currentDocument,
+            currentWindow,
+            extra = ""
+        ) => {
+            const elapsedSeconds =
+                Math.floor(
+                    (
+                        Date.now() -
+                        overviewWaitStarted
+                    ) / 1000
+                );
+
+            if (
+                elapsedSeconds ===
+                lastOverviewWaitSecond
+            ) {
+                return;
+            }
+
+            lastOverviewWaitSecond =
+                elapsedSeconds;
+
+            let locationText =
+                "URL indisponível";
+
+            try {
+                locationText =
+                    currentWindow?.location?.pathname ||
+                    currentWindow?.location?.href ||
+                    "URL vazia";
+            } catch (_) {
+                locationText =
+                    "URL cross-origin/inacessível";
+            }
+
+            const readyState =
+                currentDocument?.readyState ||
+                "sem documento";
+
+            const formCount =
+                currentDocument
+                    ? currentDocument.querySelectorAll(
+                        "form"
+                    ).length
+                    : 0;
+
+            const title =
+                String(
+                    currentDocument?.title ||
+                    ""
+                ).trim();
+
+            progress(
+                2,
+                "aguardando formulário",
+                [
+                    `${elapsedSeconds}s`,
+                    `readyState=${readyState}`,
+                    `forms=${formCount}`,
+                    locationText,
+                    title
+                        ? `title=${title}`
+                        : null,
+                    extra || null,
+                ]
+                    .filter(Boolean)
+                    .join(" · ")
+            );
+        };
 
         try {
             /*
-             * O iframe pode navegar ou reconstruir o documento enquanto a
-             * página inicializa. Por isso cada tentativa consulta novamente
-             * contentDocument e só devolve o contexto quando o formulário
-             * definitivo do Overview realmente estiver disponível.
-             *
-             * Não dependemos apenas do atributo name do form: o Marketplace
-             * já alterou detalhes desse markup sem alterar os ids dos campos.
+             * O Marketplace pode alterar a rota, adicionar barra final ou
+             * navegar internamente antes de montar o formulário. A URL serve
+             * apenas para diagnóstico; o reconhecimento é feito pelos campos
+             * reais do Overview.
              */
             const overviewContext =
                 await waitForCondition(
@@ -2991,6 +3065,12 @@
                             !currentDocument ||
                             !currentDocument.documentElement
                         ) {
+                            reportOverviewWait(
+                                currentDocument,
+                                currentWindow,
+                                "iframe/document ainda indisponível"
+                            );
+
                             return false;
                         }
 
@@ -2998,26 +3078,60 @@
 
                         try {
                             pathname =
-                                currentWindow.location.pathname;
+                                currentWindow.location.pathname ||
+                                "";
                         } catch (_) {
+                            reportOverviewWait(
+                                currentDocument,
+                                currentWindow,
+                                "não foi possível ler location"
+                            );
+
                             return false;
                         }
 
                         if (
-                            pathname !== overviewUrl &&
-                            !pathname.endsWith(
-                                `/plugins/${plugin.id}/edit/overview`
+                            /\/login(?:\/|$)/i.test(
+                                pathname
                             )
                         ) {
-                            return false;
+                            throw new Error(
+                                `Overview iframe redirected to login: ${pathname}`
+                            );
                         }
 
-                        if (
-                            currentDocument.readyState ===
-                            "loading"
-                        ) {
-                            return false;
-                        }
+                        const nameInput =
+                            currentDocument.querySelector(
+                                [
+                                    "#plugin_edit_overview_form_name",
+                                    "[name='plugin_edit_overview_form[name]']",
+                                ].join(",")
+                            );
+
+                        const descriptionInput =
+                            currentDocument.querySelector(
+                                [
+                                    "#plugin_edit_overview_form_shortDescription",
+                                    "[name='plugin_edit_overview_form[shortDescription]']",
+                                ].join(",")
+                            );
+
+                        const iconInput =
+                            currentDocument.querySelector(
+                                [
+                                    "#plugin_edit_overview_form_icon",
+                                    "[name='plugin_edit_overview_form[icon]']",
+                                ].join(",")
+                            );
+
+                        const screenshotsInput =
+                            currentDocument.querySelector(
+                                [
+                                    "#plugin_edit_overview_form_screenshots",
+                                    "[name='plugin_edit_overview_form[screenshots]']",
+                                    "[name='plugin_edit_overview_form[screenshots][]']",
+                                ].join(",")
+                            );
 
                         const form =
                             currentDocument.querySelector(
@@ -3026,13 +3140,46 @@
                             currentDocument.querySelector(
                                 "form[name='plugin_edit_overview_form']"
                             ) ||
-                            currentDocument
-                                .querySelector(
-                                    "#plugin_edit_overview_form_name"
-                                )
-                                ?.closest("form");
+                            currentDocument.querySelector(
+                                `form[action*="/plugins/${plugin.id}/edit/overview"]`
+                            ) ||
+                            nameInput?.closest("form") ||
+                            descriptionInput?.closest("form") ||
+                            iconInput?.closest("form") ||
+                            screenshotsInput?.closest("form");
 
-                        if (!form) {
+                        const foundFields = [
+                            nameInput
+                                ? "name"
+                                : null,
+                            descriptionInput
+                                ? "description"
+                                : null,
+                            iconInput
+                                ? "icon"
+                                : null,
+                            screenshotsInput
+                                ? "screenshots"
+                                : null,
+                        ]
+                            .filter(Boolean)
+                            .join(",");
+
+                        if (
+                            currentDocument.readyState ===
+                            "loading" ||
+                            !form ||
+                            !nameInput ||
+                            !descriptionInput ||
+                            !iconInput ||
+                            !screenshotsInput
+                        ) {
+                            reportOverviewWait(
+                                currentDocument,
+                                currentWindow,
+                                `campos=${foundFields || "nenhum"}`
+                            );
+
                             return false;
                         }
 
@@ -3042,6 +3189,10 @@
                             frameWindow:
                                 currentWindow,
                             form,
+                            nameInput,
+                            descriptionInput,
+                            iconInput,
+                            screenshotsInput,
                         };
                     },
                     "overview form"
@@ -3051,6 +3202,10 @@
                 frameDocument,
                 frameWindow,
                 form,
+                nameInput,
+                descriptionInput,
+                iconInput,
+                screenshotsInput,
             } = overviewContext;
 
             progress(
@@ -3058,37 +3213,6 @@
                 "preenchendo campos",
                 catalog.name || plugin.component
             );
-
-            const nameInput =
-                form.querySelector(
-                    "#plugin_edit_overview_form_name"
-                );
-
-            const descriptionInput =
-                form.querySelector(
-                    "#plugin_edit_overview_form_shortDescription"
-                );
-
-            const iconInput =
-                form.querySelector(
-                    "#plugin_edit_overview_form_icon"
-                );
-
-            const screenshotsInput =
-                form.querySelector(
-                    "#plugin_edit_overview_form_screenshots"
-                );
-
-            if (
-                !nameInput ||
-                !descriptionInput ||
-                !iconInput ||
-                !screenshotsInput
-            ) {
-                throw new Error(
-                    "Overview name/description/icon/screenshots fields were not found."
-                );
-            }
 
             const name =
                 String(
