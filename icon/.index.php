@@ -1,7 +1,7 @@
 <?php
 
 const DEFAULT_WIDTH = 128;
-const MAX_WIDTH = 2048;
+const MAX_WIDTH = 1024;
 const BROWSER_CACHE_SECONDS = 86400;
 
 $width = DEFAULT_WIDTH;
