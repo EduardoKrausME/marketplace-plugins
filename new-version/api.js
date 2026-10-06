@@ -164,54 +164,19 @@
     const sleep = (ms) =>
         new Promise((resolve) => setTimeout(resolve, ms));
 
-    const STEP2_OPENED_STORAGE_KEY =
-        "marketplace-step2-opened";
+    const openedStep2Urls =
+        new Set();
 
     function getOpenedStep2Urls() {
-        try {
-            const value =
-                JSON.parse(
-                    localStorage.getItem(
-                        STEP2_OPENED_STORAGE_KEY
-                    ) ||
-                    "[]"
-                );
-
-            return new Set(
-                Array.isArray(value)
-                    ? value
-                    : []
-            );
-        } catch (_) {
-            return new Set();
-        }
+        return new Set(
+            openedStep2Urls
+        );
     }
 
     function rememberOpenedStep2Url(url) {
-        const opened =
-            getOpenedStep2Urls();
-
-        opened.add(
+        openedStep2Urls.add(
             String(url)
         );
-
-        /*
-         * Evita crescer indefinidamente. Os links mais recentes
-         * são suficientes para marcar as execuções atuais.
-         */
-        const values =
-            [
-                ...opened,
-            ].slice(-500);
-
-        try {
-            localStorage.setItem(
-                STEP2_OPENED_STORAGE_KEY,
-                JSON.stringify(values)
-            );
-        } catch (_) {
-            // O :visited ainda funciona se localStorage estiver indisponível.
-        }
     }
 
     function ensureStep2PopupStyles() {
