@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once "config.php";
 
-const CACHE_TTL = 300;
+const CACHE_TTL = 10 * 60 * 60;
 const ALLOWED_ORIGIN = "https://marketplace.moodle.com";
 const GITHUB_API_VERSION = "2026-03-10";
 
@@ -289,51 +289,73 @@ function getRepositoryInfo(
         $component .
         ".json";
 
-    if (
-        !$force &&
-        is_file($cacheFile)
-    ) {
+    $cached = null;
+
+    if (is_file($cacheFile)) {
         $contents = file_get_contents(
             $cacheFile
         );
 
         if ($contents !== false) {
-            $cached = json_decode(
+            $decoded = json_decode(
                 $contents,
                 true
             );
 
-            if (is_array($cached)) {
-                $fetchedAt =
-                    strtotime(
-                        (string)(
-                            $cached["fetched_at"] ??
-                            ""
-                        )
-                    );
-
-                if (
-                    $fetchedAt !== false &&
-                    $fetchedAt >=
-                        time() - CACHE_TTL
-                ) {
-                    $cached["cached"] = true;
-
-                    return $cached;
-                }
+            if (is_array($decoded)) {
+                $cached = $decoded;
             }
         }
 
-        /*
-         * Cache expirado, sem timestamp ou inválido:
-         * descarta o arquivo e obtém os dados novamente.
-         */
-        @unlink($cacheFile);
+        if ($cached === null) {
+            @unlink($cacheFile);
+        }
+    }
+
+    if (
+        !$force &&
+        $cached !== null
+    ) {
+        $fetchedAt =
+            strtotime(
+                (string)(
+                    $cached["fetched_at"] ??
+                    ""
+                )
+            );
+
+        if (
+            $fetchedAt !== false &&
+            $fetchedAt >=
+                time() - CACHE_TTL
+        ) {
+            $cached["cached"] = true;
+
+            return $cached;
+        }
     }
 
     $releaseUrl = "https://api.github.com/repos/{$owner}/{$repository}/releases/latest";
 
-    $release = githubJsonRequest($releaseUrl);
+    $release = githubJsonRequest(
+        $releaseUrl,
+        true
+    );
+
+    if ($release === null) {
+        if ($cached !== null) {
+            $cached["cached"] = true;
+            $cached["cache_fallback"] =
+                "github_http_403";
+
+            return $cached;
+        }
+
+        throwApiError(
+            "GitHub returned HTTP 403 and no repository cache is available.",
+            502
+        );
+    }
 
     $tag = trim(
         (string)($release["tag_name"] ?? "")
@@ -349,8 +371,24 @@ function getRepositoryInfo(
     $versionPhp = getVersionPhp(
         $owner,
         $repository,
-        $tag
+        $tag,
+        true
     );
+
+    if ($versionPhp === null) {
+        if ($cached !== null) {
+            $cached["cached"] = true;
+            $cached["cache_fallback"] =
+                "github_http_403";
+
+            return $cached;
+        }
+
+        throwApiError(
+            "GitHub returned HTTP 403 and no repository cache is available.",
+            502
+        );
+    }
 
     $parsedVersion = parseVersionPhp(
         $versionPhp
@@ -400,13 +438,19 @@ function getRepositoryInfo(
 function getVersionPhp(
     string $owner,
     string $repository,
-    string $tag
-): string {
+    string $tag,
+    bool $allowForbidden = false
+): ?string {
     $url = "https://api.github.com/repos/{$owner}/{$repository}/contents/version.php?ref={$tag}";
 
     $response = githubJsonRequest(
-        $url
+        $url,
+        $allowForbidden
     );
+
+    if ($response === null) {
+        return null;
+    }
 
     $encoding = strtolower(
         (string)($response["encoding"] ?? "")
@@ -1169,12 +1213,21 @@ function normalizeTag(string $tag): string {
     ) ?? trim($tag);
 }
 
-function githubJsonRequest(string $url): array {
+function githubJsonRequest(
+    string $url,
+    bool $allowForbidden = false
+): ?array {
     $response = githubRequest(
-        $url
+        $url,
+        false,
+        $allowForbidden
     );
 
     if ($response === null) {
+        if ($allowForbidden) {
+            return null;
+        }
+
         throwApiError(
             "GitHub resource was not found.",
             404
@@ -1227,13 +1280,9 @@ function githubJsonRequestOptional(
 
 function githubRequest(
     string $url,
-    bool $allowNotFound = false
+    bool $allowNotFound = false,
+    bool $allowForbidden = false
 ): ?array {
-    $cacheFile =
-        getGithubResponseCacheFile(
-            $url
-        );
-
     $ch = curl_init();
 
     if ($ch === false) {
@@ -1282,19 +1331,11 @@ function githubRequest(
         return null;
     }
 
-    if ($status === 403) {
-        $cached =
-            readGithubResponseCache(
-                $cacheFile
-            );
-
-        if ($cached !== null) {
-            $cached["cached"] = true;
-            $cached["cache_fallback"] =
-                "github_http_403";
-
-            return $cached;
-        }
+    if (
+        $status === 403 &&
+        $allowForbidden
+    ) {
+        return null;
     }
 
     if ($status < 200 || $status >= 300) {
@@ -1327,102 +1368,7 @@ function githubRequest(
         "body" => $body,
     ];
 
-    writeGithubResponseCache(
-        $cacheFile,
-        $response
-    );
-
     return $response;
-}
-
-function getGithubResponseCacheFile(
-    string $url
-): string {
-    return
-        getCacheDirectory() .
-        "/github-response-" .
-        hash(
-            "sha256",
-            $url
-        ) .
-        ".json";
-}
-
-function readGithubResponseCache(
-    string $filename
-): ?array {
-    if (!is_file($filename)) {
-        return null;
-    }
-
-    $contents =
-        file_get_contents(
-            $filename
-        );
-
-    if ($contents === false) {
-        return null;
-    }
-
-    $cached =
-        json_decode(
-            $contents,
-            true
-        );
-
-    if (
-        !is_array($cached) ||
-        !isset($cached["status"]) ||
-        !isset($cached["body"]) ||
-        !is_string($cached["body"])
-    ) {
-        return null;
-    }
-
-    $status =
-        (int)$cached["status"];
-
-    if ($status < 200 || $status >= 300) {
-        return null;
-    }
-
-    return [
-        "status" => $status,
-        "body" => $cached["body"],
-        "cached_at" =>
-            $cached["cached_at"] ??
-            null,
-    ];
-}
-
-function writeGithubResponseCache(
-    string $filename,
-    array $response
-): void {
-    if (
-        !isset($response["status"]) ||
-        !isset($response["body"]) ||
-        !is_string($response["body"])
-    ) {
-        return;
-    }
-
-    $status =
-        (int)$response["status"];
-
-    if ($status < 200 || $status >= 300) {
-        return;
-    }
-
-    writeCache(
-        $filename,
-        [
-            "status" => $status,
-            "body" => $response["body"],
-            "cached_at" =>
-                gmdate("c"),
-        ]
-    );
 }
 
 function githubHeaders(): array {
