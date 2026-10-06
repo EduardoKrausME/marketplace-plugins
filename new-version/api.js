@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.01-step2-github-url";
+        "2026-10-05.02-overview-assets-sync";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1995,6 +1995,200 @@
     }
 
 
+    function getFilePondExistingFiles(
+        input
+    ) {
+        if (!input) {
+            return [];
+        }
+
+        const raw =
+            input.getAttribute(
+                "data-filepond-existing-files-value"
+            ) ||
+            input.dataset
+                ?.filepondExistingFilesValue ||
+            "";
+
+        if (!String(raw).trim()) {
+            return [];
+        }
+
+        try {
+            const files =
+                JSON.parse(raw);
+
+            return Array.isArray(files)
+                ? files
+                : [];
+        } catch (error) {
+            console.warn(
+                "[Marketplace] Não foi possível ler data-filepond-existing-files-value:",
+                error
+            );
+
+            return [];
+        }
+    }
+
+
+    function normalizeAssetFilename(
+        value
+    ) {
+        return String(value || "")
+            .normalize("NFC")
+            .trim()
+            .toLowerCase();
+    }
+
+
+    async function getNormalizedImagePixels(
+        blob
+    ) {
+        const objectUrl =
+            URL.createObjectURL(
+                blob
+            );
+
+        try {
+            const image =
+                new Image();
+
+            await new Promise(
+                (resolve, reject) => {
+                    image.onload =
+                        () => resolve();
+
+                    image.onerror =
+                        () => reject(
+                            new Error(
+                                "Unable to decode image for comparison."
+                            )
+                        );
+
+                    image.src =
+                        objectUrl;
+                }
+            );
+
+            const size =
+                CONFIG.setupImageSize;
+
+            const canvas =
+                document.createElement(
+                    "canvas"
+                );
+
+            canvas.width = size;
+            canvas.height = size;
+
+            const context =
+                canvas.getContext(
+                    "2d",
+                    {
+                        willReadFrequently:
+                            true,
+                    }
+                );
+
+            if (!context) {
+                throw new Error(
+                    "Canvas 2D is unavailable for image comparison."
+                );
+            }
+
+            context.clearRect(
+                0,
+                0,
+                size,
+                size
+            );
+
+            const sourceWidth =
+                image.naturalWidth ||
+                size;
+
+            const sourceHeight =
+                image.naturalHeight ||
+                size;
+
+            const scale =
+                Math.min(
+                    size / sourceWidth,
+                    size / sourceHeight
+                );
+
+            const width =
+                sourceWidth * scale;
+
+            const height =
+                sourceHeight * scale;
+
+            context.drawImage(
+                image,
+                (size - width) / 2,
+                (size - height) / 2,
+                width,
+                height
+            );
+
+            return context
+                .getImageData(
+                    0,
+                    0,
+                    size,
+                    size
+                )
+                .data;
+        } finally {
+            URL.revokeObjectURL(
+                objectUrl
+            );
+        }
+    }
+
+
+    async function imageBlobsHaveSamePixels(
+        first,
+        second
+    ) {
+        const [
+            firstPixels,
+            secondPixels,
+        ] =
+            await Promise.all([
+                getNormalizedImagePixels(
+                    first
+                ),
+                getNormalizedImagePixels(
+                    second
+                ),
+            ]);
+
+        if (
+            firstPixels.length !==
+            secondPixels.length
+        ) {
+            return false;
+        }
+
+        for (
+            let i = 0;
+            i < firstPixels.length;
+            i++
+        ) {
+            if (
+                firstPixels[i] !==
+                secondPixels[i]
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
     async function waitForCondition(
         callback,
         description,
@@ -2653,7 +2847,13 @@
             const frameDocument =
                 iframe.contentDocument;
 
-            if (!frameDocument) {
+            const frameWindow =
+                iframe.contentWindow;
+
+            if (
+                !frameDocument ||
+                !frameWindow
+            ) {
                 throw new Error(
                     "Marketplace overview document is unavailable."
                 );
@@ -2678,12 +2878,24 @@
                     "#plugin_edit_overview_form_shortDescription"
                 );
 
+            const iconInput =
+                form.querySelector(
+                    "#plugin_edit_overview_form_icon"
+                );
+
+            const screenshotsInput =
+                form.querySelector(
+                    "#plugin_edit_overview_form_screenshots"
+                );
+
             if (
                 !nameInput ||
-                !descriptionInput
+                !descriptionInput ||
+                !iconInput ||
+                !screenshotsInput
             ) {
                 throw new Error(
-                    "Overview name/description fields were not found."
+                    "Overview name/description/icon/screenshots fields were not found."
                 );
             }
 
@@ -2735,15 +2947,76 @@
                 name
             );
 
-            /*
-             * Description, icon e screenshots só são preenchidos no primeiro
-             * setup. O campo Screenshots é limpo antes para remover qualquer
-             * ícone/imagem que tenha sido colocado nele pelo fluxo antigo.
-             */
             if (shouldPopulateOverview) {
                 setFormValue(
                     descriptionInput,
                     shortDescription
+                );
+            }
+
+            /*
+             * O ícone é conferido pelo conteúdo visual e não pelo nome.
+             * O Marketplace normalmente preserva originalName como icon.png,
+             * portanto comparar somente nome/tamanho não detectaria troca de arte.
+             */
+            const existingIconFiles =
+                getFilePondExistingFiles(
+                    iconInput
+                );
+
+            const existingIcon =
+                existingIconFiles[0] ||
+                null;
+
+            let iconUpdated =
+                !existingIcon?.url;
+
+            if (existingIcon?.url) {
+                try {
+                    const currentIconUrl =
+                        new URL(
+                            existingIcon.url,
+                            frameWindow.location.origin
+                        ).toString();
+
+                    const currentIconResponse =
+                        await marketplaceFetch(
+                            currentIconUrl,
+                            {
+                                cache:
+                                    "no-store",
+                            }
+                        );
+
+                    const currentIconBlob =
+                        await currentIconResponse
+                            .blob();
+
+                    iconUpdated =
+                        !await imageBlobsHaveSamePixels(
+                            currentIconBlob,
+                            setupIcon.file
+                        );
+                } catch (error) {
+                    /*
+                     * Se não for possível conferir o atual, é mais seguro
+                     * enviar o ícone do catálogo do que manter um ícone
+                     * potencialmente desatualizado.
+                     */
+                    console.warn(
+                        `[Marketplace] Falha comparando o ícone atual de ${plugin.component}; o ícone será reenviado.`,
+                        error
+                    );
+
+                    iconUpdated =
+                        true;
+                }
+            }
+
+            if (iconUpdated) {
+                await clearFilePondFiles(
+                    iframe,
+                    "plugin_edit_overview_form_icon"
                 );
 
                 await setFilePondFile(
@@ -2752,24 +3025,112 @@
                     "plugin_edit_overview_form[icon]",
                     setupIcon.file
                 );
+            }
 
-                await clearFilePondFiles(
-                    iframe,
-                    "plugin_edit_overview_form_screenshots"
+            /*
+             * Para screenshots, o próprio Marketplace informa o nome original
+             * em data-filepond-existing-files-value. Mantemos tudo que já está
+             * lá e enviamos somente os arquivos do catálogo cujo nome ainda
+             * não existe.
+             */
+            const existingScreenshotFiles =
+                getFilePondExistingFiles(
+                    screenshotsInput
                 );
 
-                for (
-                    const screenshot
-                    of setupScreenshots
-                ) {
-                    await setFilePondFile(
-                        iframe,
-                        "plugin_edit_overview_form_screenshots",
-                        "plugin_edit_overview_form[screenshots][]",
-                        screenshot.file
-                    );
-                }
+            const existingScreenshotNames =
+                new Set(
+                    existingScreenshotFiles
+                        .map(
+                            (item) =>
+                                normalizeAssetFilename(
+                                    item?.originalName ||
+                                    item?.filename
+                                )
+                        )
+                        .filter(Boolean)
+                );
+
+            const missingScreenshots =
+                setupScreenshots.filter(
+                    (screenshot) =>
+                        !existingScreenshotNames.has(
+                            normalizeAssetFilename(
+                                screenshot.filename ||
+                                screenshot.file?.name
+                            )
+                        )
+                );
+
+            const configuredMaxFiles =
+                Number(
+                    screenshotsInput.getAttribute(
+                        "data-filepond-max-files-value"
+                    )
+                );
+
+            const maxFiles =
+                Number.isFinite(
+                    configuredMaxFiles
+                ) &&
+                configuredMaxFiles > 0
+                    ? configuredMaxFiles
+                    : 10;
+
+            const availableSlots =
+                Math.max(
+                    0,
+                    maxFiles -
+                    existingScreenshotFiles.length
+                );
+
+            const screenshotsToUpload =
+                missingScreenshots.slice(
+                    0,
+                    availableSlots
+                );
+
+            const skippedScreenshots =
+                missingScreenshots.slice(
+                    availableSlots
+                );
+
+            for (
+                const screenshot
+                of screenshotsToUpload
+            ) {
+                await setFilePondFile(
+                    iframe,
+                    "plugin_edit_overview_form_screenshots",
+                    "plugin_edit_overview_form[screenshots][]",
+                    screenshot.file
+                );
             }
+
+            console.log(
+                `[Marketplace] Assets do Overview: ${plugin.component}`,
+                {
+                    iconUpdated,
+                    currentIcon:
+                        existingIcon?.originalName ||
+                        existingIcon?.filename ||
+                        null,
+                    existingScreenshots:
+                        [
+                            ...existingScreenshotNames,
+                        ],
+                    uploadedScreenshots:
+                        screenshotsToUpload.map(
+                            (screenshot) =>
+                                screenshot.filename
+                        ),
+                    skippedScreenshots:
+                        skippedScreenshots.map(
+                            (screenshot) =>
+                                screenshot.filename
+                        ),
+                }
+            );
 
             const submit =
                 form.querySelector(
@@ -2836,23 +3197,35 @@
                 shortDescription,
                 populatedOverview:
                     shouldPopulateOverview,
+                iconUpdated,
                 iconPath:
-                    shouldPopulateOverview
+                    iconUpdated
                         ? setupIcon.path
                         : null,
+                existingScreenshotNames:
+                    [
+                        ...existingScreenshotNames,
+                    ],
                 screenshotPaths:
-                    shouldPopulateOverview
-                        ? setupScreenshots.map(
-                            (screenshot) =>
-                                screenshot.path
-                        )
-                        : [],
+                    screenshotsToUpload.map(
+                        (screenshot) =>
+                            screenshot.path
+                    ),
+                uploadedScreenshotNames:
+                    screenshotsToUpload.map(
+                        (screenshot) =>
+                            screenshot.filename
+                    ),
+                skippedScreenshotNames:
+                    skippedScreenshots.map(
+                        (screenshot) =>
+                            screenshot.filename
+                    ),
             };
         } finally {
             iframe.remove();
         }
     }
-
 
     async function submitMarketplaceSupport(
         plugin,
@@ -3148,10 +3521,27 @@
 
         status.set(
             "Página 1 configurada",
-            overviewResult.populatedOverview
-                ? `${overviewResult.name} · description do plugins.json · ícone no campo Icon · ${setupScreenshots.length} screenshot(s) reais enviados · Save and next`
-                : `${overviewResult.name} · description existente preservada · ícone e screenshots não alterados · Save and next`,
-            "success"
+            [
+                overviewResult.name,
+                overviewResult.populatedOverview
+                    ? "description do plugins.json"
+                    : "description existente preservada",
+                overviewResult.iconUpdated
+                    ? "ícone atualizado"
+                    : "ícone atual já é igual",
+                overviewResult.uploadedScreenshotNames.length
+                    ? `${overviewResult.uploadedScreenshotNames.length} screenshot(s) adicionada(s): ${overviewResult.uploadedScreenshotNames.join(", ")}`
+                    : "nenhuma screenshot nova faltando",
+                overviewResult.skippedScreenshotNames.length
+                    ? `limite do Marketplace impediu: ${overviewResult.skippedScreenshotNames.join(", ")}`
+                    : null,
+                "Save and next",
+            ]
+                .filter(Boolean)
+                .join(" · "),
+            overviewResult.skippedScreenshotNames.length
+                ? "warning"
+                : "success"
         );
 
         status.set(
