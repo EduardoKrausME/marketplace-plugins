@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.06-description-html-sync";
+        "2026-10-05.07-filepond-description-fixes";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -2044,6 +2044,51 @@
     }
 
 
+    function findFilePondBrowser(
+        root
+    ) {
+        if (!root) {
+            return null;
+        }
+
+        /*
+         * No Marketplace, o próprio elemento com o id do campo pode virar o
+         * input.filepond--browser. querySelector() procura apenas descendentes
+         * e, nesse caso, nunca encontrava o próprio input.
+         */
+        if (
+            root.matches?.(
+                "input.filepond--browser[type='file']"
+            )
+        ) {
+            return root;
+        }
+
+        return root.querySelector?.(
+            "input.filepond--browser[type='file']"
+        ) || null;
+    }
+
+
+    function getFilePondScope(
+        root,
+        browser
+    ) {
+        return (
+            browser?.closest?.(
+                ".filepond--root"
+            ) ||
+            root?.closest?.(
+                ".filepond--root"
+            ) ||
+            root?.querySelector?.(
+                ".filepond--root"
+            ) ||
+            root
+        );
+    }
+
+
     async function waitForCondition(
         callback,
         description,
@@ -2223,10 +2268,16 @@
         const browser =
             await waitForCondition(
                 () =>
-                    root.querySelector(
-                        "input.filepond--browser[type='file']"
+                    findFilePondBrowser(
+                        root
                     ),
                 `${rootId} file input`
+            );
+
+        const pondScope =
+            getFilePondScope(
+                root,
+                browser
             );
 
         const FilePondApi =
@@ -2245,14 +2296,15 @@
                     ".filepond--root"
                 ),
                 root,
-                root.querySelector(
-                    ".filepond--root"
-                ),
-                root.querySelector(
+                pondScope,
+                pondScope?.querySelector?.(
                     ".filepond"
                 ),
-                ...root.querySelectorAll(
-                    "input[type='file']"
+                ...(
+                    pondScope?.querySelectorAll?.(
+                        "input[type='file']"
+                    ) ||
+                    []
                 ),
             ].filter(Boolean);
 
@@ -2302,7 +2354,7 @@
              */
             while (true) {
                 const button =
-                    root.querySelector(
+                    pondScope?.querySelector?.(
                         ".filepond--action-remove-item"
                     );
 
@@ -2320,7 +2372,7 @@
         if (removed) {
             await waitForCondition(
                 () =>
-                    !root.querySelector(
+                    !pondScope?.querySelector?.(
                         "[data-filepond-item-state]"
                     ),
                 `${rootId} clear`
@@ -2382,10 +2434,16 @@
         const browser =
             await waitForCondition(
                 () =>
-                    root.querySelector(
-                        "input.filepond--browser[type='file']"
+                    findFilePondBrowser(
+                        root
                     ),
                 `${rootId} file input`
+            );
+
+        const pondScope =
+            getFilePondScope(
+                root,
+                browser
             );
 
         const FilePondApi =
@@ -2404,14 +2462,15 @@
                     ".filepond--root"
                 ),
                 root,
-                root.querySelector(
-                    ".filepond--root"
-                ),
-                root.querySelector(
+                pondScope,
+                pondScope?.querySelector?.(
                     ".filepond"
                 ),
-                ...root.querySelectorAll(
-                    "input[type='file']"
+                ...(
+                    pondScope?.querySelectorAll?.(
+                        "input[type='file']"
+                    ) ||
+                    []
                 ),
             ].filter(Boolean);
 
@@ -2542,15 +2601,24 @@
         const browser =
             await waitForCondition(
                 () =>
-                    root.querySelector(
-                        "input.filepond--browser[type='file']"
+                    findFilePondBrowser(
+                        root
                     ),
                 `${rootId} file input`
             );
 
+        const pondScope =
+            getFilePondScope(
+                root,
+                browser
+            );
+
         const hiddenInputs = () => [
-            ...root.querySelectorAll(
-                "input[type='hidden']"
+            ...(
+                pondScope?.querySelectorAll?.(
+                    "input[type='hidden']"
+                ) ||
+                []
             ),
         ];
 
@@ -2610,14 +2678,15 @@
                     ".filepond--root"
                 ),
                 root,
-                root.querySelector(
-                    ".filepond--root"
-                ),
-                root.querySelector(
+                pondScope,
+                pondScope?.querySelector?.(
                     ".filepond"
                 ),
-                ...root.querySelectorAll(
-                    "input[type='file']"
+                ...(
+                    pondScope?.querySelectorAll?.(
+                        "input[type='file']"
+                    ) ||
+                    []
                 ),
             ].filter(Boolean);
 
@@ -2724,7 +2793,7 @@
         await waitForCondition(
             () => {
                 const item =
-                    root.querySelector(
+                    pondScope?.querySelector?.(
                         "[data-filepond-item-state]"
                     );
 
@@ -2756,8 +2825,11 @@
                 }
 
                 const exactValues = [
-                    ...root.querySelectorAll(
-                        `input[type='hidden'][name="${hiddenName}"]`
+                    ...(
+                        pondScope?.querySelectorAll?.(
+                            `input[type='hidden'][name="${hiddenName}"]`
+                        ) ||
+                        []
                     ),
                 ]
                     .map(
@@ -3567,6 +3639,162 @@
     }
 
 
+    function normalizeDescriptionWhitespace(
+        value
+    ) {
+        return String(value || "")
+            .replace(/\u00a0/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+
+    function normalizeDescriptionUrl(
+        value
+    ) {
+        const raw =
+            String(value || "").trim();
+
+        if (!raw) {
+            return "";
+        }
+
+        try {
+            const parsed =
+                new URL(
+                    raw,
+                    location.origin
+                );
+
+            if (
+                parsed.origin ===
+                location.origin
+            ) {
+                return (
+                    parsed.pathname +
+                    parsed.search +
+                    parsed.hash
+                );
+            }
+
+            return parsed.toString();
+        } catch (_) {
+            return raw;
+        }
+    }
+
+
+    function getDescriptionSemanticSignature(
+        html
+    ) {
+        const documentObject =
+            new DOMParser()
+                .parseFromString(
+                    `<div id="marketplace-description-signature">${String(html || "")}</div>`,
+                    "text/html"
+                );
+
+        const root =
+            documentObject.getElementById(
+                "marketplace-description-signature"
+            );
+
+        if (!root) {
+            return {
+                text: "",
+                links: [],
+                images: [],
+            };
+        }
+
+        return {
+            text:
+                normalizeDescriptionWhitespace(
+                    root.textContent
+                ),
+
+            links:
+                [
+                    ...root.querySelectorAll(
+                        "a[href]"
+                    ),
+                ]
+                    .map(
+                        (element) =>
+                            normalizeDescriptionUrl(
+                                element.getAttribute(
+                                    "href"
+                                )
+                            )
+                    )
+                    .filter(Boolean)
+                    .sort(),
+
+            images:
+                [
+                    ...root.querySelectorAll(
+                        "img[src]"
+                    ),
+                ]
+                    .map(
+                        (element) =>
+                            normalizeDescriptionUrl(
+                                element.getAttribute(
+                                    "src"
+                                )
+                            )
+                    )
+                    .filter(Boolean)
+                    .sort(),
+        };
+    }
+
+
+    function isDescriptionSemanticallyPersisted(
+        expectedHtml,
+        actualHtml
+    ) {
+        const expected =
+            getDescriptionSemanticSignature(
+                expectedHtml
+            );
+
+        const actual =
+            getDescriptionSemanticSignature(
+                actualHtml
+            );
+
+        if (
+            expected.text !==
+            actual.text
+        ) {
+            return false;
+        }
+
+        if (
+            expected.links.length !==
+                actual.links.length ||
+            expected.images.length !==
+                actual.images.length
+        ) {
+            return false;
+        }
+
+        return (
+            expected.links.every(
+                (value, index) =>
+                    value ===
+                    actual.links[index]
+            ) &&
+            expected.images.every(
+                (value, index) =>
+                    value ===
+                    actual.images[index]
+            )
+        );
+    }
+
+
     async function submitMarketplaceDescription(
         plugin,
         catalog
@@ -3705,18 +3933,40 @@
         }
 
         /*
-         * Quando permanece na mesma página, confirma pelo valor retornado
-         * pelo textarea que o HTML realmente foi persistido.
+         * O Marketplace normaliza o HTML ao salvar: pode alterar espaços,
+         * aspas, fechamento de tags e atributos sem mudar o conteúdo.
+         * Validamos texto, links e imagens em vez de exigir igualdade
+         * byte a byte entre o HTML enviado e o HTML devolvido.
          */
         if (
             resultTextarea &&
-            String(
+            !isDescriptionSemanticallyPersisted(
+                html,
                 resultTextarea.value ||
-                ""
-            ) !== html
+                    ""
+            )
         ) {
+            const expectedSignature =
+                getDescriptionSemanticSignature(
+                    html
+                );
+
+            const actualSignature =
+                getDescriptionSemanticSignature(
+                    resultTextarea.value ||
+                    ""
+                );
+
             throw new Error(
-                "Description was not persisted with the expected HTML."
+                [
+                    "Description was not persisted with the expected content.",
+                    `expected text=${expectedSignature.text.length}`,
+                    `actual text=${actualSignature.text.length}`,
+                    `expected links=${expectedSignature.links.length}`,
+                    `actual links=${actualSignature.links.length}`,
+                    `expected images=${expectedSignature.images.length}`,
+                    `actual images=${actualSignature.images.length}`,
+                ].join(" ")
             );
         }
 
