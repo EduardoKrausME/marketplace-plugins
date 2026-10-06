@@ -4,7 +4,7 @@
     const CONFIG = {
         apiUrl: "https://eduardokraus.com/marketplace-plugins/new-version/api.php",
         githubOwner: "EduardoKrausME",
-        setupPageTimeoutMs: 45000,
+        setupPageTimeoutMs: 4500000,
         setupImageSize: 512,
         autoUpload: true,
         concurrency: 2,
