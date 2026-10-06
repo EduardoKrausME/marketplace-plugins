@@ -944,96 +944,6 @@
     "iconUrl": "/marketplace-plugins/icon/theme_eadflix/icon.png"
   },
   {
-    "id": 3324,
-    "name": "Panda Video",
-    "component": "mod_pandavideo",
-    "repository_url": "https://github.com/panda-moodle/moodle-mod_pandavideo",
-    "category": "video",
-    "description": "Add Panda Video as a native Moodle activity with provider playback, secure URL/token handling and activity completion support.",
-    "moodle": "3.11+",
-    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<div class=\"row align-items-center g-4\">\n  <div class=\"col-12 col-lg-7\">\n    <div class=\"d-flex flex-wrap gap-2 mb-3\"><span class=\"badge text-bg-primary\">Video activity</span><span class=\"badge text-bg-light border\">Panda Video</span></div>\n    <h1 class=\"display-5 fw-bold mb-3\">Panda Video</h1>\n    <p class=\"lead mb-4\">Use Panda Video as an actual Moodle activity instead of treating every course video as a generic external embed.</p>\n    <p class=\"text-body-secondary mb-0\">Teachers add a Panda-hosted video to the course structure, while the plugin handles provider playback, API-key integration, secure URL/token patterns and Moodle activity behavior.</p>\n  </div>\n  <div class=\"col-12 col-lg-5\">\n    <div class=\"card border h-100\"><div class=\"card-body p-4\">\n      <div class=\"fw-semibold mb-3\">Native course behavior</div>\n      <ul class=\"mb-0\">\n        <li>Dedicated Panda Video activity type.</li>\n        <li>Panda Video player inside the course.</li>\n        <li>Secure URL/token support.</li>\n        <li>Activity completion compatibility.</li>\n        <li>Activity summary and display settings.</li>\n      </ul>\n    </div></div>\n  </div>\n</div>\n<div class=\"row g-4 mt-4\">\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">Course structure</div><div class=\"small text-body-secondary\">The video appears as a normal Moodle activity, so teachers can position and manage it alongside the rest of the learning sequence.</div></div></div></div>\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">Provider integration</div><div class=\"small text-body-secondary\">The site API key is configured once in the activity plugin and reused by the Panda integration instead of requiring authors to build embed code manually.</div></div></div></div>\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">Part of a plugin family</div><div class=\"small text-body-secondary\">Use <code>repository_pandavideo</code> for library selection and <code>media_pandavideo</code> when the goal is automatic embedding inside Moodle text content.</div></div></div></div>\n</div>\n</div></div></div>",
-    "screenshots": [
-      {
-        "url": "/marketplace-plugins/screenshots/mod_pandavideo/new-1.png"
-      },
-      {
-        "url": "/marketplace-plugins/screenshots/mod_pandavideo/old-1.png",
-        "id": 11212,
-        "position": 0,
-        "filename": "old-1.png",
-        "originalName": "Screenshot 2025-07-20 at 11.27.57.png",
-        "size": 361796
-      }
-    ],
-    "iconUrl": "/marketplace-plugins/icon/mod_pandavideo/icon.svg"
-  },
-  {
-    "id": 3325,
-    "name": "Panda Video Filter Player",
-    "component": "media_pandavideo",
-    "repository_url": "https://github.com/panda-moodle/moodle-media_pandavideo",
-    "category": "video",
-    "description": "Recognize Panda Video links in Moodle content and automatically render them as embedded Panda players through the standard media workflow.",
-    "moodle": "3.11+",
-    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<div class=\"row align-items-center g-4\">\n  <div class=\"col-12 col-lg-7\">\n    <div class=\"d-flex flex-wrap gap-2 mb-3\"><span class=\"badge text-bg-primary\">Media player</span><span class=\"badge text-bg-light border\">Panda Video</span></div>\n    <h1 class=\"display-5 fw-bold mb-3\">Panda Video Filter Player</h1>\n    <p class=\"lead mb-4\">Paste a compatible Panda Video reference into Moodle content and let the media layer turn it into the embedded player automatically.</p>\n    <p class=\"text-body-secondary mb-0\">The plugin is designed for Moodle text content such as pages, books, labels, forum posts and other editor-driven areas where authors want the Panda player without hand-writing embed code.</p>\n  </div>\n  <div class=\"col-12 col-lg-5\">\n    <div class=\"card border h-100\"><div class=\"card-body p-4\">\n      <div class=\"fw-semibold mb-3\">Part of the Panda integration</div>\n      <ul class=\"mb-0\">\n        <li>Detect compatible Panda Video links.</li>\n        <li>Render the Panda player during Moodle content output.</li>\n        <li>Work with Moodle's normal editor/media workflow.</li>\n        <li>Integrate with the Panda Video repository plugin family.</li>\n      </ul>\n    </div></div>\n  </div>\n</div>\n<div class=\"row g-4 mt-4\">\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">Automatic embed</div><div class=\"small text-body-secondary\">Authors work with a media reference while the plugin handles player rendering at display time.</div></div></div></div>\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">Reusable in text content</div><div class=\"small text-body-secondary\">The same media workflow can be used across Moodle areas that support the configured media player.</div></div></div></div>\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">No copied embed markup</div><div class=\"small text-body-secondary\">Teachers do not need to paste provider HTML or maintain custom iframe code inside every resource.</div></div></div></div>\n</div>\n</div></div></div>",
-    "screenshots": [
-      {
-        "url": "/marketplace-plugins/screenshots/media_pandavideo/new-1.png"
-      },
-      {
-        "url": "/marketplace-plugins/screenshots/media_pandavideo/old-1.png",
-        "id": 11213,
-        "position": 0,
-        "filename": "old-1.png",
-        "originalName": "Screenshot 2025-07-20 at 16.05.30.png",
-        "size": 555625
-      },
-      {
-        "url": "/marketplace-plugins/screenshots/media_pandavideo/old-2.png",
-        "id": 11214,
-        "position": 0,
-        "filename": "old-2.png",
-        "originalName": "Screenshot 2025-07-20 at 16.05.29.png",
-        "size": 145542
-      }
-    ],
-    "iconUrl": "/marketplace-plugins/icon/media_pandavideo/icon.svg",
-    "branch": "main"
-  },
-  {
-    "id": 3326,
-    "name": "Panda Video Repository",
-    "component": "repository_pandavideo",
-    "repository_url": "https://github.com/panda-moodle/moodle-repository_pandavideo",
-    "category": "integrations",
-    "description": "Browse the Panda Video library from Moodle's repository picker and insert selected videos into Moodle content without copying URLs manually.",
-    "moodle": "3.11+",
-    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<div class=\"row align-items-center g-4\">\n  <div class=\"col-12 col-lg-7\">\n    <div class=\"d-flex flex-wrap gap-2 mb-3\"><span class=\"badge text-bg-primary\">Moodle repository</span><span class=\"badge text-bg-light border\">Panda Video library</span></div>\n    <h1 class=\"display-5 fw-bold mb-3\">Panda Video Repository</h1>\n    <p class=\"lead mb-4\">Browse your Panda Video account from Moodle's repository picker and insert a selected video directly where you are authoring content.</p>\n    <p class=\"text-body-secondary mb-0\">The repository removes the copy-URL-switch-window-paste cycle: authors select a library item through Moodle, and the media integration takes care of displaying the player.</p>\n  </div>\n  <div class=\"col-12 col-lg-5\">\n    <div class=\"card border h-100\"><div class=\"card-body p-4\">\n      <div class=\"fw-semibold mb-3\">Panda integration flow</div>\n      <ol class=\"mb-0\">\n        <li>Configure the Panda API key in <code>mod_pandavideo</code>.</li>\n        <li>Enable the Panda Video repository.</li>\n        <li>Browse the Panda library from Moodle's picker.</li>\n        <li>Select a video.</li>\n        <li>Let <code>media_pandavideo</code> render the compatible player in content.</li>\n      </ol>\n    </div></div>\n  </div>\n</div>\n<div class=\"row g-4 mt-4\">\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">Library selection</div><div class=\"small text-body-secondary\">Search and choose Panda-hosted content where Moodle authors already expect external repositories to appear.</div></div></div></div>\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">No manual embed code</div><div class=\"small text-body-secondary\">The selected reference can move through the normal editor workflow rather than asking every teacher to understand provider embed markup.</div></div></div></div>\n  <div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><div class=\"fw-semibold mb-2\">Shared credentials</div><div class=\"small text-body-secondary\">The repository uses the Panda integration configured through <code>mod_pandavideo</code> instead of maintaining a second independent API-key setup.</div></div></div></div>\n</div>\n</div></div></div>",
-    "screenshots": [
-      {
-        "url": "/marketplace-plugins/screenshots/repository_pandavideo/new-1.png"
-      },
-      {
-        "url": "/marketplace-plugins/screenshots/repository_pandavideo/old-1.png",
-        "id": 11215,
-        "position": 0,
-        "filename": "old-1.png",
-        "originalName": "Screenshot 2025-07-21 at 07.26.48.png",
-        "size": 112622
-      },
-      {
-        "url": "/marketplace-plugins/screenshots/repository_pandavideo/old-2.png",
-        "id": 11216,
-        "position": 0,
-        "filename": "old-2.png",
-        "originalName": "Screenshot 2025-07-21 at 07.27.06.png",
-        "size": 85108
-      }
-    ],
-    "iconUrl": "/marketplace-plugins/icon/repository_pandavideo/icon.svg",
-    "branch": "main"
-  },
-  {
     "id": 3341,
     "name": "Ead Training",
     "component": "theme_eadtraining",
@@ -1427,7 +1337,7 @@
         "url": "/marketplace-plugins/screenshots/local_kopere_recert/new-2.png"
       }
     ],
-    "iconUrl": "/marketplace-plugins/icon/local_kopere_recert/icon.svg"
+    "iconUrl": "/marketplace-plugins/icon/local_kopere_recert/icon.png"
   },
   {
     "id": 3639,
