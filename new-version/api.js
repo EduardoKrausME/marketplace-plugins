@@ -15,7 +15,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.02-overview-assets-sync";
+        "2026-10-05.03-always-replace-icon";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -2955,77 +2955,23 @@
             }
 
             /*
-             * O ícone é conferido pelo conteúdo visual e não pelo nome.
-             * O Marketplace normalmente preserva originalName como icon.png,
-             * portanto comparar somente nome/tamanho não detectaria troca de arte.
+             * O ícone é sempre substituído pelo arquivo atual do catálogo.
+             * Não compara nome, tamanho, hash ou pixels com o Marketplace.
              */
-            const existingIconFiles =
-                getFilePondExistingFiles(
-                    iconInput
-                );
+            await clearFilePondFiles(
+                iframe,
+                "plugin_edit_overview_form_icon"
+            );
 
-            const existingIcon =
-                existingIconFiles[0] ||
-                null;
+            await setFilePondFile(
+                iframe,
+                "plugin_edit_overview_form_icon",
+                "plugin_edit_overview_form[icon]",
+                setupIcon.file
+            );
 
-            let iconUpdated =
-                !existingIcon?.url;
-
-            if (existingIcon?.url) {
-                try {
-                    const currentIconUrl =
-                        new URL(
-                            existingIcon.url,
-                            frameWindow.location.origin
-                        ).toString();
-
-                    const currentIconResponse =
-                        await marketplaceFetch(
-                            currentIconUrl,
-                            {
-                                cache:
-                                    "no-store",
-                            }
-                        );
-
-                    const currentIconBlob =
-                        await currentIconResponse
-                            .blob();
-
-                    iconUpdated =
-                        !await imageBlobsHaveSamePixels(
-                            currentIconBlob,
-                            setupIcon.file
-                        );
-                } catch (error) {
-                    /*
-                     * Se não for possível conferir o atual, é mais seguro
-                     * enviar o ícone do catálogo do que manter um ícone
-                     * potencialmente desatualizado.
-                     */
-                    console.warn(
-                        `[Marketplace] Falha comparando o ícone atual de ${plugin.component}; o ícone será reenviado.`,
-                        error
-                    );
-
-                    iconUpdated =
-                        true;
-                }
-            }
-
-            if (iconUpdated) {
-                await clearFilePondFiles(
-                    iframe,
-                    "plugin_edit_overview_form_icon"
-                );
-
-                await setFilePondFile(
-                    iframe,
-                    "plugin_edit_overview_form_icon",
-                    "plugin_edit_overview_form[icon]",
-                    setupIcon.file
-                );
-            }
+            const iconUpdated =
+                true;
 
             /*
              * Para screenshots, o próprio Marketplace informa o nome original
@@ -3111,10 +3057,6 @@
                 `[Marketplace] Assets do Overview: ${plugin.component}`,
                 {
                     iconUpdated,
-                    currentIcon:
-                        existingIcon?.originalName ||
-                        existingIcon?.filename ||
-                        null,
                     existingScreenshots:
                         [
                             ...existingScreenshotNames,
@@ -3526,9 +3468,7 @@
                 overviewResult.populatedOverview
                     ? "description do plugins.json"
                     : "description existente preservada",
-                overviewResult.iconUpdated
-                    ? "ícone atualizado"
-                    : "ícone atual já é igual",
+                "ícone substituído",
                 overviewResult.uploadedScreenshotNames.length
                     ? `${overviewResult.uploadedScreenshotNames.length} screenshot(s) adicionada(s): ${overviewResult.uploadedScreenshotNames.join(", ")}`
                     : "nenhuma screenshot nova faltando",
