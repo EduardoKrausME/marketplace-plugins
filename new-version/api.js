@@ -3550,10 +3550,10 @@
             `https://eduardokraus.com/marketplace-plugins/plugin/${component}`;
 
         const notice = [
-            "<mark>",
-            "Como toda a formatação foi comprometida e as imagens foram perdidos, acesse a visualização melhor em: ",
-            `<a href="${publicUrl}">${publicUrl}</a>`,
-            "</mark>",
+            "<p><mark>",
+            "As the store migration was not carried out properly, part of the formatting was compromised and the images were lost. For a complete and properly formatted view, please visit: ",
+            `<a href="${publicUrl}" target="_blank">${publicUrl}</a>`,
+            "</mark></p>",
         ].join("\n");
 
         return (
