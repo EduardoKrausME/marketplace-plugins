@@ -1390,6 +1390,7 @@
 
     async function apiInfo(
         repository,
+        component,
         force = false
     ) {
         const url =
@@ -1405,6 +1406,11 @@
         url.searchParams.set(
             "repo",
             repository
+        );
+
+        url.searchParams.set(
+            "component",
+            component
         );
 
         if (force) {
@@ -1481,6 +1487,11 @@
         url.searchParams.set(
             "tag",
             tag
+        );
+
+        url.searchParams.set(
+            "component",
+            component
         );
 
         const response =
@@ -4792,6 +4803,7 @@
         const repositoryInfo =
             await apiInfo(
                 repository.fullName,
+                plugin.component,
                 plugin.needsChanges
             );
 
