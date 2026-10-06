@@ -645,25 +645,27 @@ function getCatalogScreenshotFiles(
     );
 
     /*
-     * Os screenshots novos seguem new-1.png, new-2.png...
-     * Quando eles existem, são os arquivos usados no novo cadastro.
-     * Isso evita reenviar imagens antigas ou assets auxiliares da pasta.
+     * Os screenshots mantidos pelo catálogo usam old-N e new-N.
+     * Ambos fazem parte da galeria: os old continuam válidos e os new
+     * acrescentam/substituem imagens novas sem fazer os antigos sumirem.
+     *
+     * Outros arquivos auxiliares da pasta, como Untitled.gif, não entram.
      */
-    $newFiles =
+    $catalogFiles =
         array_values(
             array_filter(
                 $files,
                 static fn(string $filename): bool =>
                     preg_match(
-                        "/^new-\d+\.(png|jpe?g|webp|gif)$/i",
+                        "/^(?:old|new)-\d+\.(png|jpe?g|webp|gif)$/i",
                         $filename
                     ) === 1
             )
         );
 
     return
-        $newFiles !== []
-            ? $newFiles
+        $catalogFiles !== []
+            ? $catalogFiles
             : $files;
 }
 
