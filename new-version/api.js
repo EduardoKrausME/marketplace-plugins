@@ -12,7 +12,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-05.08-php-only-cache";
+        "2026-10-05.09-overview-iframe-ready";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -2770,20 +2770,64 @@
             );
 
         try {
+            /*
+             * O evento load do iframe pode ocorrer antes de contentDocument
+             * estar utilizável (ou ainda refletir about:blank). Não guardamos
+             * uma referência antecipada ao Document porque a navegação troca
+             * esse objeto. Esperamos o documento definitivo do Overview.
+             */
             const frameDocument =
-                iframe.contentDocument;
+                await waitForCondition(
+                    () => {
+                        const currentWindow =
+                            iframe.contentWindow;
+
+                        const currentDocument =
+                            iframe.contentDocument;
+
+                        if (
+                            !currentWindow ||
+                            !currentDocument ||
+                            !currentDocument.documentElement
+                        ) {
+                            return false;
+                        }
+
+                        let pathname = "";
+
+                        try {
+                            pathname =
+                                currentWindow.location.pathname;
+                        } catch (_) {
+                            return false;
+                        }
+
+                        if (
+                            pathname !== overviewUrl &&
+                            !pathname.endsWith(
+                                `/plugins/${plugin.id}/edit/overview`
+                            )
+                        ) {
+                            return false;
+                        }
+
+                        if (
+                            currentDocument.readyState ===
+                            "loading"
+                        ) {
+                            return false;
+                        }
+
+                        return currentDocument;
+                    },
+                    "marketplace overview document"
+                );
 
             const frameWindow =
-                iframe.contentWindow;
-
-            if (
-                !frameDocument ||
-                !frameWindow
-            ) {
-                throw new Error(
-                    "Marketplace overview document is unavailable."
+                await waitForCondition(
+                    () => iframe.contentWindow,
+                    "marketplace overview window"
                 );
-            }
 
             const form =
                 await waitForCondition(
