@@ -12,7 +12,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-06.01-hidden-overview-filepond";
+        "2026-10-06.02-live-step2-popup";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -165,132 +165,320 @@
     const sleep = (ms) =>
         new Promise((resolve) => setTimeout(resolve, ms));
 
+    const STEP2_OPENED_STORAGE_KEY =
+        "marketplace-step2-opened";
+
+    function getOpenedStep2Urls() {
+        try {
+            const value =
+                JSON.parse(
+                    localStorage.getItem(
+                        STEP2_OPENED_STORAGE_KEY
+                    ) ||
+                    "[]"
+                );
+
+            return new Set(
+                Array.isArray(value)
+                    ? value
+                    : []
+            );
+        } catch (_) {
+            return new Set();
+        }
+    }
+
+    function rememberOpenedStep2Url(url) {
+        const opened =
+            getOpenedStep2Urls();
+
+        opened.add(
+            String(url)
+        );
+
+        /*
+         * Evita crescer indefinidamente. Os links mais recentes
+         * são suficientes para marcar as execuções atuais.
+         */
+        const values =
+            [
+                ...opened,
+            ].slice(-500);
+
+        try {
+            localStorage.setItem(
+                STEP2_OPENED_STORAGE_KEY,
+                JSON.stringify(values)
+            );
+        } catch (_) {
+            // O :visited ainda funciona se localStorage estiver indisponível.
+        }
+    }
+
+    function ensureStep2PopupStyles() {
+        if (
+            document.getElementById(
+                "marketplace-step2-popup-styles"
+            )
+        ) {
+            return;
+        }
+
+        const style =
+            document.createElement("style");
+
+        style.id =
+            "marketplace-step2-popup-styles";
+
+        style.textContent = `
+            #marketplace-step2-popup
+            a.marketplace-step2-link:visited {
+                color: #6c757d !important;
+            }
+
+            #marketplace-step2-popup
+            .marketplace-step2-row.is-opened {
+                background: #f1f3f5 !important;
+                border-color: #adb5bd !important;
+                opacity: .72 !important;
+            }
+
+            #marketplace-step2-popup
+            .marketplace-step2-row.is-opened
+            a.marketplace-step2-link {
+                color: #6c757d !important;
+                text-decoration: line-through !important;
+            }
+
+            #marketplace-step2-popup
+            .marketplace-step2-row.is-opened::after {
+                content: "ABERTO";
+                display: inline-block;
+                margin-top: 8px;
+                padding: 2px 7px;
+                border-radius: 999px;
+                background: #6c757d;
+                color: #fff;
+                font-size: 10px;
+                font-weight: 700;
+                letter-spacing: .04em;
+            }
+        `;
+
+        document.head.appendChild(
+            style
+        );
+    }
+
     function showStep2Popup(links) {
         if (!Array.isArray(links) || !links.length) {
             return;
         }
 
-        document.getElementById(
-            "marketplace-step2-popup"
-        )?.remove();
+        ensureStep2PopupStyles();
 
-        const overlay =
-            document.createElement("div");
+        let overlay =
+            document.getElementById(
+                "marketplace-step2-popup"
+            );
 
-        overlay.id =
-            "marketplace-step2-popup";
+        if (!overlay) {
+            overlay =
+                document.createElement("div");
 
-        overlay.style.cssText = [
-            "position:fixed",
-            "inset:0",
-            "z-index:2147483647",
-            "background:rgba(0,0,0,.55)",
-            "display:flex",
-            "align-items:center",
-            "justify-content:center",
-            "padding:24px",
-        ].join(";");
+            overlay.id =
+                "marketplace-step2-popup";
 
-        const dialog =
-            document.createElement("div");
+            overlay.style.cssText = [
+                "position:fixed",
+                "inset:0",
+                "z-index:2147483647",
+                "background:rgba(0,0,0,.55)",
+                "display:flex",
+                "align-items:center",
+                "justify-content:center",
+                "padding:24px",
+            ].join(";");
 
-        dialog.style.cssText = [
-            "width:min(900px,100%)",
-            "max-height:85vh",
-            "overflow:auto",
-            "background:#fff",
-            "color:#212529",
-            "border-radius:10px",
-            "box-shadow:0 20px 60px rgba(0,0,0,.35)",
-            "padding:24px",
-            "font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
-        ].join(";");
+            const dialog =
+                document.createElement("div");
 
-        const header =
-            document.createElement("div");
+            dialog.style.cssText = [
+                "width:min(900px,100%)",
+                "max-height:85vh",
+                "overflow:auto",
+                "background:#fff",
+                "color:#212529",
+                "border-radius:10px",
+                "box-shadow:0 20px 60px rgba(0,0,0,.35)",
+                "padding:24px",
+                "font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",
+            ].join(";");
 
-        header.style.cssText = [
-            "display:flex",
-            "align-items:flex-start",
-            "justify-content:space-between",
-            "gap:16px",
-            "margin-bottom:18px",
-        ].join(";");
+            const header =
+                document.createElement("div");
 
-        const heading =
-            document.createElement("div");
+            header.style.cssText = [
+                "display:flex",
+                "align-items:flex-start",
+                "justify-content:space-between",
+                "gap:16px",
+                "margin-bottom:18px",
+            ].join(";");
+
+            const heading =
+                document.createElement("div");
+
+            const title =
+                document.createElement("h2");
+
+            title.dataset.role =
+                "step2-title";
+
+            title.style.cssText =
+                "margin:0 0 6px;font-size:22px";
+
+            const description =
+                document.createElement("div");
+
+            description.textContent =
+                "Os ZIPs vão aparecendo aqui assim que cada Step2 fica disponível. Links já abertos ficam marcados.";
+
+            description.style.cssText =
+                "font-size:14px;color:#6c757d";
+
+            heading.append(
+                title,
+                description
+            );
+
+            const close =
+                document.createElement("button");
+
+            close.type = "button";
+            close.textContent = "Fechar";
+            close.style.cssText = [
+                "border:1px solid #ced4da",
+                "background:#fff",
+                "border-radius:6px",
+                "padding:7px 12px",
+                "cursor:pointer",
+            ].join(";");
+
+            close.addEventListener(
+                "click",
+                () => overlay.remove()
+            );
+
+            header.append(
+                heading,
+                close
+            );
+
+            dialog.appendChild(
+                header
+            );
+
+            const list =
+                document.createElement("div");
+
+            list.dataset.role =
+                "step2-list";
+
+            list.style.cssText =
+                "display:grid;gap:10px";
+
+            dialog.appendChild(
+                list
+            );
+
+            overlay.appendChild(
+                dialog
+            );
+
+            overlay.addEventListener(
+                "click",
+                (event) => {
+                    if (event.target === overlay) {
+                        overlay.remove();
+                    }
+                }
+            );
+
+            document.body.appendChild(
+                overlay
+            );
+        }
 
         const title =
-            document.createElement("h2");
-
-        title.textContent =
-            `Step2 pendente (${links.length})`;
-
-        title.style.cssText =
-            "margin:0 0 6px;font-size:22px";
-
-        const description =
-            document.createElement("div");
-
-        description.textContent =
-            "Os ZIPs já foram enviados. A URL do GitHub foi conferida no step2; abra cada link para revisar e concluir manualmente.";
-
-        description.style.cssText =
-            "font-size:14px;color:#6c757d";
-
-        heading.append(
-            title,
-            description
-        );
-
-        const close =
-            document.createElement("button");
-
-        close.type = "button";
-        close.textContent = "Fechar";
-        close.style.cssText = [
-            "border:1px solid #ced4da",
-            "background:#fff",
-            "border-radius:6px",
-            "padding:7px 12px",
-            "cursor:pointer",
-        ].join(";");
-
-        close.addEventListener(
-            "click",
-            () => overlay.remove()
-        );
-
-        header.append(
-            heading,
-            close
-        );
-
-        dialog.appendChild(
-            header
-        );
+            overlay.querySelector(
+                "[data-role='step2-title']"
+            );
 
         const list =
-            document.createElement("div");
+            overlay.querySelector(
+                "[data-role='step2-list']"
+            );
 
-        list.style.cssText =
-            "display:grid;gap:10px";
+        if (!title || !list) {
+            return;
+        }
+
+        const openedUrls =
+            getOpenedStep2Urls();
+
+        const renderedUrls =
+            new Set(
+                [
+                    ...list.querySelectorAll(
+                        "[data-step2-url]"
+                    ),
+                ].map(
+                    (row) =>
+                        row.dataset.step2Url
+                )
+            );
 
         for (const item of links) {
+            const itemUrl =
+                String(
+                    item.url ||
+                    ""
+                );
+
+            if (
+                !itemUrl ||
+                renderedUrls.has(
+                    itemUrl
+                )
+            ) {
+                continue;
+            }
+
             const row =
                 document.createElement("div");
+
+            row.className =
+                "marketplace-step2-row";
+
+            row.dataset.step2Url =
+                itemUrl;
 
             row.style.cssText = [
                 "border:1px solid #dee2e6",
                 "border-radius:8px",
                 "padding:12px 14px",
+                "transition:opacity .15s ease,background .15s ease,border-color .15s ease",
             ].join(";");
 
             const link =
                 document.createElement("a");
 
+            link.className =
+                "marketplace-step2-link";
+
             link.href =
-                item.url;
+                itemUrl;
 
             link.target =
                 "_blank";
@@ -308,11 +496,34 @@
                 "margin-bottom:5px",
             ].join(";");
 
+            link.addEventListener(
+                "click",
+                () => {
+                    row.classList.add(
+                        "is-opened"
+                    );
+
+                    rememberOpenedStep2Url(
+                        itemUrl
+                    );
+                }
+            );
+
+            if (
+                openedUrls.has(
+                    itemUrl
+                )
+            ) {
+                row.classList.add(
+                    "is-opened"
+                );
+            }
+
             const url =
                 document.createElement("div");
 
             url.textContent =
-                item.url;
+                itemUrl;
 
             url.style.cssText = [
                 "font-size:12px",
@@ -349,28 +560,24 @@
             list.appendChild(
                 row
             );
+
+            renderedUrls.add(
+                itemUrl
+            );
         }
 
-        dialog.appendChild(
-            list
-        );
+        const total =
+            list.querySelectorAll(
+                "[data-step2-url]"
+            ).length;
 
-        overlay.appendChild(
-            dialog
-        );
+        const opened =
+            list.querySelectorAll(
+                ".marketplace-step2-row.is-opened"
+            ).length;
 
-        overlay.addEventListener(
-            "click",
-            (event) => {
-                if (event.target === overlay) {
-                    overlay.remove();
-                }
-            }
-        );
-
-        document.body.appendChild(
-            overlay
-        );
+        title.textContent =
+            `Step2 pendente (${total}) · abertos ${opened}`;
     }
 
     function normalizeRelease(value) {
@@ -4762,6 +4969,15 @@
                                     .repositoryValidation ||
                                 null,
                         });
+
+                        /*
+                         * Não espera todos os workers terminarem. O popup
+                         * aparece no primeiro Step2 e recebe os próximos
+                         * incrementalmente enquanto o processamento continua.
+                         */
+                        showStep2Popup(
+                            counters.step2Links
+                        );
                     }
                 }
 
