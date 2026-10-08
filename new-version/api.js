@@ -4,14 +4,16 @@
     const CONFIG = {
         apiUrl: "https://eduardokraus.com/marketplace-plugins/new-version/api.php",
         githubOwner: "EduardoKrausME",
-        setupPageTimeoutMs: 4500000,
+        setupPageTimeoutMs: 45000,
+        filePondOperationTimeoutMs: 30000,
+        reviewPostTimeoutMs: 90000,
         autoUpload: true,
         concurrency: 2,
         delayBetweenPluginsMs: 500,
     };
 
     const SCRIPT_BUILD =
-        "2026-10-06.07-refresh-screenshots";
+        "2026-10-08.01-review-sync-timeouts";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -163,6 +165,24 @@
 
     const sleep = (ms) =>
         new Promise((resolve) => setTimeout(resolve, ms));
+
+    // The FilePond API can leave addFile/processFile/removeFile promises pending forever.
+    async function awaitWithTimeout(promise, description, timeoutMs = CONFIG.filePondOperationTimeoutMs) {
+        let timer;
+        try {
+            return await Promise.race([
+                Promise.resolve(promise),
+                new Promise((_, reject) => {
+                    timer = setTimeout(
+                        () => reject(new Error(`Timeout after ${Math.round(timeoutMs / 1000)}s: ${description}`)),
+                        timeoutMs
+                    );
+                }),
+            ]);
+        } finally {
+            clearTimeout(timer);
+        }
+    }
 
     const openedStep2Urls =
         new Set();
@@ -2106,9 +2126,23 @@
             iframe
         );
 
-        await loaded;
-
-        return iframe;
+        try {
+            await loaded;
+            const expected = new URL(url, location.origin).pathname.replace(/\/$/, "");
+            let actualUrl;
+            try {
+                actualUrl = iframe.contentWindow.location.href;
+            } catch (_) {
+                throw new Error(`Cannot access Marketplace iframe for ${url}; verify same-origin permissions.`);
+            }
+            if (new URL(actualUrl).pathname.replace(/\/$/, "") !== expected) {
+                throw new Error(`Marketplace iframe redirected from ${url} to ${actualUrl}; check your login and plugin permissions.`);
+            }
+            return iframe;
+        } catch (error) {
+            iframe.remove();
+            throw error;
+        }
     }
 
     function setFormValue(
@@ -2245,11 +2279,9 @@
             ];
 
             for (const item of files) {
-                await Promise.resolve(
-                    pond.removeFile(
-                        item?.id ||
-                        item
-                    )
+                await awaitWithTimeout(
+                    pond.removeFile(item?.id || item),
+                    `FilePond.removeFile (${rootId})`
                 );
 
                 removed++;
@@ -2259,20 +2291,21 @@
              * Fallback para FilePond não exposto globalmente.
              * Remove os itens existentes pela própria ação visual do pond.
              */
-            while (true) {
+            const deadline = Date.now() + CONFIG.filePondOperationTimeoutMs;
+            while (Date.now() < deadline) {
                 const button =
                     pondScope?.querySelector?.(
                         ".filepond--action-remove-item"
                     );
-
                 if (!button) {
                     break;
                 }
-
                 button.click();
                 removed++;
-
-                await sleep(50);
+                await sleep(100);
+            }
+            if (pondScope?.querySelector?.(".filepond--action-remove-item")) {
+                throw new Error(`Timeout removing FilePond items (${rootId}).`);
             }
         }
 
@@ -2429,11 +2462,9 @@
                     continue;
                 }
 
-                await Promise.resolve(
-                    pond.removeFile(
-                        item?.id ||
-                        item
-                    )
+                await awaitWithTimeout(
+                    pond.removeFile(item?.id || item),
+                    `FilePond.removeFile (${rootId}: ${itemName})`
                 );
 
                 removedNames.push(
@@ -2620,8 +2651,9 @@
         ) {
             try {
                 addedItem =
-                    await pond.addFile(
-                        frameFile
+                    await awaitWithTimeout(
+                        pond.addFile(frameFile),
+                        `FilePond.addFile (${rootId}: ${file.name})`
                     );
 
                 const options =
@@ -2658,9 +2690,9 @@
                         "function"
                 ) {
                     addedItem =
-                        await pond.processFile(
-                            addedItem?.id ||
-                            addedItem
+                        await awaitWithTimeout(
+                            pond.processFile(addedItem?.id || addedItem),
+                            `FilePond.processFile (${rootId}: ${file.name})`
                         );
                 }
             } catch (error) {
@@ -4329,17 +4361,27 @@
     async function submitMarketplaceReviewDetails(
         plugin,
         catalog,
-        setupScreenshots
+        setupScreenshots,
+        onProgress = null
     ) {
         const reviewUrl =
             `/plugins/submit/step3/${plugin.id}`;
 
+        const progress = (step, detail = "") => {
+            console.info(`[Marketplace] ${plugin.component} Step3: ${step}`, detail);
+            if (onProgress) {
+                onProgress(step, detail);
+            }
+        };
+
+        progress("abrindo formulário", reviewUrl);
         const iframe =
             await createSetupIframe(
                 reviewUrl
             );
 
         try {
+            progress("aguardando formulário", reviewUrl);
             /*
              * Submitted for review usa uma página própria. Nela o Marketplace
              * permite atualizar Description e Screenshots, enquanto o nome
@@ -4403,8 +4445,11 @@
                             form,
                         };
                     },
-                    "submitted review step3 form"
+                    `submitted review step3 form (${reviewUrl}; page: ${iframe.contentDocument?.title || "untitled"})`,
+                    15000
                 );
+
+            progress("formulário localizado", reviewUrl);
 
             const {
                 frameDocument,
@@ -4529,6 +4574,11 @@
             let screenshotsReset =
                 false;
 
+            progress(
+                "removendo screenshots anteriores",
+                `${obsoleteScreenshotFiles.length} arquivo(s)`
+            );
+
             if (
                 obsoleteScreenshotFiles.length
             ) {
@@ -4618,9 +4668,13 @@
                 );
 
             for (
-                const screenshot
-                of screenshotsToUpload
+                const [index, screenshot]
+                of screenshotsToUpload.entries()
             ) {
+                progress(
+                    "enviando screenshot",
+                    `${index + 1}/${screenshotsToUpload.length}: ${screenshot.filename}`
+                );
                 await setFilePondFile(
                     iframe,
                     "plugin_update_form_screenshots",
@@ -4670,17 +4724,34 @@
                         location.origin
                     ).toString();
 
-            const response =
-                await marketplaceFetch(
-                    postUrl,
-                    {
-                        method: "POST",
-                        body: formData,
-                    }
-                );
+            progress("salvando Description e Screenshots", postUrl);
 
-            const responseHtml =
-                await response.text();
+            const controller = new AbortController();
+            const postTimer = setTimeout(
+                () => controller.abort(),
+                CONFIG.reviewPostTimeoutMs
+            );
+            let response;
+            let responseHtml;
+            try {
+                response = await marketplaceFetch(postUrl, {
+                    method: "POST",
+                    body: formData,
+                    signal: controller.signal,
+                });
+                responseHtml = await response.text();
+            } catch (error) {
+                if (controller.signal.aborted) {
+                    throw new Error(
+                        `Timeout after ${CONFIG.reviewPostTimeoutMs / 1000}s saving Submitted for review step3.`
+                    );
+                }
+                throw error;
+            } finally {
+                clearTimeout(postTimer);
+            }
+
+            progress("verificando resposta", response.url);
 
             const resultDocument =
                 new DOMParser()
@@ -4797,7 +4868,11 @@
             await submitMarketplaceReviewDetails(
                 plugin,
                 catalog,
-                setupScreenshots
+                setupScreenshots,
+                (step, detail) => status.set(
+                    `Submitted for review · ${step}`,
+                    detail || plugin.component
+                )
             );
 
         status.set(
