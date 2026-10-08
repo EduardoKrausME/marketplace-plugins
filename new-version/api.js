@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-08.02-screenshot-atomic-sync";
+        "2026-10-08.03-filepond-removal";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -2266,61 +2266,123 @@
             }
         }
 
-        let removed = 0;
+        const items = () => [
+            ...(pondScope?.querySelectorAll?.(".filepond--item") || []),
+        ].filter((item) => item.isConnected && pondScope.contains(item));
+        const apiItems = () =>
+            typeof pond?.getFiles === "function" ? pond.getFiles() : null;
+        const empty = () => items().length === 0 &&
+            (apiItems() === null || apiItems().length === 0);
 
-        if (
-            pond &&
-            typeof pond.getFiles ===
-                "function" &&
-            typeof pond.removeFile ===
-                "function"
-        ) {
-            const files = [
-                ...pond.getFiles(),
-            ];
-
-            for (const item of files) {
-                await awaitWithTimeout(
-                    pond.removeFile(item?.id || item),
-                    `FilePond.removeFile (${rootId})`
-                );
-
-                removed++;
-            }
-        } else {
-            /*
-             * Fallback para FilePond não exposto globalmente.
-             * Remove os itens existentes pela própria ação visual do pond.
-             */
-            const deadline = Date.now() + CONFIG.filePondOperationTimeoutMs;
-            while (Date.now() < deadline) {
-                const button =
-                    pondScope?.querySelector?.(
-                        ".filepond--action-remove-item"
-                    );
-                if (!button) {
-                    break;
-                }
-                button.click();
-                removed++;
-                await sleep(100);
-            }
-            if (pondScope?.querySelector?.(".filepond--action-remove-item")) {
-                throw new Error(`Timeout removing FilePond items (${rootId}).`);
-            }
-        }
-
-        if (removed) {
+        /*
+         * O iframe pode disparar load antes do FilePond/Stimulus terminar
+         * de montar os arquivos existentes. Nesse caso, nao devemos
+         * considerar a colecao vazia e adicionar outro icone em cima.
+         */
+        const existing = getFilePondExistingFiles(root);
+        if (existing.length && empty()) {
             await waitForCondition(
-                () =>
-                    !pondScope?.querySelector?.(
-                        "[data-filepond-item-state]"
-                    ),
-                `${rootId} clear`
+                () => !empty(),
+                `${rootId} existing FilePond files initialization`,
+                5000
             );
         }
 
-        return removed;
+        const originalCount = Math.max(
+            items().length,
+            apiItems()?.length || 0
+        );
+        if (empty()) {
+            return 0;
+        }
+
+        /*
+         * FilePond.removeFiles() / removeFile() retorna void. A chamada
+         * nao comprova que os arquivos sairam: verifique getFiles e DOM.
+         */
+        if (pond && typeof pond.removeFiles === "function") {
+            pond.removeFiles();
+        } else if (pond && typeof pond.removeFile === "function") {
+            for (const file of [...pond.getFiles()]) {
+                pond.removeFile(file?.id || file);
+            }
+        }
+        if (pond) {
+            try {
+                await waitForCondition(
+                    empty,
+                    `${rootId} FilePond API removal`,
+                    3500
+                );
+                return originalCount;
+            } catch (_) {
+                // Usa controles reais do item quando o API nao remove.
+            }
+        }
+
+        /*
+         * Cada <li class="filepond--item"> representa um arquivo.
+         * Botoes de remocao podem continuar no DOM invisiveis/inativos;
+         * nunca use a presenca deles como condicao para repetir cliques.
+         */
+        const controls = [
+            ".filepond--action-remove-item",
+            ".filepond--action-revert-item-processing",
+            ".filepond--action-confirm-item-removal",
+            ".filepond--action-abort-item-processing",
+        ].join(",");
+        const deadline = Date.now() + CONFIG.filePondOperationTimeoutMs;
+        while (items().length && Date.now() < deadline) {
+            const item = items()[0];
+            const buttons = [...item.querySelectorAll(controls)].filter(
+                (button) => !button.disabled
+            );
+            let removed = false;
+            for (const button of buttons) {
+                if (!pondScope.contains(item)) {
+                    removed = true;
+                    break;
+                }
+                button.click();
+                try {
+                    await waitForCondition(
+                        () => !item.isConnected || !pondScope.contains(item),
+                        `${rootId} item DOM removal`,
+                        2000
+                    );
+                    removed = true;
+                    break;
+                } catch (_) {
+                    // Try the next valid action exactly once for this item.
+                }
+            }
+            if (!removed) {
+                const state =
+                    item.getAttribute("data-filepond-item-state") ||
+                    item.querySelector("[data-filepond-item-state]")
+                        ?.getAttribute("data-filepond-item-state") ||
+                    "unknown";
+                throw new Error(
+                    `FilePond could not remove ${rootId}: ` +
+                    `itemState=${state}, items=${items().length}, ` +
+                    `buttons=${buttons.map((button) => button.className).join(",") || "none"}. ` +
+                    "No new file was submitted."
+                );
+            }
+        }
+
+        if (!empty()) {
+            throw new Error(
+                `FilePond removal incomplete for ${rootId}: ` +
+                `DOM=${items().length}, API=${apiItems()?.length ?? "unavailable"}`
+            );
+        }
+
+        console.info(
+            "[Marketplace] FilePond cleared",
+            { rootId, count: originalCount, method: pond ? "api/dom" : "dom" }
+        );
+        return originalCount;
     }
 
 
