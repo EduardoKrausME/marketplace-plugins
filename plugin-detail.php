@@ -31,6 +31,38 @@ $categoryLabels = [
 ];
 $categoryLabel = $categoryLabels[$category] ?? ucfirst($category);
 $screenshots = is_array($plugin["screenshots"] ?? null) ? array_values($plugin["screenshots"]) : [];
+// Old screenshots are kept as history, not as part of the current gallery.
+$newScreenshots = array_values(array_filter(
+    $screenshots,
+    static fn(array $screenshot): bool =>
+        preg_match('~/new-\\d+\\.(?:png|jpe?g|webp|gif)(?:\\?.*)?$~i', (string) ($screenshot["url"] ?? "")) === 1
+));
+if ($newScreenshots !== []) {
+    usort($newScreenshots, static fn(array $a, array $b): int =>
+        strnatcasecmp((string) ($a["url"] ?? ""), (string) ($b["url"] ?? ""))
+    );
+    $screenshots = $newScreenshots;
+}
+// Immutable image URLs prevent stale browser/CDN screenshots after replacement.
+$screenshotRoot = realpath(__DIR__ . '/screenshots');
+foreach ($screenshots as &$screenshot) {
+    $url = (string) ($screenshot['url'] ?? '');
+    $path = (string) parse_url($url, PHP_URL_PATH);
+    $prefix = '/marketplace-plugins/screenshots/';
+    if ($screenshotRoot === false || !str_starts_with($path, $prefix)) {
+        continue;
+    }
+    $relative = substr($path, strlen($prefix));
+    $filename = realpath($screenshotRoot . DIRECTORY_SEPARATOR . rawurldecode($relative));
+    if ($filename === false ||
+        !str_starts_with($filename, $screenshotRoot . DIRECTORY_SEPARATOR) ||
+        !is_file($filename)) {
+        continue;
+    }
+    $screenshot['url'] = $url . (str_contains($url, '?') ? '&' : '?') .
+        'v=' . substr(sha1_file($filename), 0, 16);
+}
+unset($screenshot);
 $downloadUrl = $plugin ? marketplace_download_url($plugin["repository_url"]) : "#";
 
 // These links can be defined individually in plugins.json later.

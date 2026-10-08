@@ -645,28 +645,24 @@ function getCatalogScreenshotFiles(
     );
 
     /*
-     * Os screenshots mantidos pelo catálogo usam old-N e new-N.
-     * Ambos fazem parte da galeria: os old continuam válidos e os new
-     * acrescentam/substituem imagens novas sem fazer os antigos sumirem.
-     *
-     * Outros arquivos auxiliares da pasta, como Untitled.gif, não entram.
+     * new-N screenshots replace the archived old-N collection. Do not
+     * republish old images just to fill the gallery. Only fall back to
+     * old-N when a component has no new images at all.
      */
-    $catalogFiles =
-        array_values(
-            array_filter(
-                $files,
-                static fn(string $filename): bool =>
-                    preg_match(
-                        "/^(?:old|new)-\d+\.(png|jpe?g|webp|gif)$/i",
-                        $filename
-                    ) === 1
-            )
-        );
+    $newFiles = array_values(array_filter(
+        $files,
+        static fn(string $filename): bool =>
+            preg_match("/^new-\\d+\\.(png|jpe?g|webp|gif)$/i", $filename) === 1
+    ));
+    if ($newFiles !== []) {
+        return $newFiles;
+    }
 
-    return
-        $catalogFiles !== []
-            ? $catalogFiles
-            : $files;
+    return array_values(array_filter(
+        $files,
+        static fn(string $filename): bool =>
+            preg_match("/^old-\\d+\\.(png|jpe?g|webp|gif)$/i", $filename) === 1
+    ));
 }
 
 

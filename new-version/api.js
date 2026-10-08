@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-08.01-review-sync-timeouts";
+        "2026-10-08.02-screenshot-atomic-sync";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1914,9 +1914,10 @@
             });
         }
 
-        if (!files.length) {
+        if (files.length < 2) {
             throw new Error(
-                `No valid screenshot files found for ${component}.`
+                `Missing new-2.png for ${component}: the catalog contains only ${files.length} screenshot(s). ` +
+                "The existing Marketplace gallery was not changed."
             );
         }
 
@@ -2929,6 +2930,193 @@
         );
     }
 
+
+    /**
+     * Replace screenshots as one batch. Matching filenames do not mean
+     * matching images, so always re-upload the current catalog bytes.
+     */
+    async function replaceMarketplaceScreenshots(
+        iframe, rootId, fieldName, form, screenshotInput, screenshots,
+        onUpload = null
+    ) {
+        if (screenshots.length < 2) {
+            throw new Error(rootId + ": at least two screenshots are required.");
+        }
+        const expected = screenshots.map((item) =>
+            normalizeAssetFilename(item.filename || item.file?.name)
+        );
+        if (expected.some((name) => !name) ||
+            new Set(expected).size !== expected.length) {
+            throw new Error("Missing or duplicate screenshot filenames: " + expected.join(", "));
+        }
+
+        const frameWindow = iframe.contentWindow;
+        const frameDocument = iframe.contentDocument;
+        const root = await waitForCondition(
+            () => frameDocument.getElementById(rootId), rootId
+        );
+        const browser = await waitForCondition(
+            () => findFilePondBrowser(root), rootId + " file browser"
+        );
+        const scope = getFilePondScope(root, browser);
+        const pondApi = frameWindow.FilePond;
+        const candidates = [
+            root, browser, scope, browser.closest(".filepond--root"),
+            ...scope.querySelectorAll("input[type='file']"),
+        ].filter(Boolean);
+        const pond = pondApi?.find
+            ? candidates.map((element) => {
+                try {
+                    return pondApi.find(element);
+                } catch (_) {
+                    return null;
+                }
+            }).find(Boolean)
+            : null;
+
+        const fromInput = Number(
+            screenshotInput.getAttribute("data-filepond-max-files-value")
+        );
+        const fromPond = Number(pond?.getOptions?.()?.maxFiles);
+        const limits = [fromInput, fromPond].filter((n) =>
+            Number.isFinite(n) && n > 0
+        );
+        const maxFiles = limits.length ? Math.min(...limits) : 10;
+
+        if (screenshots.length > maxFiles) {
+            throw new Error(
+                rootId + ": " + screenshots.length + " screenshots required, " +
+                "but the Marketplace permits " + maxFiles +
+                ". Nothing was removed or silently skipped."
+            );
+        }
+
+        const previousScreenshotFiles = getFilePondExistingFiles(screenshotInput);
+        const existingScreenshotNames = new Set(
+            previousScreenshotFiles.map((item) =>
+                normalizeAssetFilename(item?.originalName || item?.filename)
+            ).filter(Boolean)
+        );
+        const obsoleteScreenshotNames = previousScreenshotFiles.map((item) =>
+            String(item?.originalName || item?.filename || "").trim()
+        ).filter(Boolean);
+
+        // Clear even if the initial metadata is empty; the visual FilePond
+        // may still contain archived images or files with unknown names.
+        await clearFilePondFiles(iframe, rootId);
+        await waitForCondition(() => {
+            const items = pond?.getFiles?.();
+            return (!items || items.length === 0) &&
+                scope.querySelectorAll(".filepond--item").length === 0;
+        }, rootId + " emptied before upload");
+
+        for (const [index, screenshot] of screenshots.entries()) {
+            onUpload?.(index + 1, screenshots.length, screenshot);
+            await setFilePondFile(iframe, rootId, fieldName, screenshot.file);
+        }
+
+        await waitForCondition(() => {
+            let actual;
+            if (pond?.getFiles) {
+                const items = pond.getFiles();
+                actual = items.map((item) =>
+                    normalizeAssetFilename(
+                        item?.filename || item?.file?.name ||
+                        item?.source?.originalName || ""
+                    )
+                );
+                const options = pond.getOptions?.() || {};
+                const serverProcessing = Boolean(options.server?.process) &&
+                    options.storeAsFile !== true &&
+                    options.allowProcess !== false;
+                const complete = pondApi?.FileStatus?.PROCESSING_COMPLETE ?? 5;
+                if (serverProcessing && items.some((item) =>
+                    !item?.serverId && item?.status !== complete
+                )) {
+                    return false;
+                }
+            } else {
+                actual = [...scope.querySelectorAll(".filepond--item")].map(
+                    (item) => normalizeAssetFilename(
+                        item.querySelector(".filepond--file-info-main")
+                            ?.getAttribute("title") ||
+                        item.querySelector(".filepond--file-info-main")
+                            ?.textContent || ""
+                    )
+                );
+            }
+            return actual.length === expected.length &&
+                actual.every((name) => expected.includes(name));
+        }, rootId + " complete screenshot batch");
+
+        const serialized = new FormData(form).getAll(fieldName).filter(
+            (value) => typeof value === "string"
+                ? value.trim() !== ""
+                : value && value.size > 0
+        );
+        if (serialized.length !== screenshots.length) {
+            throw new Error(
+                rootId + ": " + screenshots.length + " images are shown, but " +
+                serialized.length + " are present in FormData. " +
+                "Refusing to save an incomplete screenshot gallery."
+            );
+        }
+
+        return {
+            previousScreenshotFiles,
+            existingScreenshotNames,
+            obsoleteScreenshotNames,
+            screenshotsReset: true,
+            screenshotsToUpload: screenshots,
+            skippedScreenshots: [],
+        };
+    }
+
+    /**
+     * Check the server state after POST, not just the form submitted by JS.
+     * A former file with the same name must also have a different file ID.
+     */
+    async function verifyPersistedScreenshots(
+        pageUrl, rootId, screenshots, previousScreenshotFiles
+    ) {
+        const expected = screenshots.map((item) =>
+            normalizeAssetFilename(item.filename || item.file?.name)
+        ).sort();
+        const previousIds = new Set(previousScreenshotFiles.map((item) =>
+            String(item?.id ?? "")
+        ).filter(Boolean));
+        let observed = "none";
+
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const page = await marketplaceHtml(pageUrl);
+            const input = page.document.getElementById(rootId);
+            if (input) {
+                const saved = getFilePondExistingFiles(input);
+                const names = saved.map((item) =>
+                    normalizeAssetFilename(item?.originalName || item?.filename)
+                ).sort();
+                const sameNames = names.length === expected.length &&
+                    names.every((name, i) => name === expected[i]);
+                const reusedId = saved.some((item) =>
+                    item?.id != null && previousIds.has(String(item.id))
+                );
+                observed = names.join(", ") || "empty";
+                if (sameNames && !reusedId) {
+                    return;
+                }
+            } else {
+                observed = "screenshot field not returned";
+            }
+            if (attempt < 2) {
+                await sleep(800);
+            }
+        }
+        throw new Error(
+            rootId + ": Marketplace did not persist the expected fresh screenshots. " +
+            "Expected: " + expected.join(", ") + "; found: " + observed
+        );
+    }
+
     function getOverviewErrors(
         documentObject
     ) {
@@ -3347,180 +3535,25 @@
                 `${setupScreenshots.length} screenshot(s) no catálogo`
             );
 
-            const existingScreenshotFiles =
-                getFilePondExistingFiles(
-                    screenshotsInput
-                );
-
-            const catalogScreenshotNames =
-                new Set(
-                    setupScreenshots
-                        .map(
-                            (screenshot) =>
-                                normalizeAssetFilename(
-                                    screenshot.filename ||
-                                    screenshot.file?.name
-                                )
-                        )
-                        .filter(Boolean)
-                );
-
-            const existingScreenshotNames =
-                new Set(
-                    existingScreenshotFiles
-                        .map(
-                            (item) =>
-                                normalizeAssetFilename(
-                                    item?.originalName ||
-                                    item?.filename
-                                )
-                        )
-                        .filter(Boolean)
-                );
-
-            /*
-             * Todo screenshot já existente é considerado substituível,
-             * inclusive quando o nome continua igual ao arquivo do catálogo.
-             */
-            const obsoleteScreenshotFiles =
-                existingScreenshotFiles;
-
-            const obsoleteScreenshotNames =
-                obsoleteScreenshotFiles
-                    .map(
-                        (item) =>
-                            String(
-                                item?.originalName ||
-                                item?.filename ||
-                                ""
-                            ).trim()
-                    )
-                    .filter(Boolean);
-
-            let screenshotsReset =
-                false;
-
-            if (
-                obsoleteScreenshotFiles.length
-            ) {
-                /*
-                 * Se houver item sem nome, não existe uma chave segura para
-                 * remoção seletiva; nesse caso resetamos o FilePond inteiro.
-                 */
-                const hasUnnamedObsolete =
-                    obsoleteScreenshotFiles.some(
-                        (item) =>
-                            !normalizeAssetFilename(
-                                item?.originalName ||
-                                item?.filename
-                            )
-                    );
-
-                if (hasUnnamedObsolete) {
-                    await clearFilePondFiles(
-                        iframe,
-                        "plugin_edit_overview_form_screenshots"
-                    );
-
-                    screenshotsReset =
-                        true;
-                } else {
-                    const removal =
-                        await removeFilePondFilesByNames(
-                            iframe,
-                            "plugin_edit_overview_form_screenshots",
-                            obsoleteScreenshotNames
-                        );
-
-                    screenshotsReset =
-                        removal.clearedAll;
-                }
-            }
-
-            /*
-             * Como os arquivos existentes acabaram de ser removidos, nenhum
-             * filename pode ser tratado como já sincronizado. Assim um
-             * new-1.png novo substitui de fato o new-1.png antigo.
-             */
-            const keptScreenshotNames =
-                new Set();
-
-            const keptScreenshotCount =
-                0;
-
-            const missingScreenshots =
-                setupScreenshots.filter(
-                    (screenshot) =>
-                        !keptScreenshotNames.has(
-                            normalizeAssetFilename(
-                                screenshot.filename ||
-                                screenshot.file?.name
-                            )
-                        )
-                );
-
-            const configuredMaxFiles =
-                Number(
-                    screenshotsInput.getAttribute(
-                        "data-filepond-max-files-value"
-                    )
-                );
-
-            const maxFiles =
-                Number.isFinite(
-                    configuredMaxFiles
-                ) &&
-                configuredMaxFiles > 0
-                    ? configuredMaxFiles
-                    : 10;
-
-            const availableSlots =
-                Math.max(
-                    0,
-                    maxFiles -
-                    keptScreenshotCount
-                );
-
-            const screenshotsToUpload =
-                missingScreenshots.slice(
-                    0,
-                    availableSlots
-                );
-
-            const skippedScreenshots =
-                missingScreenshots.slice(
-                    availableSlots
-                );
-
-            if (!screenshotsToUpload.length) {
-                progress(
-                    7,
-                    "screenshots sincronizadas",
-                    "nenhum upload necessário"
-                );
-            }
-
-            let screenshotUploadIndex = 0;
-
-            for (
-                const screenshot
-                of screenshotsToUpload
-            ) {
-                screenshotUploadIndex++;
-
-                progress(
-                    7,
-                    "enviando screenshots",
-                    `${screenshotUploadIndex}/${screenshotsToUpload.length} · ${screenshot.filename || screenshot.file?.name || "screenshot"}`
-                );
-
-                await setFilePondFile(
-                    iframe,
-                    "plugin_edit_overview_form_screenshots",
-                    "plugin_edit_overview_form[screenshots][]",
-                    screenshot.file
-                );
-            }
+            const {
+                previousScreenshotFiles,
+                existingScreenshotNames,
+                obsoleteScreenshotNames,
+                screenshotsReset,
+                screenshotsToUpload,
+                skippedScreenshots,
+            } = await replaceMarketplaceScreenshots(
+                iframe,
+                "plugin_edit_overview_form_screenshots",
+                "plugin_edit_overview_form[screenshots][]",
+                form,
+                screenshotsInput,
+                setupScreenshots,
+                (index, total, screenshot) => progress(
+                    7, "enviando screenshots",
+                    `${index}/${total} · ${screenshot.filename || screenshot.file?.name}`
+                )
+            );
 
             console.log(
                 `[Marketplace] Assets do Overview: ${plugin.component}`,
@@ -3669,6 +3702,11 @@
                     "Overview form remained on the same page after POST."
                 );
             }
+
+            await verifyPersistedScreenshots(
+                overviewUrl, "plugin_edit_overview_form_screenshots",
+                setupScreenshots, previousScreenshotFiles
+            );
 
             return {
                 url:
@@ -4521,167 +4559,25 @@
                 html
             );
 
-            const existingScreenshotFiles =
-                getFilePondExistingFiles(
-                    screenshotsInput
-                );
-
-            const catalogScreenshotNames =
-                new Set(
-                    setupScreenshots
-                        .map(
-                            (screenshot) =>
-                                normalizeAssetFilename(
-                                    screenshot.filename ||
-                                    screenshot.file?.name
-                                )
-                        )
-                        .filter(Boolean)
-                );
-
-            const existingScreenshotNames =
-                new Set(
-                    existingScreenshotFiles
-                        .map(
-                            (item) =>
-                                normalizeAssetFilename(
-                                    item?.originalName ||
-                                    item?.filename
-                                )
-                        )
-                        .filter(Boolean)
-                );
-
-            /*
-             * Todo screenshot já existente é considerado substituível,
-             * inclusive quando o nome continua igual ao arquivo do catálogo.
-             */
-            const obsoleteScreenshotFiles =
-                existingScreenshotFiles;
-
-            const obsoleteScreenshotNames =
-                obsoleteScreenshotFiles
-                    .map(
-                        (item) =>
-                            String(
-                                item?.originalName ||
-                                item?.filename ||
-                                ""
-                            ).trim()
-                    )
-                    .filter(Boolean);
-
-            let screenshotsReset =
-                false;
-
-            progress(
-                "removendo screenshots anteriores",
-                `${obsoleteScreenshotFiles.length} arquivo(s)`
-            );
-
-            if (
-                obsoleteScreenshotFiles.length
-            ) {
-                const hasUnnamedObsolete =
-                    obsoleteScreenshotFiles.some(
-                        (item) =>
-                            !normalizeAssetFilename(
-                                item?.originalName ||
-                                item?.filename
-                            )
-                    );
-
-                if (hasUnnamedObsolete) {
-                    await clearFilePondFiles(
-                        iframe,
-                        "plugin_update_form_screenshots"
-                    );
-
-                    screenshotsReset =
-                        true;
-                } else {
-                    const removal =
-                        await removeFilePondFilesByNames(
-                            iframe,
-                            "plugin_update_form_screenshots",
-                            obsoleteScreenshotNames
-                        );
-
-                    screenshotsReset =
-                        removal.clearedAll;
-                }
-            }
-
-            /*
-             * Como os arquivos existentes acabaram de ser removidos, nenhum
-             * filename pode ser tratado como já sincronizado. Assim um
-             * new-1.png novo substitui de fato o new-1.png antigo.
-             */
-            const keptScreenshotNames =
-                new Set();
-
-            const keptScreenshotCount =
-                0;
-
-            const missingScreenshots =
-                setupScreenshots.filter(
-                    (screenshot) =>
-                        !keptScreenshotNames.has(
-                            normalizeAssetFilename(
-                                screenshot.filename ||
-                                screenshot.file?.name
-                            )
-                        )
-                );
-
-            const configuredMaxFiles =
-                Number(
-                    screenshotsInput.getAttribute(
-                        "data-filepond-max-files-value"
-                    )
-                );
-
-            const maxFiles =
-                Number.isFinite(
-                    configuredMaxFiles
-                ) &&
-                configuredMaxFiles > 0
-                    ? configuredMaxFiles
-                    : 10;
-
-            const availableSlots =
-                Math.max(
-                    0,
-                    maxFiles -
-                    keptScreenshotCount
-                );
-
-            const screenshotsToUpload =
-                missingScreenshots.slice(
-                    0,
-                    availableSlots
-                );
-
-            const skippedScreenshots =
-                missingScreenshots.slice(
-                    availableSlots
-                );
-
-            for (
-                const [index, screenshot]
-                of screenshotsToUpload.entries()
-            ) {
-                progress(
+            const {
+                previousScreenshotFiles,
+                existingScreenshotNames,
+                obsoleteScreenshotNames,
+                screenshotsReset,
+                screenshotsToUpload,
+                skippedScreenshots,
+            } = await replaceMarketplaceScreenshots(
+                iframe,
+                "plugin_update_form_screenshots",
+                "plugin_update_form[screenshots][]",
+                form,
+                screenshotsInput,
+                setupScreenshots,
+                (index, total, screenshot) => progress(
                     "enviando screenshot",
-                    `${index + 1}/${screenshotsToUpload.length}: ${screenshot.filename}`
-                );
-                await setFilePondFile(
-                    iframe,
-                    "plugin_update_form_screenshots",
-                    "plugin_update_form[screenshots][]",
-                    screenshot.file
-                );
-            }
+                    `${index}/${total}: ${screenshot.filename || screenshot.file?.name}`
+                )
+            );
 
             /*
              * new FormData(form) imita o submit real da página e, diferente
@@ -4801,6 +4697,11 @@
                     "Submitted review step3 Description was not persisted with the expected content."
                 );
             }
+
+            await verifyPersistedScreenshots(
+                reviewUrl, "plugin_update_form_screenshots",
+                setupScreenshots, previousScreenshotFiles
+            );
 
             return {
                 url:
