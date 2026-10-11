@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.04-continue-after-error";
+        "2026-10-11.05-no-duplicate-assets";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3019,6 +3019,8 @@
             );
         }
 
+        // This DOM metadata is only used for reporting. Always perform a
+        // fresh server GET before deciding whether uploads are safe.
         const previousScreenshotFiles = getFilePondExistingFiles(screenshotInput);
         const existingScreenshotNames = new Set(
             previousScreenshotFiles.map((item) =>
@@ -3088,100 +3090,101 @@
     }
 
     /**
-     * FilePond's multipart POST appends files to the Marketplace's persisted
-     * gallery. Clear archived records separately, verifying the server before
-     * uploading new files. An unsuccessful deletion MUST block the upload.
+     * The Marketplace may append multipart uploads to the saved gallery. A
+     * hidden input rendered by FilePond is NOT authoritative: it can still be
+     * empty while its already-saved files are loading. Re-read the persisted
+     * metadata from the server, refusing to upload if it is unavailable.
      */
-    async function readMarketplaceScreenshotGallery(pageUrl, rootId) {
+    async function readMarketplaceAssetState(pageUrl, rootId) {
         const page = await marketplaceHtml(pageUrl);
         const input = page.document.getElementById(rootId);
         if (!input) {
-            throw new Error(rootId + ": missing screenshot field in server response.");
+            throw new Error(rootId + ": Marketplace asset field was not returned.");
         }
-        return getFilePondExistingFiles(input);
+        const raw = input.getAttribute("data-filepond-existing-files-value") ??
+            input.dataset?.filepondExistingFilesValue;
+        if (typeof raw !== "string" || !raw.trim()) {
+            throw new Error(
+                rootId + ": cannot verify existing Marketplace assets. " +
+                "Upload blocked to avoid duplicated images."
+            );
+        }
+
+        let files;
+        try {
+            files = JSON.parse(raw);
+        } catch (_) {
+            throw new Error(rootId + ": invalid existing-files metadata; upload blocked.");
+        }
+        if (!Array.isArray(files)) {
+            throw new Error(rootId + ": invalid existing-files array; upload blocked.");
+        }
+        return files;
     }
 
-    async function waitForEmptyMarketplaceScreenshotGallery(pageUrl, rootId) {
-        let remaining = [];
-        for (let attempt = 0; attempt < 4; attempt++) {
-            remaining = await readMarketplaceScreenshotGallery(pageUrl, rootId);
-            if (remaining.length === 0) {
-                return [];
-            }
-            if (attempt < 3) {
-                await sleep(700);
-            }
+    async function verifyEmptyMarketplaceAssets(pageUrl, rootId) {
+        // A fresh server-side read guards against FilePond UI initialization,
+        // and a second read guards against a transient empty response.
+        const first = await readMarketplaceAssetState(pageUrl, rootId);
+        if (first.length) {
+            return first;
         }
-        return remaining;
+        await sleep(300);
+        return readMarketplaceAssetState(pageUrl, rootId);
     }
 
-    async function clearPersistedMarketplaceScreenshots(
-        iframe, rootId, fieldName, form, pageUrl, previousFiles
-    ) {
-        if (!previousFiles.length) {
-            return;
+    async function clearPersistedMarketplaceAssets(iframe, pageUrl, rootId) {
+        const existing = await readMarketplaceAssetState(pageUrl, rootId);
+        if (!existing.length) {
+            return [];
         }
 
-        // First request the same removal FilePond uses for existing items.
-        // It may use server.remove, or only update the form's local selection.
+        // Only use the UI's supported remove action, never assume that
+        // submitting an empty FilePond field deletes archived server records.
         let removalError = "";
         try {
             await clearFilePondFiles(iframe, rootId);
         } catch (error) {
             removalError = marketplaceErrorMessage(error);
-            console.warn("[Marketplace] Screenshot FilePond removal failed:", removalError);
         }
 
-        let remaining = await waitForEmptyMarketplaceScreenshotGallery(pageUrl, rootId);
-        if (!remaining.length) {
-            return;
+        let remaining = existing;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            remaining = await readMarketplaceAssetState(pageUrl, rootId);
+            if (remaining.length === 0) {
+                remaining = await verifyEmptyMarketplaceAssets(pageUrl, rootId);
+                if (remaining.length === 0) {
+                    return existing;
+                }
+            }
+            if (attempt < 2) {
+                await sleep(500);
+            }
         }
 
-        // Some FilePond configurations persist removals only when the parent
-        // form is submitted. Submit an EMPTY screenshot selection in a separate
-        // request; never combine archived files with the new multipart batch.
-        const clearData = new FormData(form);
-        const baseName = fieldName.endsWith("[]")
-            ? fieldName.slice(0, -2)
-            : fieldName;
-        clearData.delete(baseName);
-        clearData.delete(baseName + "[]");
-        clearData.append(fieldName, "");
-
-        const submit = form.querySelector(
-            "button[type='submit'][name='save_and_next']"
+        throw new Error(
+            rootId + ": Marketplace still stores " + remaining.length +
+            " previous image(s), even after FilePond removal. " +
+            "No new files were uploaded, to prevent further duplication." +
+            (removalError ? " Removal: " + removalError : "")
         );
-        if (submit?.name) {
-            clearData.set(submit.name, submit.value || "");
-        }
+    }
 
-        const action = form.getAttribute("action") || pageUrl;
-        const postUrl = new URL(action, location.origin).toString();
-        let serverErrors = [];
-        try {
-            const response = await marketplaceFetch(postUrl, {
-                method: "POST",
-                body: clearData,
-            });
-            const html = await response.text();
-            serverErrors = getOverviewErrors(
-                new DOMParser().parseFromString(html, "text/html")
-            );
-        } catch (error) {
-            serverErrors = [marketplaceErrorMessage(error)];
-        }
-
-        remaining = await waitForEmptyMarketplaceScreenshotGallery(pageUrl, rootId);
-        if (remaining.length) {
-            const names = remaining.map((item) =>
-                item.originalName || item.filename || String(item.id || "?")
-            );
+    async function verifySingleMarketplaceIcon(pageUrl, previousFiles) {
+        const field = "plugin_edit_overview_form_icon";
+        const saved = await readMarketplaceAssetState(pageUrl, field);
+        if (saved.length !== 1) {
             throw new Error(
-                rootId + ": could not delete " + remaining.length +
-                " persisted screenshot(s): " + names.join(", ") +
-                ". Upload cancelled to prevent additional duplicates." +
-                (removalError ? " FilePond: " + removalError : "") +
-                (serverErrors.length ? " Clear form: " + serverErrors.join(" | ") : "")
+                field + ": expected exactly one saved icon after upload; found " +
+                saved.length + ". Do not retry upload before removing duplicates."
+            );
+        }
+        const previousIds = new Set(previousFiles.map((item) =>
+            String(item?.id ?? "")
+        ).filter(Boolean));
+        if (saved[0]?.id != null && previousIds.has(String(saved[0].id))) {
+            throw new Error(
+                field + ": existing icon ID was reused; cannot confirm replacement."
             );
         }
     }
@@ -3605,9 +3608,8 @@
             }
 
             /*
-             * A remoção do ícone pelo FilePond pode ficar bloqueada nos itens
-             * importados. No POST substituímos o campo pelo arquivo do catálogo
-             * sem tocar na galeria existente antes da confirmação do servidor.
+             * O ícone não é enviado enquanto o servidor ainda registrar
+             * algum ícone anterior. Esta verificação acontece antes do POST.
              */
             progress(
                 4,
@@ -3650,16 +3652,37 @@
                 )
             );
 
-            progress(7, "removendo screenshots anteriores",
-                `${previousScreenshotFiles.length} anterior(es)`);
-            await clearPersistedMarketplaceScreenshots(
-                iframe,
-                "plugin_edit_overview_form_screenshots",
-                "plugin_edit_overview_form[screenshots][]",
-                form,
-                overviewUrl,
-                previousScreenshotFiles
+            // Confirm both server-side collections before sending ANY new file.
+            // A FilePond input can look empty before loading existing records.
+            const previousIconFiles = await readMarketplaceAssetState(
+                overviewUrl, "plugin_edit_overview_form_icon"
             );
+            const existingServerScreenshots = await readMarketplaceAssetState(
+                overviewUrl, "plugin_edit_overview_form_screenshots"
+            );
+
+            progress(7, "validando remoção de imagens anteriores",
+                `${previousIconFiles.length} ícone(s), ${existingServerScreenshots.length} screenshot(s)`);
+            await clearPersistedMarketplaceAssets(
+                iframe, overviewUrl, "plugin_edit_overview_form_screenshots"
+            );
+            await clearPersistedMarketplaceAssets(
+                iframe, overviewUrl, "plugin_edit_overview_form_icon"
+            );
+
+            // Recheck both assets immediately before POST, even if FilePond
+            // falsely reported a successful remove or finished initializing.
+            const [remainingIcons, remainingScreenshots] = await Promise.all([
+                verifyEmptyMarketplaceAssets(overviewUrl, "plugin_edit_overview_form_icon"),
+                verifyEmptyMarketplaceAssets(overviewUrl, "plugin_edit_overview_form_screenshots"),
+            ]);
+            if (remainingIcons.length || remainingScreenshots.length) {
+                throw new Error(
+                    "Marketplace assets are not empty (icons=" + remainingIcons.length +
+                    ", screenshots=" + remainingScreenshots.length +
+                    "); POST cancelled to prevent duplicate images."
+                );
+            }
 
             console.log(
                 `[Marketplace] Assets do Overview: ${plugin.component}`,
@@ -3816,8 +3839,9 @@
 
             await verifyPersistedScreenshots(
                 overviewUrl, "plugin_edit_overview_form_screenshots",
-                setupScreenshots, previousScreenshotFiles
+                setupScreenshots, existingServerScreenshots
             );
+            await verifySingleMarketplaceIcon(overviewUrl, previousIconFiles);
 
             return {
                 url:
@@ -4686,16 +4710,19 @@
                 )
             );
 
-            progress("removendo screenshots anteriores",
-                `${previousScreenshotFiles.length} anterior(es)`);
-            await clearPersistedMarketplaceScreenshots(
-                iframe,
-                "plugin_update_form_screenshots",
-                "plugin_update_form[screenshots][]",
-                form,
-                reviewUrl,
-                previousScreenshotFiles
+            progress("validando remoção de screenshots anteriores", reviewUrl);
+            await clearPersistedMarketplaceAssets(
+                iframe, reviewUrl, "plugin_update_form_screenshots"
             );
+            const remainingReviewImages = await verifyEmptyMarketplaceAssets(
+                reviewUrl, "plugin_update_form_screenshots"
+            );
+            if (remainingReviewImages.length) {
+                throw new Error(
+                    "Submitted review screenshots were not removed from Marketplace. " +
+                    "Upload cancelled to avoid duplicates."
+                );
+            }
 
             /*
              * O FormData preserva os demais campos da página, mas recebe
