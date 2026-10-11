@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-08.03-filepond-removal";
+        "2026-10-11.01-catalog-screenshots";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1914,13 +1914,6 @@
             });
         }
 
-        if (files.length < 2) {
-            throw new Error(
-                `Missing new-2.png for ${component}: the catalog contains only ${files.length} screenshot(s). ` +
-                "The existing Marketplace gallery was not changed."
-            );
-        }
-
         return files;
     }
 
@@ -3001,8 +2994,8 @@
         iframe, rootId, fieldName, form, screenshotInput, screenshots,
         onUpload = null
     ) {
-        if (screenshots.length < 2) {
-            throw new Error(rootId + ": at least two screenshots are required.");
+        if (!screenshots.length) {
+            throw new Error(rootId + ": at least one screenshot is required.");
         }
         const expected = screenshots.map((item) =>
             normalizeAssetFilename(item.filename || item.file?.name)

@@ -564,107 +564,68 @@ function getRepositoryFileBytes(
 
 
 function getCatalogScreenshotFiles(
-    string $component
+    string $component,
+    array $declaredScreenshots
 ): array {
     if (!preg_match(
         "/^[a-z][a-z0-9]*_[a-z0-9_]+$/i",
         $component
     )) {
-        jsonError(
-            "Invalid plugin component.",
-            400
-        );
+        jsonError("Invalid plugin component.", 400);
     }
 
-    $screenshotsRoot =
-        realpath(
-            dirname(__DIR__) .
-            "/screenshots"
-        );
-
-    $directory =
-        realpath(
-            dirname(__DIR__) .
-            "/screenshots/" .
-            $component
-        );
+    $screenshotsRoot = realpath(dirname(__DIR__) . "/screenshots");
+    $directory = realpath(dirname(__DIR__) . "/screenshots/" . $component);
 
     if (
         $screenshotsRoot === false ||
         $directory === false ||
-        !str_starts_with(
-            $directory,
-            $screenshotsRoot .
-            DIRECTORY_SEPARATOR
-        ) ||
+        !str_starts_with($directory, $screenshotsRoot . DIRECTORY_SEPARATOR) ||
         !is_dir($directory)
     ) {
-        return [];
+        if ($declaredScreenshots === []) {
+            return [];
+        }
+        throwApiError("Screenshot directory not found for " . $component . ".", 500);
     }
 
-    $entries =
-        scandir(
-            $directory
-        );
-
-    if ($entries === false) {
-        throwApiError(
-            "Unable to read screenshots for " .
-            $component .
-            ".",
-            500
-        );
-    }
-
+    $prefix = "/marketplace-plugins/screenshots/" . $component . "/";
     $files = [];
+    $seen = [];
 
-    foreach ($entries as $entry) {
-        if (
-            $entry === "." ||
-            $entry === ".." ||
-            !preg_match(
-                "/\.(png|jpe?g|webp|gif)$/i",
-                $entry
-            ) ||
-            !is_file(
-                $directory .
-                DIRECTORY_SEPARATOR .
-                $entry
-            )
-        ) {
-            continue;
+    foreach ($declaredScreenshots as $screenshot) {
+        $url = is_array($screenshot) ? ($screenshot["url"] ?? null) : null;
+        if (!is_string($url) || !str_starts_with($url, $prefix)) {
+            throwApiError("Invalid screenshot URL in plugins.json for " . $component . ".", 500);
         }
 
-        $files[] =
-            $entry;
+        $filename = rawurldecode(substr($url, strlen($prefix)));
+        if (
+            !preg_match("/^[a-z0-9][a-z0-9._-]*\\.(png|jpe?g|webp|gif)$/i", $filename) ||
+            basename($filename) !== $filename ||
+            str_contains($filename, "..")
+        ) {
+            throwApiError("Invalid screenshot filename in plugins.json for " . $component . ".", 500);
+        }
+        if (isset($seen[$filename])) {
+            throwApiError("Duplicate screenshot in plugins.json: " . $filename, 500);
+        }
+
+        $file = realpath($directory . DIRECTORY_SEPARATOR . $filename);
+        if (
+            $file === false ||
+            !str_starts_with($file, $directory . DIRECTORY_SEPARATOR) ||
+            !is_file($file)
+        ) {
+            throwApiError("Screenshot declared in plugins.json was not found: " . $component . "/" . $filename, 500);
+        }
+
+        $files[] = $filename;
+        $seen[$filename] = true;
     }
 
-    usort(
-        $files,
-        "strnatcasecmp"
-    );
-
-    /*
-     * new-N screenshots replace the archived old-N collection. Do not
-     * republish old images just to fill the gallery. Only fall back to
-     * old-N when a component has no new images at all.
-     */
-    $newFiles = array_values(array_filter(
-        $files,
-        static fn(string $filename): bool =>
-            preg_match("/^new-\\d+\\.(png|jpe?g|webp|gif)$/i", $filename) === 1
-    ));
-    if ($newFiles !== []) {
-        return $newFiles;
-    }
-
-    return array_values(array_filter(
-        $files,
-        static fn(string $filename): bool =>
-            preg_match("/^old-\\d+\\.(png|jpe?g|webp|gif)$/i", $filename) === 1
-    ));
+    return $files;
 }
-
 
 function getCatalogPlugin(
     string $component
@@ -784,7 +745,8 @@ function getCatalogPlugin(
                             rawurlencode($filename),
                     ],
                     getCatalogScreenshotFiles(
-                        $component
+                        $component,
+                        $plugin["screenshots"] ?? []
                     )
                 ),
 
@@ -828,10 +790,8 @@ function streamCatalogScreenshot(
         );
     }
 
-    $files =
-        getCatalogScreenshotFiles(
-            $component
-        );
+    $catalog = getCatalogPlugin($component);
+    $files = array_column($catalog["screenshots"], "filename");
 
     if (!in_array(
         $requestedFilename,
