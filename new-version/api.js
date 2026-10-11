@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.01-catalog-screenshots";
+        "2026-10-11.02-direct-multipart-assets";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -2987,16 +2987,17 @@
 
 
     /**
-     * Replace screenshots as one batch. Matching filenames do not mean
-     * matching images, so always re-upload the current catalog bytes.
+     * FilePond can render files in its gallery without putting a single file
+     * (or processed token) into FormData. Stage the catalog entries instead of
+     * manipulating its asynchronous/remove-only UI. We attach the actual file
+     * bytes to the multipart request below, so no pending FilePond operation
+     * can prevent replacing the gallery.
      */
-    async function replaceMarketplaceScreenshots(
-        iframe, rootId, fieldName, form, screenshotInput, screenshots,
-        onUpload = null
-    ) {
+    function prepareMarketplaceScreenshots(screenshotInput, screenshots, onUpload = null) {
         if (!screenshots.length) {
-            throw new Error(rootId + ": at least one screenshot is required.");
+            throw new Error("No catalog screenshots were provided.");
         }
+
         const expected = screenshots.map((item) =>
             normalizeAssetFilename(item.filename || item.file?.name)
         );
@@ -3005,44 +3006,16 @@
             throw new Error("Missing or duplicate screenshot filenames: " + expected.join(", "));
         }
 
-        const frameWindow = iframe.contentWindow;
-        const frameDocument = iframe.contentDocument;
-        const root = await waitForCondition(
-            () => frameDocument.getElementById(rootId), rootId
-        );
-        const browser = await waitForCondition(
-            () => findFilePondBrowser(root), rootId + " file browser"
-        );
-        const scope = getFilePondScope(root, browser);
-        const pondApi = frameWindow.FilePond;
-        const candidates = [
-            root, browser, scope, browser.closest(".filepond--root"),
-            ...scope.querySelectorAll("input[type='file']"),
-        ].filter(Boolean);
-        const pond = pondApi?.find
-            ? candidates.map((element) => {
-                try {
-                    return pondApi.find(element);
-                } catch (_) {
-                    return null;
-                }
-            }).find(Boolean)
-            : null;
-
-        const fromInput = Number(
+        const declaredMax = Number(
             screenshotInput.getAttribute("data-filepond-max-files-value")
         );
-        const fromPond = Number(pond?.getOptions?.()?.maxFiles);
-        const limits = [fromInput, fromPond].filter((n) =>
-            Number.isFinite(n) && n > 0
-        );
-        const maxFiles = limits.length ? Math.min(...limits) : 10;
-
+        const maxFiles = Number.isFinite(declaredMax) && declaredMax > 0
+            ? declaredMax
+            : 10;
         if (screenshots.length > maxFiles) {
             throw new Error(
-                rootId + ": " + screenshots.length + " screenshots required, " +
-                "but the Marketplace permits " + maxFiles +
-                ". Nothing was removed or silently skipped."
+                "The catalog has " + screenshots.length + " screenshots, but the " +
+                "Marketplace allows " + maxFiles + ". No gallery was changed."
             );
         }
 
@@ -3056,65 +3029,8 @@
             String(item?.originalName || item?.filename || "").trim()
         ).filter(Boolean);
 
-        // Clear even if the initial metadata is empty; the visual FilePond
-        // may still contain archived images or files with unknown names.
-        await clearFilePondFiles(iframe, rootId);
-        await waitForCondition(() => {
-            const items = pond?.getFiles?.();
-            return (!items || items.length === 0) &&
-                scope.querySelectorAll(".filepond--item").length === 0;
-        }, rootId + " emptied before upload");
-
         for (const [index, screenshot] of screenshots.entries()) {
             onUpload?.(index + 1, screenshots.length, screenshot);
-            await setFilePondFile(iframe, rootId, fieldName, screenshot.file);
-        }
-
-        await waitForCondition(() => {
-            let actual;
-            if (pond?.getFiles) {
-                const items = pond.getFiles();
-                actual = items.map((item) =>
-                    normalizeAssetFilename(
-                        item?.filename || item?.file?.name ||
-                        item?.source?.originalName || ""
-                    )
-                );
-                const options = pond.getOptions?.() || {};
-                const serverProcessing = Boolean(options.server?.process) &&
-                    options.storeAsFile !== true &&
-                    options.allowProcess !== false;
-                const complete = pondApi?.FileStatus?.PROCESSING_COMPLETE ?? 5;
-                if (serverProcessing && items.some((item) =>
-                    !item?.serverId && item?.status !== complete
-                )) {
-                    return false;
-                }
-            } else {
-                actual = [...scope.querySelectorAll(".filepond--item")].map(
-                    (item) => normalizeAssetFilename(
-                        item.querySelector(".filepond--file-info-main")
-                            ?.getAttribute("title") ||
-                        item.querySelector(".filepond--file-info-main")
-                            ?.textContent || ""
-                    )
-                );
-            }
-            return actual.length === expected.length &&
-                actual.every((name) => expected.includes(name));
-        }, rootId + " complete screenshot batch");
-
-        const serialized = new FormData(form).getAll(fieldName).filter(
-            (value) => typeof value === "string"
-                ? value.trim() !== ""
-                : value && value.size > 0
-        );
-        if (serialized.length !== screenshots.length) {
-            throw new Error(
-                rootId + ": " + screenshots.length + " images are shown, but " +
-                serialized.length + " are present in FormData. " +
-                "Refusing to save an incomplete screenshot gallery."
-            );
         }
 
         return {
@@ -3125,6 +3041,50 @@
             screenshotsToUpload: screenshots,
             skippedScreenshots: [],
         };
+    }
+
+    /**
+     * The Marketplace FilePond widget may not use storeAsFile and its visual
+     * items are not necessarily successful form controls. Use the real catalog
+     * File objects in the POST instead of trusting its DOM representation.
+     *
+     * Remove both the array and non-array variants before adding the new files
+     * so an old hidden FilePond token cannot silently mix with new uploads.
+     */
+    function buildMarketplaceAssetFormData(form, groups) {
+        const formData = new FormData(form);
+
+        for (const { fieldName, files } of groups) {
+            const baseName = fieldName.replace(/\[\]$/, "");
+            formData.delete(baseName);
+            formData.delete(baseName + "[]");
+
+            if (!files.length) {
+                throw new Error("No files to upload for " + fieldName);
+            }
+
+            for (const file of files) {
+                if (!file?.name || !Number.isFinite(file.size) || file.size <= 0) {
+                    throw new Error("Invalid catalog file for " + fieldName);
+                }
+                formData.append(fieldName, file, file.name);
+            }
+
+            const actual = formData.getAll(fieldName);
+            if (actual.length !== files.length ||
+                actual.some((value, index) =>
+                    typeof value === "string" ||
+                    value.name !== files[index].name ||
+                    value.size !== files[index].size
+                )) {
+                throw new Error(
+                    "Multipart payload is incomplete for " + fieldName +
+                    ": expected " + files.length + ", found " + actual.length
+                );
+            }
+        }
+
+        return formData;
     }
 
     /**
@@ -3546,43 +3506,29 @@
             }
 
             /*
-             * O ícone é sempre substituído pelo arquivo atual do catálogo.
-             * Não compara nome, tamanho, hash ou pixels com o Marketplace.
+             * A remoção do ícone pelo FilePond pode ficar bloqueada nos itens
+             * importados. No POST substituímos o campo pelo arquivo do catálogo
+             * sem tocar na galeria existente antes da confirmação do servidor.
              */
             progress(
                 4,
-                "removendo ícone anterior",
+                "preparando substituição do ícone",
                 setupIcon.file?.name || setupIcon.path || ""
-            );
-
-            await clearFilePondFiles(
-                iframe,
-                "plugin_edit_overview_form_icon"
             );
 
             progress(
                 5,
-                "enviando ícone",
+                "ícone preparado para POST",
                 `${setupIcon.file?.name || "ícone"} · ${setupIcon.file?.size || 0} bytes`
-            );
-
-            await setFilePondFile(
-                iframe,
-                "plugin_edit_overview_form_icon",
-                "plugin_edit_overview_form[icon]",
-                setupIcon.file
             );
 
             const iconUpdated =
                 true;
 
             /*
-             * Screenshots são sempre reenviadas a partir do catálogo.
-             *
-             * Não dá para considerar um screenshot atualizado apenas porque
-             * o filename é igual: new-1.png pode ter sido regenerado mantendo
-             * exatamente o mesmo nome. Por isso removemos as imagens atuais e
-             * enviamos novamente os bytes do catálogo.
+             * Screenshots são sempre anexadas ao POST a partir do catálogo.
+             * Filenames iguais não comprovam conteúdo igual, portanto o
+             * multipart leva os bytes novos, não tokens antigos do FilePond.
              */
             progress(
                 6,
@@ -3597,15 +3543,11 @@
                 screenshotsReset,
                 screenshotsToUpload,
                 skippedScreenshots,
-            } = await replaceMarketplaceScreenshots(
-                iframe,
-                "plugin_edit_overview_form_screenshots",
-                "plugin_edit_overview_form[screenshots][]",
-                form,
+            } = prepareMarketplaceScreenshots(
                 screenshotsInput,
                 setupScreenshots,
                 (index, total, screenshot) => progress(
-                    7, "enviando screenshots",
+                    7, "preparando screenshots",
                     `${index}/${total} · ${screenshot.filename || screenshot.file?.name}`
                 )
             );
@@ -3646,9 +3588,16 @@
             }
 
             const formData =
-                new FormData(
-                    form
-                );
+                buildMarketplaceAssetFormData(form, [
+                    {
+                        fieldName: "plugin_edit_overview_form[icon]",
+                        files: [setupIcon.file],
+                    },
+                    {
+                        fieldName: "plugin_edit_overview_form[screenshots][]",
+                        files: setupScreenshots.map((item) => item.file),
+                    },
+                ]);
 
             if (submit.name) {
                 formData.append(
@@ -3695,11 +3644,9 @@
             );
 
             /*
-             * O Overview não usa mais submit.click() dentro do iframe.
-             * Essa abordagem podia ser bloqueada pela validação/eventos da
-             * página sem gerar qualquer POST. Aqui enviamos exatamente o
-             * formulário montado, incluindo FilePond/storeAsFile e o valor
-             * do botão save_and_next.
+             * O Overview é enviado via POST direto. O payload já inclui os
+             * arquivos originais do catálogo, sem depender de storeAsFile,
+             * timers ou dos hidden inputs gerados pelo FilePond.
              */
             const responsePromise =
                 marketplaceFetch(
@@ -4621,29 +4568,27 @@
                 screenshotsReset,
                 screenshotsToUpload,
                 skippedScreenshots,
-            } = await replaceMarketplaceScreenshots(
-                iframe,
-                "plugin_update_form_screenshots",
-                "plugin_update_form[screenshots][]",
-                form,
+            } = prepareMarketplaceScreenshots(
                 screenshotsInput,
                 setupScreenshots,
                 (index, total, screenshot) => progress(
-                    "enviando screenshot",
+                    "preparando screenshot",
                     `${index}/${total}: ${screenshot.filename || screenshot.file?.name}`
                 )
             );
 
             /*
-             * new FormData(form) imita o submit real da página e, diferente
-             * de formToFormData(), também preserva File inputs caso esta
-             * instalação do FilePond esteja usando storeAsFile/fallback
-             * nativo em vez de server.process.
+             * O FormData preserva os demais campos da página, mas recebe
+             * screenshots novas explicitamente para não depender do estado
+             * interno/visual do FilePond.
              */
             const formData =
-                new FormData(
-                    form
-                );
+                buildMarketplaceAssetFormData(form, [
+                    {
+                        fieldName: "plugin_update_form[screenshots][]",
+                        files: setupScreenshots.map((item) => item.file),
+                    },
+                ]);
 
             /*
              * Garante explicitamente o valor atualizado da Description caso
