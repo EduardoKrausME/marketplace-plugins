@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.05-no-duplicate-assets";
+        "2026-10-11.06-single-batch";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -5800,15 +5800,19 @@
     }
 
     async function main() {
-        if (
-            window.top !==
-            window.self
-        ) {
+        if (window.top !== window.self) {
             return;
         }
 
-        const plugins =
-            getDashboardPlugins();
+        // Prevent two injections of the script from concurrently updating the
+        // same plugin in this tab; a completed run releases the lock.
+        if (window.__marketplacePluginBatchRunning__) {
+            console.warn("[Marketplace] A batch is already running. Duplicate invocation skipped.");
+            return;
+        }
+        window.__marketplacePluginBatchRunning__ = true;
+        try {
+            const plugins = getDashboardPlugins();
 
         if (!plugins.length) {
             console.log(
@@ -5895,6 +5899,9 @@
             } catch (popupError) {
                 console.error("[Marketplace] Unable to show Step2 summary:", popupError);
             }
+        }
+        } finally {
+            window.__marketplacePluginBatchRunning__ = false;
         }
     }
 
