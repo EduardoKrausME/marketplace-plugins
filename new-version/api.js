@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.02-direct-multipart-assets";
+        "2026-10-11.03-screenshot-replacement";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3088,6 +3088,105 @@
     }
 
     /**
+     * FilePond's multipart POST appends files to the Marketplace's persisted
+     * gallery. Clear archived records separately, verifying the server before
+     * uploading new files. An unsuccessful deletion MUST block the upload.
+     */
+    async function readMarketplaceScreenshotGallery(pageUrl, rootId) {
+        const page = await marketplaceHtml(pageUrl);
+        const input = page.document.getElementById(rootId);
+        if (!input) {
+            throw new Error(rootId + ": missing screenshot field in server response.");
+        }
+        return getFilePondExistingFiles(input);
+    }
+
+    async function waitForEmptyMarketplaceScreenshotGallery(pageUrl, rootId) {
+        let remaining = [];
+        for (let attempt = 0; attempt < 4; attempt++) {
+            remaining = await readMarketplaceScreenshotGallery(pageUrl, rootId);
+            if (remaining.length === 0) {
+                return [];
+            }
+            if (attempt < 3) {
+                await sleep(700);
+            }
+        }
+        return remaining;
+    }
+
+    async function clearPersistedMarketplaceScreenshots(
+        iframe, rootId, fieldName, form, pageUrl, previousFiles
+    ) {
+        if (!previousFiles.length) {
+            return;
+        }
+
+        // First request the same removal FilePond uses for existing items.
+        // It may use server.remove, or only update the form's local selection.
+        let removalError = "";
+        try {
+            await clearFilePondFiles(iframe, rootId);
+        } catch (error) {
+            removalError = marketplaceErrorMessage(error);
+            console.warn("[Marketplace] Screenshot FilePond removal failed:", removalError);
+        }
+
+        let remaining = await waitForEmptyMarketplaceScreenshotGallery(pageUrl, rootId);
+        if (!remaining.length) {
+            return;
+        }
+
+        // Some FilePond configurations persist removals only when the parent
+        // form is submitted. Submit an EMPTY screenshot selection in a separate
+        // request; never combine archived files with the new multipart batch.
+        const clearData = new FormData(form);
+        const baseName = fieldName.endsWith("[]")
+            ? fieldName.slice(0, -2)
+            : fieldName;
+        clearData.delete(baseName);
+        clearData.delete(baseName + "[]");
+        clearData.append(fieldName, "");
+
+        const submit = form.querySelector(
+            "button[type='submit'][name='save_and_next']"
+        );
+        if (submit?.name) {
+            clearData.set(submit.name, submit.value || "");
+        }
+
+        const action = form.getAttribute("action") || pageUrl;
+        const postUrl = new URL(action, location.origin).toString();
+        let serverErrors = [];
+        try {
+            const response = await marketplaceFetch(postUrl, {
+                method: "POST",
+                body: clearData,
+            });
+            const html = await response.text();
+            serverErrors = getOverviewErrors(
+                new DOMParser().parseFromString(html, "text/html")
+            );
+        } catch (error) {
+            serverErrors = [marketplaceErrorMessage(error)];
+        }
+
+        remaining = await waitForEmptyMarketplaceScreenshotGallery(pageUrl, rootId);
+        if (remaining.length) {
+            const names = remaining.map((item) =>
+                item.originalName || item.filename || String(item.id || "?")
+            );
+            throw new Error(
+                rootId + ": could not delete " + remaining.length +
+                " persisted screenshot(s): " + names.join(", ") +
+                ". Upload cancelled to prevent additional duplicates." +
+                (removalError ? " FilePond: " + removalError : "") +
+                (serverErrors.length ? " Clear form: " + serverErrors.join(" | ") : "")
+            );
+        }
+    }
+
+    /**
      * Check the server state after POST, not just the form submitted by JS.
      * A former file with the same name must also have a different file ID.
      */
@@ -3526,9 +3625,8 @@
                 true;
 
             /*
-             * Screenshots são sempre anexadas ao POST a partir do catálogo.
-             * Filenames iguais não comprovam conteúdo igual, portanto o
-             * multipart leva os bytes novos, não tokens antigos do FilePond.
+             * Os bytes atuais do catálogo serão enviados via multipart,
+             * após a remoção dos registros previamente armazenados.
              */
             progress(
                 6,
@@ -3550,6 +3648,17 @@
                     7, "preparando screenshots",
                     `${index}/${total} · ${screenshot.filename || screenshot.file?.name}`
                 )
+            );
+
+            progress(7, "removendo screenshots anteriores",
+                `${previousScreenshotFiles.length} anterior(es)`);
+            await clearPersistedMarketplaceScreenshots(
+                iframe,
+                "plugin_edit_overview_form_screenshots",
+                "plugin_edit_overview_form[screenshots][]",
+                form,
+                overviewUrl,
+                previousScreenshotFiles
             );
 
             console.log(
@@ -4575,6 +4684,17 @@
                     "preparando screenshot",
                     `${index}/${total}: ${screenshot.filename || screenshot.file?.name}`
                 )
+            );
+
+            progress("removendo screenshots anteriores",
+                `${previousScreenshotFiles.length} anterior(es)`);
+            await clearPersistedMarketplaceScreenshots(
+                iframe,
+                "plugin_update_form_screenshots",
+                "plugin_update_form[screenshots][]",
+                form,
+                reviewUrl,
+                previousScreenshotFiles
             );
 
             /*
