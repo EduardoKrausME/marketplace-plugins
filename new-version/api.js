@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.03-screenshot-replacement";
+        "2026-10-11.04-continue-after-error";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -5654,117 +5654,121 @@
         };
     }
 
-    async function worker(
-        queue,
-        counters
-    ) {
+    /**
+     * Each queue item is an independent operation. An error is recorded on
+     * that plugin only; it must never prevent subsequent plugins from running.
+     */
+    async function worker(queue, counters) {
         while (queue.length) {
-            const item =
-                queue.shift();
-
+            const item = queue.shift();
             if (!item) {
-                return;
+                continue;
             }
 
+            let status = null;
             try {
-                const result =
-                    await inspectPlugin(
-                        item.plugin,
-                        item.status
-                    );
+                // A malformed status row must not abort queue construction.
+                status = addStatusRow(item.plugin);
 
-                if (
-                    result.state ===
-                    "uploaded"
-                ) {
+                const result = await inspectPlugin(item.plugin, status);
+
+                if (result.state === "uploaded") {
                     counters.uploaded++;
 
-                    if (
-                        result.result?.url
-                    ) {
+                    if (result.result?.url) {
                         counters.step2Links.push({
-                            id:
-                                item.plugin.id,
-                            component:
-                                item.plugin.component,
-                            url:
-                                result.result.url,
+                            id: item.plugin.id,
+                            component: item.plugin.component,
+                            url: result.result.url,
                             repositoryValidation:
-                                result.result
-                                    .repositoryValidation ||
-                                null,
+                                result.result.repositoryValidation || null,
                         });
 
-                        /*
-                         * Não espera todos os workers terminarem. O popup
-                         * aparece no primeiro Step2 e recebe os próximos
-                         * incrementalmente enquanto o processamento continua.
-                         */
-                        showStep2Popup(
-                            counters.step2Links
-                        );
+                        // Popup errors must not invalidate an uploaded plugin.
+                        try {
+                            showStep2Popup(counters.step2Links);
+                        } catch (popupError) {
+                            console.error(
+                                "[Marketplace] Unable to display Step2 popup:",
+                                popupError
+                            );
+                        }
                     }
                 }
 
-                if (
-                    result.state ===
-                    "setup"
-                ) {
+                if (result.state === "setup") {
                     counters.setup++;
                 }
-
-                if (
-                    result.state ===
-                    "current"
-                ) {
+                if (result.state === "current") {
                     counters.current++;
                 }
-
-                if (
-                    result.state ===
-                    "outdated"
-                ) {
+                if (result.state === "outdated") {
                     counters.outdated++;
                 }
-
-                if (
-                    result.state ===
-                    "skipped"
-                ) {
+                if (result.state === "skipped") {
                     counters.skipped++;
                 }
             } catch (error) {
                 counters.errors++;
 
-                logMarketplaceError(
-                    error,
-                    {
-                        plugin: item.plugin,
-                        debug: item.status.getDebugContext(),
-                    }
-                );
+                const message = marketplaceErrorMessage(error);
+                let debug = {};
+                try {
+                    debug = status?.getDebugContext?.() || {};
+                } catch (debugError) {
+                    console.error("[Marketplace] Error reading debug context:", debugError);
+                }
 
-                item.status.set(
-                    "Erro",
-                    marketplaceErrorMessage(error),
-                    "error"
+                // Keep a queryable failure record for the entire batch.
+                counters.failures.push({
+                    id: item.plugin.id,
+                    component: item.plugin.component,
+                    phase: debug.status || "initializing",
+                    message,
+                    details: debug.details || "",
+                });
+
+                try {
+                    logMarketplaceError(error, {
+                        plugin: item.plugin,
+                        debug,
+                    });
+                } catch (loggingError) {
+                    console.error(
+                        "[Marketplace] Unable to log plugin error:",
+                        loggingError,
+                        item.plugin.component,
+                        message
+                    );
+                }
+
+                try {
+                    // Leave the failed plugin's status visible on the page.
+                    if (!status) {
+                        status = addStatusRow(item.plugin);
+                    }
+                    status.set("Erro", message, "error");
+                } catch (statusError) {
+                    console.error(
+                        "[Marketplace] Unable to show plugin error status:",
+                        item.plugin.component,
+                        statusError
+                    );
+                }
+            } finally {
+                counters.done++;
+                console.log(
+                    `[Marketplace] ${counters.done}/${counters.total}` +
+                    ` | enviados=${counters.uploaded}` +
+                    ` | configurados=${counters.setup}` +
+                    ` | atuais=${counters.current}` +
+                    ` | ignorados=${counters.skipped}` +
+                    ` | erros=${counters.errors}`
                 );
             }
 
-            counters.done++;
-
-            console.log(
-                `[Marketplace] ${counters.done}/${counters.total}` +
-                ` | enviados=${counters.uploaded}` +
-                ` | configurados=${counters.setup}` +
-                ` | atuais=${counters.current}` +
-                ` | ignorados=${counters.skipped}` +
-                ` | erros=${counters.errors}`
-            );
-
-            await sleep(
-                CONFIG.delayBetweenPluginsMs
-            );
+            // The next item runs whether the current one succeeded or failed.
+            await sleep(CONFIG.delayBetweenPluginsMs);
         }
     }
 
@@ -5809,20 +5813,14 @@
 
             errors: 0,
 
+            failures: [],
             step2Links: [],
         };
 
-        const queue =
-            plugins.map(
-                (plugin) => ({
-                    plugin,
+        // Failed items remain available for inspection after the batch.
+        window.marketplacePluginErrors = counters.failures;
 
-                    status:
-                        addStatusRow(
-                            plugin
-                        ),
-                })
-            );
+        const queue = plugins.map((plugin) => ({ plugin }));
 
         const workers = [];
 
@@ -5848,18 +5846,29 @@
             );
         }
 
-        await Promise.all(
-            workers
-        );
+        const outcomes = await Promise.allSettled(workers);
+        for (const outcome of outcomes) {
+            if (outcome.status === "rejected") {
+                console.error("[Marketplace] Worker stopped unexpectedly:", outcome.reason);
+            }
+        }
 
-        console.log(
-            "[Marketplace] Finalizado",
-            counters
-        );
+        console.log("[Marketplace] Finalizado", counters);
+        if (counters.failures.length) {
+            console.warn(
+                `[Marketplace] ${counters.failures.length} plugin(s) com erro; ` +
+                "os demais itens foram processados."
+            );
+            console.table(counters.failures);
+        }
 
-        showStep2Popup(
-            counters.step2Links
-        );
+        if (counters.step2Links.length) {
+            try {
+                showStep2Popup(counters.step2Links);
+            } catch (popupError) {
+                console.error("[Marketplace] Unable to show Step2 summary:", popupError);
+            }
+        }
     }
 
     function formToFormData(form) {
