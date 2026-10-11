@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.07-reconcile-gallery";
+        "2026-10-11.08-gallery-status";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3046,12 +3046,9 @@
     }
 
     /**
-     * The Marketplace FilePond widget may not use storeAsFile and its visual
-     * items are not necessarily successful form controls. Use the real catalog
-     * File objects in the POST instead of trusting its DOM representation.
-     *
-     * Remove both the array and non-array variants before adding the new files
-     * so an old hidden FilePond token cannot silently mix with new uploads.
+     * Upload only the catalog assets that differ from the published gallery.
+     * Existing FilePond inputs are retained when they already match; only
+     * changed asset fields are replaced in the multipart payload.
      */
     function buildMarketplaceAssetFormData(form, groups) {
         const formData = new FormData(form);
@@ -3724,9 +3721,10 @@
                         [
                             ...existingScreenshotNames,
                         ],
-                    deletedScreenshots:
-                        obsoleteScreenshotNames,
-                    screenshotsReset,
+                    deletedScreenshots: shouldUploadScreenshots
+                        ? obsoleteScreenshotNames
+                        : [],
+                    screenshotsReset: shouldUploadScreenshots,
                     uploadedScreenshots: shouldUploadScreenshots
                         ? screenshotsToUpload.map((screenshot) => screenshot.filename)
                         : [],
@@ -3809,9 +3807,8 @@
             );
 
             /*
-             * O Overview é enviado via POST direto. O payload já inclui os
-             * arquivos originais do catálogo, sem depender de storeAsFile,
-             * timers ou dos hidden inputs gerados pelo FilePond.
+             * O POST inclui apenas os arquivos divergentes do catálogo,
+             * preservando os campos já corretos e o token CSRF.
              */
             const responsePromise =
                 marketplaceFetch(
@@ -3896,8 +3893,9 @@
                     [
                         ...existingScreenshotNames,
                     ],
-                deletedScreenshotNames:
-                    obsoleteScreenshotNames,
+                deletedScreenshotNames: shouldUploadScreenshots
+                    ? obsoleteScreenshotNames
+                    : [],
                 screenshotsReset: shouldUploadScreenshots,
                 screenshotPaths: shouldUploadScreenshots
                     ? screenshotsToUpload.map((screenshot) => screenshot.path)
@@ -4915,8 +4913,9 @@
                     [
                         ...existingScreenshotNames,
                     ],
-                deletedScreenshotNames:
-                    obsoleteScreenshotNames,
+                deletedScreenshotNames: shouldUploadScreenshots
+                    ? obsoleteScreenshotNames
+                    : [],
                 screenshotsReset: shouldUploadScreenshots,
                 uploadedScreenshotNames: shouldUploadScreenshots
                     ? screenshotsToUpload.map((screenshot) => screenshot.filename)
@@ -5061,7 +5060,9 @@
         status.set(
             "Overview sincronizado",
             [
-                "ícone substituído",
+                overviewResult.iconUpdated
+                    ? "ícone substituído"
+                    : "ícone já sincronizado",
                 overviewResult.deletedScreenshotNames.length
                     ? `${overviewResult.deletedScreenshotNames.length} screenshot(s) removida(s): ${overviewResult.deletedScreenshotNames.join(", ")}`
                     : null,
