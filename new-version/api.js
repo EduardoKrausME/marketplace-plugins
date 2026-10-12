@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.12-targeted-screenshot-removal";
+        "2026-10-11.13-duplicate-filepond-items";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3328,8 +3328,11 @@
             const nameMatches = exact.length ? [] : items.filter((item) =>
                 marketplaceFilePondItemMatches(item, serverAsset)
             );
-            const chosen = exact[0] || (nameMatches.length === 1
-                ? nameMatches[0] : null);
+            // When the server reports a surplus duplicate, any matching
+            // copy of that exact originalName and byte size is interchangeable.
+            // Choose one per pass; persisted reconciliation will stop when
+            // only the catalog's expected copy remains.
+            const chosen = exact[0] || nameMatches[nameMatches.length - 1] || null;
             if (chosen) {
                 // Passing the FilePond item reference is documented; the
                 // numeric Marketplace screenshot ID is not a FilePond ID.
@@ -3348,8 +3351,8 @@
                 ?.textContent?.trim() || "";
             return normalizeAssetFilename(label) === publishedAssetName(serverAsset);
         });
-        if (matches.length === 1) {
-            const button = matches[0].querySelector(
+        if (matches.length) {
+            const button = matches[matches.length - 1].querySelector(
                 ".filepond--action-remove-item"
             );
             if (button && !button.disabled) {
