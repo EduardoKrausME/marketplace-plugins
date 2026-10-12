@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.09-originalname-filepond-delete";
+        "2026-10-11.10-safe-filepond-deletion";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3194,13 +3194,13 @@
     }
 
     /**
-     * Clear a gallery that differs from plugins.json. First remove via the
-     * site's FilePond controller; if it only applies changes on form submit,
-     * send one deletion-only POST using the native field structure. NEVER
-     * include replacement files in this request.
+     * Remove files using the Marketplace's live FilePond controller, including
+     * its server.remove integration when available. Do not send an invented
+     * deletion form: without a documented server route/parameter it cannot
+     * prove deletion of individual persisted image IDs.
      */
     async function clearPersistedMarketplaceAssets(
-        iframe, pageUrl, rootId, fieldName = null, form = null
+        iframe, pageUrl, rootId
     ) {
         const oldFiles = await readMarketplaceAssetState(pageUrl, rootId);
         if (!oldFiles.length) {
@@ -3228,48 +3228,19 @@
             }))
         );
 
-        // An icon field may be required; do not submit an invalid overview
-        // without an icon. We only use the form-deletion fallback for galleries.
-        if (fieldName && form) {
-            const deletion = new FormData(form);
-            const base = fieldName.endsWith("[]") ? fieldName.slice(0, -2) : fieldName;
-            deletion.delete(base);
-            deletion.delete(base + "[]");
-            const submit = form.querySelector(
-                "button[type='submit'][name='save_and_next']"
-            );
-            if (submit?.name) {
-                deletion.set(submit.name, submit.value || "");
-            }
-
-            const postUrl = new URL(
-                form.getAttribute("action") || pageUrl, location.origin
-            ).toString();
-            const response = await marketplaceFetch(postUrl, {
-                method: "POST",
-                body: deletion,
-            });
-            const html = await response.text();
-            const errors = getOverviewErrors(
-                new DOMParser().parseFromString(html, "text/html")
-            );
-            if (errors.length) {
-                throw new Error(
-                    rootId + ": Marketplace rejected deletion: " + errors.join(" | ")
-                );
-            }
-            remaining = await verifyEmptyMarketplaceAssets(pageUrl, rootId);
-            if (!remaining.length) {
-                return oldFiles;
-            }
-        }
-
+        // An empty multipart field is NOT an instruction to delete specific
+        // server records by ID. The previous fallback POST was unsafe because
+        // it could resend unrelated icon inputs while leaving screenshots
+        // untouched. Only use the Marketplace's actual FilePond remove action.
+        // If the server does not delete those records, stop this plugin.
         throw new Error(
             rootId + ": Marketplace still has " + remaining.length +
             " image(s): " + remaining.map((item) =>
                 (item.originalName || item.filename || "?") +
                 " (Marketplace ID " + (item.id ?? "?") + ")"
-            ).join(", ") + ". No replacement files were uploaded." +
+            ).join(", ") + ". No replacement files were uploaded. " +
+            "The Marketplace's FilePond remove action did not delete these server records. " +
+            "Check whether server.remove is configured and inspect its removal request." +
             (removalError ? " FilePond: " + removalError : "")
         );
     }
@@ -3743,8 +3714,7 @@
                 // Replace the entire mismatching gallery only after deletion,
                 // including all duplicates with names that look correct.
                 await clearPersistedMarketplaceAssets(
-                    iframe, overviewUrl, "plugin_edit_overview_form_screenshots",
-                    "plugin_edit_overview_form[screenshots][]", form
+                    iframe, overviewUrl, "plugin_edit_overview_form_screenshots"
                 );
             }
             if (shouldUploadIcon) {
@@ -4805,8 +4775,7 @@
                 progress("excluindo galeria diferente do plugins.json",
                     publishedReviewScreenshots.length + " publicada(s)");
                 await clearPersistedMarketplaceAssets(
-                    iframe, reviewUrl, "plugin_update_form_screenshots",
-                    "plugin_update_form[screenshots][]", form
+                    iframe, reviewUrl, "plugin_update_form_screenshots"
                 );
                 const remaining = await readMarketplaceAssetState(
                     reviewUrl, "plugin_update_form_screenshots"
