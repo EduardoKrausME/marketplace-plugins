@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.11-incremental-gallery-sync";
+        "2026-10-11.12-targeted-screenshot-removal";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1897,6 +1897,8 @@
 
             files.push({
                 filename,
+                originalName: screenshot.originalName || filename,
+                catalogId: screenshot.id ?? null,
                 path:
                     screenshot.url ||
                     `/marketplace-plugins/screenshots/${component}/${encodeURIComponent(filename)}`,
@@ -1972,6 +1974,19 @@
     }
 
 
+
+    /**
+     * Catalog screenshots can be archived under old-1.png while their
+     * original Marketplace upload name is print-1.png.
+     */
+    function marketplaceCatalogNames(asset) {
+        return [
+            asset?.filename,
+            asset?.originalName,
+            asset?.marketplaceOriginalName,
+            asset?.file?.name,
+        ].map(normalizeAssetFilename).filter(Boolean);
+    }
 
     function findFilePondBrowser(
         root
@@ -3135,34 +3150,48 @@
     }
 
     /**
-     * Match the actual set of published images to plugins.json using the
-     * original upload name and known file size. A matching saved copy can
-     * remain in place; only extras need deletion and missing items upload.
-     * The position attribute cannot reliably establish order.
+     * Match by original upload name, not Marketplace's component-hash.png
+     * storage filename. Catalog entries may have alternative historical
+     * originalName values. Preserve one matching published image; duplicate
+     * copies and unexpected files are extra.
      */
     function marketplaceGalleryDiff(published, catalog) {
         const expected = catalog.map((asset) => ({
             name: normalizeAssetFilename(asset.filename || asset.file?.name),
-            size: asset.file?.size, asset
+            names: marketplaceCatalogNames(asset),
+            size: asset.file?.size,
+            id: asset.catalogId ?? asset.id ?? null,
+            asset,
         }));
         const actual = published.map((asset) => ({
-            name: publishedAssetName(asset), size: Number(asset.size),
-            id: asset.id ?? null, asset
+            name: publishedAssetName(asset),
+            size: Number(asset.size),
+            id: asset.id ?? null,
+            asset,
         }));
-        const used = new Set(), extra = [];
+        const used = new Set();
+        const extra = [];
         for (const item of actual) {
             const match = expected.findIndex((entry, index) =>
-                !used.has(index) && !!entry.name && entry.name === item.name &&
+                !used.has(index) &&
+                (entry.names.includes(item.name) ||
+                    (entry.id != null && item.id != null &&
+                        String(entry.id) === String(item.id))) &&
                 (!Number.isFinite(item.size) || item.size <= 0 ||
-                    item.size === entry.size)
+                    entry.size === item.size)
             );
-            if (match < 0) extra.push(item);
-            else used.add(match);
+            if (match < 0) {
+                extra.push(item);
+            } else {
+                used.add(match);
+            }
         }
-        const missing = expected.filter((item, i) => !used.has(i))
-            .map((item) => item.asset);
-        return {same: !extra.length && !missing.length,
-            expected, actual, extra, missing};
+        const missing = expected.filter((entry, index) => !used.has(index))
+            .map((entry) => entry.asset);
+        return {
+            same: extra.length === 0 && missing.length === 0,
+            expected, actual, extra, missing,
+        };
     }
 
     // Only server metadata can establish what the Marketplace actually saved.
@@ -3206,42 +3235,189 @@
     }
 
     /**
-     * Delete surplus images only. The old implementation insisted the
-     * gallery become empty and failed even when the last saved image was
-     * already a correct image from plugins.json. Re-evaluate remaining IDs
-     * after each attempt and reload FilePond before retrying a partial delete.
+     * Obtain FilePond's live instance. FilePond may be exposed globally or
+     * held by a Stimulus controller in the same-origin iframe.
+     */
+    function findMarketplaceFilePond(iframe, rootId) {
+        const frame = iframe.contentWindow;
+        const doc = iframe.contentDocument;
+        const root = doc?.getElementById(rootId);
+        if (!frame || !root) {
+            throw new Error(rootId + ": FilePond input is unavailable.");
+        }
+        const browser = findFilePondBrowser(root) || root;
+        const scope = getFilePondScope(root, browser);
+        const candidates = [
+            browser, root, scope,
+            browser.closest?.(".filepond--root"),
+            ...Array.from(scope?.querySelectorAll?.("input[type=file]") || []),
+        ].filter(Boolean);
+
+        const API = frame.FilePond;
+        if (typeof API?.find === "function") {
+            for (const candidate of candidates) {
+                try {
+                    const pond = API.find(candidate);
+                    if (pond?.getFiles && pond?.removeFile) return {pond, scope};
+                } catch (_) {}
+            }
+        }
+        for (const app of [
+            frame.Stimulus, frame.application, frame.stimulusApplication,
+        ].filter(Boolean)) {
+            if (typeof app.getControllerForElementAndIdentifier !== "function") continue;
+            for (const candidate of candidates) {
+                const controller = app.getControllerForElementAndIdentifier(
+                    candidate, "filepond"
+                );
+                const pond = controller?.pond || controller?.filepond ||
+                    controller?.filePond || controller?.instance ||
+                    controller?.filePondInstance;
+                if (pond?.getFiles && pond?.removeFile) return {pond, scope};
+            }
+        }
+        return {pond: null, scope};
+    }
+
+    function marketplaceFilePondItemMatches(item, serverAsset, strict = false) {
+        const source = item?.source || item?.serverId ||
+            item?.file?.source || "";
+        const sourceText = String(
+            typeof source === "object" ?
+                (source.url || source.id || "") : source
+        );
+        const serverId = String(serverAsset.id ?? "");
+        const stored = normalizeAssetFilename(serverAsset.filename);
+        const storedFromSource = normalizeAssetFilename(
+            sourceText.split("?")[0].split("/").pop()
+        );
+        if (sourceText && serverId && sourceText === serverId) return true;
+        if (stored && sourceText && storedFromSource === stored) return true;
+        if (serverAsset.url && sourceText &&
+            sourceText.split("?")[0] === String(serverAsset.url).split("?")[0]) {
+            return true;
+        }
+        if (strict) return false;
+        // Fallback only when this is the unique matching visible item or
+        // one of several interchangeable exact-name duplicates.
+        return publishedAssetName(serverAsset) === normalizeAssetFilename(
+            item?.filename || item?.file?.name
+        ) && (!serverAsset.size || !item?.file?.size ||
+            Number(serverAsset.size) === Number(item.file.size));
+    }
+
+    /**
+     * Remove a particular persisted asset, not the whole FilePond list.
+     * Do not fall back to a bulk delete if the item's identity is unknown.
+     */
+    async function removeMarketplaceFilePondAsset(iframe, rootId, serverAsset) {
+        let context = findMarketplaceFilePond(iframe, rootId);
+        if (!context.pond) {
+            // Stimulus sometimes attaches FilePond after the iframe's load.
+            for (let i = 0; i < 8 && !context.pond; i++) {
+                await sleep(150);
+                context = findMarketplaceFilePond(iframe, rootId);
+            }
+        }
+        const {pond, scope} = context;
+        if (pond) {
+            const items = Array.from(pond.getFiles());
+            const exact = items.filter((item) =>
+                marketplaceFilePondItemMatches(item, serverAsset, true)
+            );
+            const nameMatches = exact.length ? [] : items.filter((item) =>
+                marketplaceFilePondItemMatches(item, serverAsset)
+            );
+            const chosen = exact[0] || (nameMatches.length === 1
+                ? nameMatches[0] : null);
+            if (chosen) {
+                // Passing the FilePond item reference is documented; the
+                // numeric Marketplace screenshot ID is not a FilePond ID.
+                await Promise.resolve(pond.removeFile(chosen, {remove: true}));
+                return "filepond-api";
+            }
+        }
+
+        // DOM fallback only when the target has a unique matching file label.
+        // Idle placeholders (no active button) are reported, never assumed
+        // removed or skipped as successful.
+        const matches = Array.from(
+            scope?.querySelectorAll?.(".filepond--item") || []
+        ).filter((item) => {
+            const label = item.querySelector(".filepond--file-info-main")
+                ?.textContent?.trim() || "";
+            return normalizeAssetFilename(label) === publishedAssetName(serverAsset);
+        });
+        if (matches.length === 1) {
+            const button = matches[0].querySelector(
+                ".filepond--action-remove-item"
+            );
+            if (button && !button.disabled) {
+                button.click();
+                return "filepond-button";
+            }
+        }
+        throw new Error(
+            rootId + ": cannot identify a removable FilePond item for " +
+            (serverAsset.originalName || serverAsset.filename) +
+            " (Marketplace ID " + (serverAsset.id ?? "?") + "). " +
+            "The Marketplace removal endpoint is not available."
+        );
+    }
+
+    /**
+     * Remove ONLY extra/duplicate published assets. Reload the iframe on a
+     * later pass to pick up the server's remaining FilePond local items.
+     * Check the persisted IDs after each deletion, and never upload while
+     * extras remain.
      */
     async function clearPersistedMarketplaceAssets(
         iframe, pageUrl, rootId, catalog = []
     ) {
         let saved = await readMarketplaceAssetState(pageUrl, rootId);
-        if (!marketplaceGalleryDiff(saved, catalog).extra.length) {
-            return saved;
-        }
         let lastError = "";
-        for (let attempt = 0; attempt < 3; attempt++) {
-            if (!marketplaceGalleryDiff(saved, catalog).extra.length) return saved;
-            const frame = attempt === 0 ? iframe : await createSetupIframe(pageUrl);
+        for (let pass = 0; pass < 3; pass++) {
+            const extras = marketplaceGalleryDiff(saved, catalog).extra;
+            if (!extras.length) return saved;
+            const frame = pass === 0 ? iframe : await createSetupIframe(pageUrl);
             try {
-                await clearFilePondFiles(frame, rootId);
-            } catch (error) {
-                lastError = marketplaceErrorMessage(error);
-                console.warn("[Marketplace] FilePond remove attempt",
-                    rootId, attempt + 1, lastError);
+                for (const extra of extras) {
+                    const current = await readMarketplaceAssetState(pageUrl, rootId);
+                    const stillExtra = marketplaceGalleryDiff(current, catalog)
+                        .extra.find((asset) =>
+                            String(asset.id ?? asset.name) ===
+                            String(extra.id ?? extra.name)
+                        );
+                    if (!stillExtra) continue;
+                    try {
+                        const method = await removeMarketplaceFilePondAsset(
+                            frame, rootId, stillExtra.asset
+                        );
+                        console.info("[Marketplace] Remove requested",
+                            rootId, stillExtra.id, method);
+                    } catch (error) {
+                        lastError = marketplaceErrorMessage(error);
+                        console.warn("[Marketplace] Remove failed",
+                            rootId, stillExtra.id, lastError);
+                    }
+                    // Check the actual server records, not DOM item counts.
+                    await sleep(550);
+                    saved = await readMarketplaceAssetState(pageUrl, rootId);
+                }
             } finally {
-                if (attempt > 0) frame.remove();
+                if (pass > 0) frame.remove();
             }
-            await sleep(850);
             saved = await readMarketplaceAssetState(pageUrl, rootId);
         }
-        const excess = marketplaceGalleryDiff(saved, catalog).extra;
-        if (excess.length) {
-            throw new Error(rootId + ": " + excess.length +
-                " surplus image(s) remain: " + excess.map((item) =>
+        const extras = marketplaceGalleryDiff(saved, catalog).extra;
+        if (extras.length) {
+            throw new Error(
+                rootId + ": unable to remove " + extras.length +
+                " extra image(s): " + extras.map((item) =>
                     item.name + " (Marketplace ID " + (item.id ?? "?") + ")"
-                ).join(", ") +
-                ". Upload blocked; continuing with next plugin." +
-                (lastError ? " FilePond: " + lastError : ""));
+                ).join(", ") + ". Upload blocked; continuing with next plugin." +
+                (lastError ? " FilePond: " + lastError : "")
+            );
         }
         return saved;
     }
