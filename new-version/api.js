@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.13-duplicate-filepond-items";
+        "2026-10-12.14-select-operation";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -5580,67 +5580,45 @@
 
     async function inspectPlugin(
         plugin,
-        status
+        status,
+        action
     ) {
+        if (action === "media") {
+            status.set("Lendo plugins.json para mídia e descrição...", plugin.component);
+            const catalog = await apiCatalog(plugin.component);
+
+            if (plugin.submittedForReview) {
+                // Step3 exposes only description and screenshots while in review.
+                const reviewDetails = await syncMarketplaceReviewDetails(
+                    plugin, status, catalog
+                );
+                return { state: "assets", reviewDetails };
+            }
+
+            const overview = await syncMarketplaceOverviewAssets(
+                plugin, status, catalog
+            );
+            const description = await syncMarketplaceDescription(
+                plugin, status, catalog
+            );
+            if (!description.ok) {
+                throw new Error("Description was not synchronized: " + description.error);
+            }
+            return { state: "assets", overview: overview.result, description };
+        }
+
+        if (action !== "releases") {
+            throw new Error("Unknown Marketplace operation: " + action);
+        }
         if (plugin.needsSetup) {
-            return setupMarketplacePlugin(
-                plugin,
-                status
-            );
+            status.set("Ignorado", "Plugin aguarda configuração inicial; nenhuma versão enviada.", "warning");
+            return { state: "skipped" };
         }
 
-        /*
-         * O estado Submitted for review possui uma tela própria:
-         * /plugins/submit/step3/[id].
-         *
-         * Nessa tela sincronizamos somente Description e Screenshots.
-         * Published/Hidden/Changes needed continuam usando as páginas de
-         * edição normais de Overview e Description.
-         */
-        let overviewSync = null;
-        let descriptionResult = null;
-        let reviewDetailsResult = null;
-
-        status.set(
-            plugin.submittedForReview
-                ? "Lendo plugins.json para Step3..."
-                : "Lendo plugins.json para Overview e Description...",
-            plugin.component
-        );
-
-        const catalog =
-            await apiCatalog(
-                plugin.component
-            );
-
-        if (plugin.submittedForReview) {
-            reviewDetailsResult =
-                await syncMarketplaceReviewDetails(
-                    plugin,
-                    status,
-                    catalog
-                );
-        } else {
-            overviewSync =
-                await syncMarketplaceOverviewAssets(
-                    plugin,
-                    status,
-                    catalog
-                );
-
-            descriptionResult =
-                await syncMarketplaceDescription(
-                    plugin,
-                    status,
-                    catalog
-                );
-        }
-
-        /*
-         * Não existe cache de estado do plugin no navegador.
-         * A versão do Marketplace é conferida em toda execução; para dados
-         * do GitHub, a única camada de cache é o api.php.
-         */
+        // Releases only need the catalog to resolve certain repository URLs.
+        const catalog = (
+            plugin.needsChanges || plugin.submittedForReview
+        ) ? await apiCatalog(plugin.component) : null;
 
         status.set(
             plugin.needsChanges
@@ -5714,43 +5692,6 @@
             };
         }
 
-        /*
-         * Support é mantido para todo plugin com repositório válido,
-         * independentemente de ser novo, Published, Changes needed,
-         * estar atualizado ou estar no cache local.
-         */
-        let supportResult = null;
-
-        if (!plugin.submittedForReview) {
-            status.set(
-                "Consultando suporte no GitHub...",
-                repository.fullName
-            );
-
-            const supportInfo =
-                await apiSupport(
-                    repository.fullName
-                );
-
-            status.set(
-                "Atualizando Support...",
-                `${supportInfo.repository_url} · issues · ${supportInfo.docs_exists && supportInfo.has_pages ? "GitHub Pages" : "sem Documentation"}`
-            );
-
-            supportResult =
-                await submitMarketplaceSupport(
-                    plugin,
-                    repository,
-                    supportInfo
-                );
-
-            status.set(
-                "Support atualizado",
-                `${supportResult.repositoryUrl} · ${supportResult.issueUrl} · Documentation: ${supportResult.documentationUrl || "vazia"} · ${supportResult.websiteUrl}`,
-                "success"
-            );
-        }
-
         status.set(
             "Consultando GitHub...",
             repository.fullName
@@ -5808,16 +5749,7 @@
                     : "success"
             );
 
-            return {
-                state: "current",
-                overview:
-                    overviewSync?.result ||
-                    null,
-                description:
-                    descriptionResult,
-                reviewDetails:
-                    reviewDetailsResult,
-            };
+            return { state: "current" };
         }
 
         status.set(
@@ -5906,7 +5838,7 @@
      * Each queue item is an independent operation. An error is recorded on
      * that plugin only; it must never prevent subsequent plugins from running.
      */
-    async function worker(queue, counters) {
+    async function worker(queue, counters, action) {
         while (queue.length) {
             const item = queue.shift();
             if (!item) {
@@ -5918,7 +5850,7 @@
                 // A malformed status row must not abort queue construction.
                 status = addStatusRow(item.plugin);
 
-                const result = await inspectPlugin(item.plugin, status);
+                const result = await inspectPlugin(item.plugin, status, action);
 
                 if (result.state === "uploaded") {
                     counters.uploaded++;
@@ -5946,6 +5878,9 @@
 
                 if (result.state === "setup") {
                     counters.setup++;
+                }
+                if (result.state === "assets") {
+                    counters.assets++;
                 }
                 if (result.state === "current") {
                     counters.current++;
@@ -6008,6 +5943,7 @@
                 console.log(
                     `[Marketplace] ${counters.done}/${counters.total}` +
                     ` | enviados=${counters.uploaded}` +
+                    ` | mídias=${counters.assets}` +
                     ` | configurados=${counters.setup}` +
                     ` | atuais=${counters.current}` +
                     ` | ignorados=${counters.skipped}` +
@@ -6018,6 +5954,99 @@
             // The next item runs whether the current one succeeded or failed.
             await sleep(CONFIG.delayBetweenPluginsMs);
         }
+    }
+
+
+    function chooseMarketplaceAction() {
+        return new Promise((resolve) => {
+            const overlay = document.createElement("div");
+            overlay.id = "marketplace-action-popup";
+            overlay.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px";
+            const dialog = document.createElement("div");
+            dialog.setAttribute("role", "dialog");
+            dialog.setAttribute("aria-modal", "true");
+            dialog.setAttribute("aria-labelledby", "marketplace-action-title");
+            dialog.style.cssText = "width:min(600px,100%);max-height:90vh;overflow:auto;background:#fff;color:#212529;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.35);padding:26px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+            const title = document.createElement("h2");
+            title.id = "marketplace-action-title";
+            title.textContent = "O que deseja atualizar?";
+            title.style.cssText = "font-size:22px;margin:0 0 8px";
+            const help = document.createElement("p");
+            help.textContent = "Selecione uma operação. A outra não será executada.";
+            help.style.cssText = "margin:0 0 20px;color:#6c757d;font-size:14px";
+            const options = document.createElement("div");
+            options.style.cssText = "display:grid;gap:12px";
+            const buttons = [];
+            let finished = false;
+
+            function finish(action) {
+                if (finished) return;
+                finished = true;
+                document.removeEventListener("keydown", handleKeys, true);
+                overlay.remove();
+                resolve(action);
+            }
+            function makeButton(action, label, description) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.style.cssText = "display:block;width:100%;text-align:left;padding:15px 18px;border:1px solid #ced4da;border-radius:9px;background:#f8f9fa;color:#212529;cursor:pointer;font:inherit";
+                const name = document.createElement("strong");
+                name.textContent = label;
+                name.style.cssText = "display:block;font-size:16px;margin-bottom:6px";
+                const detail = document.createElement("span");
+                detail.textContent = description;
+                detail.style.cssText = "display:block;font-size:13px;color:#495057;line-height:1.45";
+                button.append(name, detail);
+                button.addEventListener("click", () => finish(action));
+                options.appendChild(button);
+                buttons.push(button);
+            }
+
+            makeButton(
+                "releases",
+                "Atualizar plugins com base no release",
+                "Verifica as versões e envia novos ZIPs. Não altera ícones, screenshots, descrição ou Support."
+            );
+            makeButton(
+                "media",
+                "Atualizar ícones, screenshots e descrição",
+                "Sincroniza os dados do catálogo sem enviar ZIPs e sem alterar Support."
+            );
+
+            const footer = document.createElement("div");
+            footer.style.cssText = "display:flex;justify-content:flex-end;margin-top:20px";
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.textContent = "Cancelar";
+            cancel.style.cssText = "background:#fff;border:1px solid #ced4da;border-radius:7px;padding:8px 15px;cursor:pointer";
+            cancel.addEventListener("click", () => finish(null));
+            footer.appendChild(cancel);
+            dialog.append(title, help, options, footer);
+            overlay.appendChild(dialog);
+
+            function handleKeys(event) {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    finish(null);
+                } else if (event.key === "Tab") {
+                    const focusable = [...buttons, cancel];
+                    const index = focusable.indexOf(document.activeElement);
+                    if (event.shiftKey && index <= 0) {
+                        event.preventDefault();
+                        focusable[focusable.length - 1].focus();
+                    } else if (!event.shiftKey && index === focusable.length - 1) {
+                        event.preventDefault();
+                        focusable[0].focus();
+                    }
+                }
+            }
+            overlay.addEventListener("click", event => {
+                if (event.target === overlay) finish(null);
+            });
+            document.addEventListener("keydown", handleKeys, true);
+            document.body.appendChild(overlay);
+            buttons[0].focus();
+        });
     }
 
     async function main() {
@@ -6033,6 +6062,17 @@
         }
         window.__marketplacePluginBatchRunning__ = true;
         try {
+            if (document.readyState === "loading") {
+                await new Promise(resolve => {
+                    document.addEventListener("DOMContentLoaded", resolve, {once:true});
+                });
+            }
+            const action = await chooseMarketplaceAction();
+            if (!action) {
+                console.info("[Marketplace] Cancelado; nenhum plugin processado.");
+                return;
+            }
+            console.info("[Marketplace] Operação selecionada:", action);
             const plugins = getDashboardPlugins();
 
         if (!plugins.length) {
@@ -6054,6 +6094,8 @@
             done: 0,
 
             uploaded: 0,
+
+            assets: 0,
 
             setup: 0,
 
@@ -6093,7 +6135,8 @@
             workers.push(
                 worker(
                     queue,
-                    counters
+                    counters,
+                    action
                 )
             );
         }
