@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.10-safe-filepond-deletion";
+        "2026-10-11.11-incremental-gallery-sync";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -3091,13 +3091,20 @@
      * Existing FilePond inputs are retained when they already match; only
      * changed asset fields are replaced in the multipart payload.
      */
-    function buildMarketplaceAssetFormData(form, groups) {
+    function buildMarketplaceAssetFormData(form, groups, mediaFields = []) {
         const formData = new FormData(form);
 
-        for (const { fieldName, files } of groups) {
+        // Existing FilePond controls may supply empty File placeholders or
+        // stale hidden tokens. Don't resubmit them by accident.
+        for (const fieldName of new Set([
+            ...mediaFields, ...groups.map((group) => group.fieldName)
+        ])) {
             const baseName = fieldName.replace(/\[\]$/, "");
             formData.delete(baseName);
             formData.delete(baseName + "[]");
+        }
+
+        for (const { fieldName, files } of groups) {
 
             if (!files.length) {
                 throw new Error("No files to upload for " + fieldName);
@@ -3128,29 +3135,34 @@
     }
 
     /**
-     * Match published images by originalName (from the original upload),
-     * NOT Marketplace's renamed component-hash.png storage filename.
-     * Validate order, count, duplicates, and known file sizes.
+     * Match the actual set of published images to plugins.json using the
+     * original upload name and known file size. A matching saved copy can
+     * remain in place; only extras need deletion and missing items upload.
+     * The position attribute cannot reliably establish order.
      */
     function marketplaceGalleryDiff(published, catalog) {
-        const expected = catalog.map((item) => ({
-            name: normalizeAssetFilename(item.filename || item.file?.name),
-            size: item.file?.size,
+        const expected = catalog.map((asset) => ({
+            name: normalizeAssetFilename(asset.filename || asset.file?.name),
+            size: asset.file?.size, asset
         }));
-        const actual = published.map((item) => ({
-            name: publishedAssetName(item),
-            size: Number(item.size),
-            id: item.id ?? null,
+        const actual = published.map((asset) => ({
+            name: publishedAssetName(asset), size: Number(asset.size),
+            id: asset.id ?? null, asset
         }));
-        const same = expected.length === actual.length &&
-            expected.every((item, index) =>
-                Boolean(item.name) &&
-                item.name === actual[index].name &&
-                (!Number.isFinite(actual[index].size) ||
-                    actual[index].size <= 0 ||
-                    item.size === actual[index].size)
+        const used = new Set(), extra = [];
+        for (const item of actual) {
+            const match = expected.findIndex((entry, index) =>
+                !used.has(index) && !!entry.name && entry.name === item.name &&
+                (!Number.isFinite(item.size) || item.size <= 0 ||
+                    item.size === entry.size)
             );
-        return { same, expected, actual };
+            if (match < 0) extra.push(item);
+            else used.add(match);
+        }
+        const missing = expected.filter((item, i) => !used.has(i))
+            .map((item) => item.asset);
+        return {same: !extra.length && !missing.length,
+            expected, actual, extra, missing};
     }
 
     // Only server metadata can establish what the Marketplace actually saved.
@@ -3194,83 +3206,60 @@
     }
 
     /**
-     * Remove files using the Marketplace's live FilePond controller, including
-     * its server.remove integration when available. Do not send an invented
-     * deletion form: without a documented server route/parameter it cannot
-     * prove deletion of individual persisted image IDs.
+     * Delete surplus images only. The old implementation insisted the
+     * gallery become empty and failed even when the last saved image was
+     * already a correct image from plugins.json. Re-evaluate remaining IDs
+     * after each attempt and reload FilePond before retrying a partial delete.
      */
     async function clearPersistedMarketplaceAssets(
-        iframe, pageUrl, rootId
+        iframe, pageUrl, rootId, catalog = []
     ) {
-        const oldFiles = await readMarketplaceAssetState(pageUrl, rootId);
-        if (!oldFiles.length) {
-            return [];
+        let saved = await readMarketplaceAssetState(pageUrl, rootId);
+        if (!marketplaceGalleryDiff(saved, catalog).extra.length) {
+            return saved;
         }
-
-        let removalError = "";
-        try {
-            await clearFilePondFiles(iframe, rootId);
-        } catch (error) {
-            removalError = marketplaceErrorMessage(error);
-            console.warn("[Marketplace] FilePond removal failed:", rootId, removalError);
+        let lastError = "";
+        for (let attempt = 0; attempt < 3; attempt++) {
+            if (!marketplaceGalleryDiff(saved, catalog).extra.length) return saved;
+            const frame = attempt === 0 ? iframe : await createSetupIframe(pageUrl);
+            try {
+                await clearFilePondFiles(frame, rootId);
+            } catch (error) {
+                lastError = marketplaceErrorMessage(error);
+                console.warn("[Marketplace] FilePond remove attempt",
+                    rootId, attempt + 1, lastError);
+            } finally {
+                if (attempt > 0) frame.remove();
+            }
+            await sleep(850);
+            saved = await readMarketplaceAssetState(pageUrl, rootId);
         }
-
-        let remaining = await verifyEmptyMarketplaceAssets(pageUrl, rootId);
-        if (!remaining.length) {
-            return oldFiles;
+        const excess = marketplaceGalleryDiff(saved, catalog).extra;
+        if (excess.length) {
+            throw new Error(rootId + ": " + excess.length +
+                " surplus image(s) remain: " + excess.map((item) =>
+                    item.name + " (Marketplace ID " + (item.id ?? "?") + ")"
+                ).join(", ") +
+                ". Upload blocked; continuing with next plugin." +
+                (lastError ? " FilePond: " + lastError : ""));
         }
-        console.warn("[Marketplace] Removed from FilePond but still persisted:",
-            rootId, remaining.map((item) => ({
-                id: item.id,
-                originalName: item.originalName,
-                storedName: item.filename,
-                size: item.size,
-            }))
-        );
-
-        // An empty multipart field is NOT an instruction to delete specific
-        // server records by ID. The previous fallback POST was unsafe because
-        // it could resend unrelated icon inputs while leaving screenshots
-        // untouched. Only use the Marketplace's actual FilePond remove action.
-        // If the server does not delete those records, stop this plugin.
-        throw new Error(
-            rootId + ": Marketplace still has " + remaining.length +
-            " image(s): " + remaining.map((item) =>
-                (item.originalName || item.filename || "?") +
-                " (Marketplace ID " + (item.id ?? "?") + ")"
-            ).join(", ") + ". No replacement files were uploaded. " +
-            "The Marketplace's FilePond remove action did not delete these server records. " +
-            "Check whether server.remove is configured and inspect its removal request." +
-            (removalError ? " FilePond: " + removalError : "")
-        );
+        return saved;
     }
 
-    async function verifyCatalogGallery(pageUrl, rootId, catalog, oldFiles = null) {
-        const previousIds = new Set((oldFiles || []).map((file) =>
-            String(file?.id ?? "")
-        ).filter(Boolean));
+    async function verifyCatalogGallery(pageUrl, rootId, catalog) {
         let observed = "";
         for (let attempt = 0; attempt < 3; attempt++) {
             const current = await readMarketplaceAssetState(pageUrl, rootId);
             const diff = marketplaceGalleryDiff(current, catalog);
-            const reused = oldFiles !== null && current.some((file) =>
-                file.id != null && previousIds.has(String(file.id))
-            );
             observed = diff.actual.map((item) =>
                 item.name + (item.size > 0 ? " (" + item.size + " bytes)" : "")
             ).join(", ") || "(empty)";
-            if (diff.same && !reused) {
-                return;
-            }
-            if (attempt < 2) {
-                await sleep(700);
-            }
+            if (diff.same) return;
+            if (attempt < 2) await sleep(700);
         }
-        throw new Error(
-            rootId + ": published gallery does not match plugins.json. Expected: " +
+        throw new Error(rootId + ": gallery differs from plugins.json. Expected " +
             catalog.map((item) => item.filename || item.file?.name).join(", ") +
-            "; published: " + observed
-        );
+            "; found " + observed);
     }
 
     function getOverviewErrors(
@@ -3690,52 +3679,43 @@
                 )
             );
 
-            // Compare against plugins.json before changing anything.
+            // Only discard mismatched/duplicate images; retain matching
+            // archived images, including local_kopere_proctoring's new-2.png.
             const previousIconFiles = await readMarketplaceAssetState(
                 overviewUrl, "plugin_edit_overview_form_icon"
             );
             const existingServerScreenshots = await readMarketplaceAssetState(
                 overviewUrl, "plugin_edit_overview_form_screenshots"
             );
-            const screenshotDiff = marketplaceGalleryDiff(
+            const expectedIcon = [{filename: setupIcon.file.name, file: setupIcon.file}];
+            let screenshotDiff = marketplaceGalleryDiff(
                 existingServerScreenshots, setupScreenshots
             );
-            const iconDiff = marketplaceGalleryDiff(
-                previousIconFiles, [{filename: setupIcon.file.name, file: setupIcon.file}]
-            );
-            const shouldUploadScreenshots = !screenshotDiff.same;
-            const shouldUploadIcon = !iconDiff.same;
-            iconUpdated = shouldUploadIcon;
-
+            let iconDiff = marketplaceGalleryDiff(previousIconFiles, expectedIcon);
             progress(7, "comparando com plugins.json",
                 existingServerScreenshots.length + " publicada(s), " +
                 setupScreenshots.length + " esperada(s)");
-            if (shouldUploadScreenshots) {
-                // Replace the entire mismatching gallery only after deletion,
-                // including all duplicates with names that look correct.
-                await clearPersistedMarketplaceAssets(
-                    iframe, overviewUrl, "plugin_edit_overview_form_screenshots"
+            if (screenshotDiff.extra.length) {
+                const saved = await clearPersistedMarketplaceAssets(
+                    iframe, overviewUrl, "plugin_edit_overview_form_screenshots",
+                    setupScreenshots
                 );
+                screenshotDiff = marketplaceGalleryDiff(saved, setupScreenshots);
             }
-            if (shouldUploadIcon) {
-                await clearPersistedMarketplaceAssets(
-                    iframe, overviewUrl, "plugin_edit_overview_form_icon"
+            if (iconDiff.extra.length) {
+                const saved = await clearPersistedMarketplaceAssets(
+                    iframe, overviewUrl, "plugin_edit_overview_form_icon", expectedIcon
                 );
+                iconDiff = marketplaceGalleryDiff(saved, expectedIcon);
             }
-
-            if (shouldUploadScreenshots || shouldUploadIcon) {
-                const [icons, screenshots] = await Promise.all([
-                    readMarketplaceAssetState(overviewUrl, "plugin_edit_overview_form_icon"),
-                    readMarketplaceAssetState(overviewUrl, "plugin_edit_overview_form_screenshots"),
-                ]);
-                if ((shouldUploadIcon && icons.length) ||
-                    (shouldUploadScreenshots && screenshots.length)) {
-                    throw new Error(
-                        "Previously published assets were not removed. " +
-                        "Upload cancelled to prevent duplicate images."
-                    );
-                }
+            if (screenshotDiff.extra.length || iconDiff.extra.length) {
+                throw new Error("Extra Marketplace images remain; upload blocked.");
             }
+            const missingScreenshots = screenshotDiff.missing;
+            const missingIcons = iconDiff.missing;
+            const shouldUploadScreenshots = missingScreenshots.length > 0;
+            const shouldUploadIcon = missingIcons.length > 0;
+            iconUpdated = shouldUploadIcon;
 
             console.log(
                 `[Marketplace] Assets do Overview: ${plugin.component}`,
@@ -3745,13 +3725,12 @@
                         [
                             ...existingScreenshotNames,
                         ],
-                    deletedScreenshots: shouldUploadScreenshots
-                        ? obsoleteScreenshotNames
-                        : [],
+                    deletedScreenshots: existingServerScreenshots
+                        .filter((item) => !screenshotDiff.actual.some((saved) =>
+                            String(saved.id) === String(item.id)))
+                        .map((item) => item.originalName || item.filename),
                     screenshotsReset: shouldUploadScreenshots,
-                    uploadedScreenshots: shouldUploadScreenshots
-                        ? screenshotsToUpload.map((screenshot) => screenshot.filename)
-                        : [],
+                    uploadedScreenshots: missingScreenshots.map((item) => item.filename),
                     skippedScreenshots:
                         skippedScreenshots.map(
                             (screenshot) =>
@@ -3775,16 +3754,19 @@
             if (shouldUploadIcon) {
                 fileGroups.push({
                     fieldName: "plugin_edit_overview_form[icon]",
-                    files: [setupIcon.file],
+                    files: missingIcons.map((item) => item.file),
                 });
             }
             if (shouldUploadScreenshots) {
                 fileGroups.push({
                     fieldName: "plugin_edit_overview_form[screenshots][]",
-                    files: setupScreenshots.map((item) => item.file),
+                    files: missingScreenshots.map((item) => item.file),
                 });
             }
-            const formData = buildMarketplaceAssetFormData(form, fileGroups);
+            const formData = buildMarketplaceAssetFormData(form, fileGroups, [
+                "plugin_edit_overview_form[icon]",
+                "plugin_edit_overview_form[screenshots][]",
+            ]);
 
             if (submit.name) {
                 formData.append(
@@ -3892,13 +3874,10 @@
             }
 
             await verifyCatalogGallery(
-                overviewUrl, "plugin_edit_overview_form_screenshots",
-                setupScreenshots, shouldUploadScreenshots ? existingServerScreenshots : null
+                overviewUrl, "plugin_edit_overview_form_screenshots", setupScreenshots
             );
             await verifyCatalogGallery(
-                overviewUrl, "plugin_edit_overview_form_icon",
-                [{filename: setupIcon.file.name, file: setupIcon.file}],
-                shouldUploadIcon ? previousIconFiles : null
+                overviewUrl, "plugin_edit_overview_form_icon", expectedIcon
             );
 
             return {
@@ -3917,16 +3896,15 @@
                     [
                         ...existingScreenshotNames,
                     ],
-                deletedScreenshotNames: shouldUploadScreenshots
-                    ? obsoleteScreenshotNames
-                    : [],
+                deletedScreenshotNames: existingServerScreenshots
+                    .filter((item) => !screenshotDiff.actual.some((saved) =>
+                        String(saved.id) === String(item.id)))
+                    .map((item) => item.originalName || item.filename),
                 screenshotsReset: shouldUploadScreenshots,
                 screenshotPaths: shouldUploadScreenshots
                     ? screenshotsToUpload.map((screenshot) => screenshot.path)
                     : [],
-                uploadedScreenshotNames: shouldUploadScreenshots
-                    ? screenshotsToUpload.map((screenshot) => screenshot.filename)
-                    : [],
+                uploadedScreenshotNames: missingScreenshots.map((item) => item.filename),
                 skippedScreenshotNames:
                     skippedScreenshots.map(
                         (screenshot) =>
@@ -4768,24 +4746,23 @@
             const publishedReviewScreenshots = await readMarketplaceAssetState(
                 reviewUrl, "plugin_update_form_screenshots"
             );
-            const shouldUploadScreenshots = !marketplaceGalleryDiff(
+            let reviewDiff = marketplaceGalleryDiff(
                 publishedReviewScreenshots, setupScreenshots
-            ).same;
-            if (shouldUploadScreenshots) {
-                progress("excluindo galeria diferente do plugins.json",
-                    publishedReviewScreenshots.length + " publicada(s)");
-                await clearPersistedMarketplaceAssets(
-                    iframe, reviewUrl, "plugin_update_form_screenshots"
+            );
+            if (reviewDiff.extra.length) {
+                progress("excluindo imagens excedentes",
+                    reviewDiff.extra.length + " arquivo(s)");
+                const saved = await clearPersistedMarketplaceAssets(
+                    iframe, reviewUrl, "plugin_update_form_screenshots",
+                    setupScreenshots
                 );
-                const remaining = await readMarketplaceAssetState(
-                    reviewUrl, "plugin_update_form_screenshots"
-                );
-                if (remaining.length) {
-                    throw new Error(
-                        "Review screenshots were not deleted. Upload cancelled."
-                    );
-                }
+                reviewDiff = marketplaceGalleryDiff(saved, setupScreenshots);
             }
+            if (reviewDiff.extra.length) {
+                throw new Error("Review gallery still contains extra images; upload blocked.");
+            }
+            const missingScreenshots = reviewDiff.missing;
+            const shouldUploadScreenshots = missingScreenshots.length > 0;
 
             /*
              * O FormData preserva os demais campos da página, mas recebe
@@ -4797,9 +4774,10 @@
                 shouldUploadScreenshots
                     ? [{
                         fieldName: "plugin_update_form[screenshots][]",
-                        files: setupScreenshots.map((item) => item.file),
+                        files: missingScreenshots.map((item) => item.file),
                     }]
-                    : []
+                    : [],
+                ["plugin_update_form[screenshots][]"]
             );
 
             /*
@@ -4911,8 +4889,7 @@
             }
 
             await verifyCatalogGallery(
-                reviewUrl, "plugin_update_form_screenshots",
-                setupScreenshots, shouldUploadScreenshots ? publishedReviewScreenshots : null
+                reviewUrl, "plugin_update_form_screenshots", setupScreenshots
             );
 
             return {
@@ -4936,13 +4913,12 @@
                     [
                         ...existingScreenshotNames,
                     ],
-                deletedScreenshotNames: shouldUploadScreenshots
-                    ? obsoleteScreenshotNames
-                    : [],
+                deletedScreenshotNames: publishedReviewScreenshots
+                    .filter((item) => !reviewDiff.actual.some((saved) =>
+                        String(saved.id) === String(item.id)))
+                    .map((item) => item.originalName || item.filename),
                 screenshotsReset: shouldUploadScreenshots,
-                uploadedScreenshotNames: shouldUploadScreenshots
-                    ? screenshotsToUpload.map((screenshot) => screenshot.filename)
-                    : [],
+                uploadedScreenshotNames: missingScreenshots.map((item) => item.filename),
                 skippedScreenshotNames:
                     skippedScreenshots.map(
                         (screenshot) =>
