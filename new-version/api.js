@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-11.08-gallery-status";
+        "2026-10-11.09-originalname-filepond-delete";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -1963,6 +1963,14 @@
             .trim()
             .toLowerCase();
     }
+    /**
+     * The Marketplace renames all images to component-hash.png. Keep the
+     * upload's actual filename from originalName when reconciling plugins.json.
+     */
+    function publishedAssetName(asset) {
+        return normalizeAssetFilename(asset?.originalName || asset?.filename);
+    }
+
 
 
     function findFilePondBrowser(
@@ -2259,6 +2267,37 @@
             }
         }
 
+        /*
+         * FilePond can be imported into the Marketplace's Stimulus bundle
+         * rather than exposed as window.FilePond. Resolve the controller's
+         * live instance before falling back to its visible remove buttons.
+         */
+        if (!pond) {
+            const applications = [
+                frameWindow.Stimulus,
+                frameWindow.application,
+                frameWindow.stimulusApplication,
+            ].filter(Boolean);
+            const hosts = [root, browser, pondScope].filter(Boolean);
+            for (const app of applications) {
+                if (pond || typeof app.getControllerForElementAndIdentifier !== "function") {
+                    continue;
+                }
+                for (const host of hosts) {
+                    const controller = app.getControllerForElementAndIdentifier(host, "filepond");
+                    const candidate = controller?.pond || controller?.filepond ||
+                        controller?.filePond || controller?.instance ||
+                        controller?.filePondInstance;
+                    if (candidate &&
+                        typeof candidate.getFiles === "function" &&
+                        typeof candidate.removeFile === "function") {
+                        pond = candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
         const items = () => [
             ...(pondScope?.querySelectorAll?.(".filepond--item") || []),
         ].filter((item) => item.isConnected && pondScope.contains(item));
@@ -2293,12 +2332,14 @@
          * FilePond.removeFiles() / removeFile() retorna void. A chamada
          * nao comprova que os arquivos sairam: verifique getFiles e DOM.
          */
-        if (pond && typeof pond.removeFiles === "function") {
-            pond.removeFiles();
-        } else if (pond && typeof pond.removeFile === "function") {
-            for (const file of [...pond.getFiles()]) {
-                pond.removeFile(file?.id || file);
+        if (pond && typeof pond.removeFile === "function") {
+            // Use FilePond's item reference (not the Marketplace numeric ID)
+            // so its configured server.remove callback runs for local files.
+            for (const file of [...(pond.getFiles?.() || [])]) {
+                pond.removeFile(file, {remove: true});
             }
+        } else if (pond && typeof pond.removeFiles === "function") {
+            pond.removeFiles();
         }
         if (pond) {
             try {
@@ -3024,7 +3065,7 @@
         const previousScreenshotFiles = getFilePondExistingFiles(screenshotInput);
         const existingScreenshotNames = new Set(
             previousScreenshotFiles.map((item) =>
-                normalizeAssetFilename(item?.originalName || item?.filename)
+                publishedAssetName(item)
             ).filter(Boolean)
         );
         const obsoleteScreenshotNames = previousScreenshotFiles.map((item) =>
@@ -3087,9 +3128,9 @@
     }
 
     /**
-     * Match the FULL published collection to plugins.json: order, count,
-     * filenames, duplicates and file sizes when Marketplace exposes them.
-     * FilePond originalName can be a legacy display name, so prefer filename.
+     * Match published images by originalName (from the original upload),
+     * NOT Marketplace's renamed component-hash.png storage filename.
+     * Validate order, count, duplicates, and known file sizes.
      */
     function marketplaceGalleryDiff(published, catalog) {
         const expected = catalog.map((item) => ({
@@ -3097,7 +3138,7 @@
             size: item.file?.size,
         }));
         const actual = published.map((item) => ({
-            name: normalizeAssetFilename(item.filename || item.originalName),
+            name: publishedAssetName(item),
             size: Number(item.size),
             id: item.id ?? null,
         }));
@@ -3114,8 +3155,12 @@
 
     // Only server metadata can establish what the Marketplace actually saved.
     async function readMarketplaceAssetState(pageUrl, rootId) {
-        const page = await marketplaceHtml(pageUrl);
-        const input = page.document.getElementById(rootId);
+        // Always ask the server for fresh HTML after an attempted deletion.
+        const response = await marketplaceFetch(pageUrl, {cache: "no-store"});
+        const html = await response.text();
+        const input = new DOMParser().parseFromString(
+            html, "text/html"
+        ).getElementById(rootId);
         if (!input) {
             throw new Error(rootId + ": Marketplace asset field was not returned.");
         }
@@ -3174,6 +3219,14 @@
         if (!remaining.length) {
             return oldFiles;
         }
+        console.warn("[Marketplace] Removed from FilePond but still persisted:",
+            rootId, remaining.map((item) => ({
+                id: item.id,
+                originalName: item.originalName,
+                storedName: item.filename,
+                size: item.size,
+            }))
+        );
 
         // An icon field may be required; do not submit an invalid overview
         // without an icon. We only use the form-deletion fallback for galleries.
@@ -3214,7 +3267,8 @@
         throw new Error(
             rootId + ": Marketplace still has " + remaining.length +
             " image(s): " + remaining.map((item) =>
-                item.filename || item.originalName || String(item.id || "?")
+                (item.originalName || item.filename || "?") +
+                " (Marketplace ID " + (item.id ?? "?") + ")"
             ).join(", ") + ". No replacement files were uploaded." +
             (removalError ? " FilePond: " + removalError : "")
         );
