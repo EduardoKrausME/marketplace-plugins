@@ -12,7 +12,14 @@
 
     }
 
-    const { CONFIG, marketplaceErrorMessage, marketplaceFetch, marketplaceHtml, apiCatalog } = bridge.common;
+    const {
+        CONFIG,
+        sleep,
+        marketplaceErrorMessage,
+        marketplaceFetch,
+        marketplaceHtml,
+        apiCatalog,
+    } = bridge.common;
 
 
 

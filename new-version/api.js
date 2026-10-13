@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-12.15-split-action-modules";
+        "2026-10-13.16-share-sleep-with-media";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -737,6 +737,7 @@
     const MARKETPLACE_MODULE_SOURCE = document.currentScript?.src || CONFIG.apiUrl;
     const SHARED_ACTION_SERVICES = Object.freeze({
         CONFIG,
+        sleep,
         marketplaceErrorMessage,
         marketplaceFetch,
         marketplaceHtml,
