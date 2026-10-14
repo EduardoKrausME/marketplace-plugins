@@ -1611,8 +1611,10 @@
                     : "Verificando Marketplace..."
         );
 
+        // Under review, including Changes needed, the versions overview
+        // belongs to the submission flow rather than the published editor.
         const versionsUrl =
-            plugin.submittedForReview
+            (plugin.needsChanges || plugin.submittedForReview)
                 ? `/plugins/submit/step3/${plugin.id}`
                 : `/plugins/${plugin.id}/edit/versions`;
 
