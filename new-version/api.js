@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-13.16-share-sleep-with-media";
+        "2026-10-14.01-changes-needed-step3";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
