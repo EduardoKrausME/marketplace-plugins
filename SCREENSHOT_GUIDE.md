@@ -14,7 +14,7 @@ Cada plugin possui uma pasta própria usando exatamente o componente Moodle:
 screenshots/[component]/
 ```
 
-O padrão mínimo atual usa duas imagens:
+O padrão recomendado usa duas imagens, mas uma única screenshot é válida quando já apresenta adequadamente o plugin:
 
 ```text
 screenshots/[component]/new-1.png
@@ -55,13 +55,14 @@ Mas não crie imagens extras apenas para mostrar a mesma tela com pequenas difer
 
 ## Quantidade recomendada
 
-O padrão do catálogo é:
+A recomendação do catálogo é:
 
 ```text
-2 screenshots por plugin
+1 screenshot principal obrigatória
+2 screenshots quando houver um segundo fluxo relevante
 ```
 
-Na maioria dos casos isso é suficiente.
+Na maioria dos casos, duas imagens são suficientes. Não crie uma segunda imagem artificial apenas para cumprir uma quantidade.
 
 A primeira imagem apresenta o conceito principal do plugin e a segunda mostra uma visão complementar.
 
@@ -152,10 +153,10 @@ Não usar:
 
 As imagens atuais seguem formato widescreen próximo de 16:9.
 
-A referência prática usada na geração atual é:
+As seis imagens de referência usam a proporção widescreen 16:9; uma resolução prática é:
 
 ```text
-1672 x 941 px
+1600 x 900 px
 ```
 
 Também são adequadas resoluções 16:9 maiores, por exemplo:
@@ -168,13 +169,65 @@ O ponto importante é manter a mesma proporção visual entre os plugins.
 
 Não misture screenshots quadradas, verticais e widescreen dentro da mesma família.
 
+## Referências visuais obrigatórias
+
+Ao criar ou refazer screenshots, use **estas seis imagens do próprio catálogo como referência visual prioritária**, em vez de interpretar as instruções apenas de forma abstrata. Observe a distribuição entre apresentação e produto, a ausência do layout externo do Moodle, a hierarquia de textos, o nível de detalhe da interface e a continuidade entre telas do mesmo plugin.
+
+As referências estão dentro do repositório e devem ser abertas antes da geração; não são apenas exemplos de nomes de arquivos.
+
+<details>
+<summary><code>screenshots/h5plib_vh5prime/new-1.png</code></summary>
+
+<img src="screenshots/h5plib_vh5prime/new-1.png" width="800" alt="Referência visual H5Prime Viewer, primeira screenshot">
+
+</details>
+
+<details>
+<summary><code>screenshots/h5plib_vh5prime/new-2.png</code></summary>
+
+<img src="screenshots/h5plib_vh5prime/new-2.png" width="800" alt="Referência visual H5Prime Viewer, segunda screenshot">
+
+</details>
+
+<details>
+<summary><code>screenshots/local_ai_bridge/new-1.png</code></summary>
+
+<img src="screenshots/local_ai_bridge/new-1.png" width="800" alt="Referência visual AI Bridge, primeira screenshot">
+
+</details>
+
+<details>
+<summary><code>screenshots/local_ai_bridge/new-2.png</code></summary>
+
+<img src="screenshots/local_ai_bridge/new-2.png" width="800" alt="Referência visual AI Bridge, segunda screenshot">
+
+</details>
+
+<details>
+<summary><code>screenshots/local_alternative_file_system/new-1.png</code></summary>
+
+<img src="screenshots/local_alternative_file_system/new-1.png" width="800" alt="Referência visual Alternative File System">
+
+</details>
+
+<details>
+<summary><code>screenshots/local_copy/new-1.png</code></summary>
+
+<img src="screenshots/local_copy/new-1.png" width="800" alt="Referência visual Local Copy">
+
+</details>
+
+**O que reproduzir:** coluna de apresentação do produto à esquerda, área principal útil à direita, interface clara e realista, conteúdos concretos e elementos com bom tamanho para leitura. As proporções e cores são referências, não um molde rígido: o acento pode seguir a identidade do plugin, inclusive roxo, desde que a coleção continue visualmente coerente.
+
+**O que não reproduzir:** cabeçalho do site Moodle, barras de menus do Moodle, navegação global, índice do curso, gavetas de navegação, coluna de blocos à esquerda ou à direita e painéis vazios que simulem essas áreas. O foco é a interface do plugin, não a página completa do Moodle.
+
 ## Estrutura visual
 
 O padrão atual usa duas áreas bem definidas.
 
 ### Coluna de apresentação
 
-A região esquerda ocupa aproximadamente 24% a 28% da largura.
+A região esquerda ocupa aproximadamente 25% a 35% da largura, conforme a referência escolhida.
 
 Ela funciona como uma pequena apresentação do plugin e normalmente contém:
 
@@ -213,14 +266,14 @@ O nome do plugin precisa ser o elemento mais forte.
 
 ### Área de interface
 
-A região direita ocupa aproximadamente 72% a 76% da imagem.
+A região direita ocupa o espaço restante, aproximadamente 65% a 75% da imagem.
 
 É nela que a funcionalidade deve ser demonstrada.
 
 A interface deve parecer uma aplicação real:
 
 - cabeçalho;
-- navegação ou tabs quando fizer sentido;
+- abas ou navegação **interna à própria funcionalidade** quando forem indispensáveis, mas nunca menus do Moodle;
 - cards;
 - tabelas;
 - formulários;
@@ -232,18 +285,37 @@ A interface deve parecer uma aplicação real:
 - botões;
 - dados de exemplo.
 
-Não preencha a área apenas com cards genéricos. A tela precisa contar uma história sobre o funcionamento do plugin.
+Não preencha a área apenas com cards genéricos. A tela precisa contar uma história sobre o funcionamento do plugin. Mostre diretamente o conteúdo do plugin, sem a moldura completa de uma página Moodle.
+
+## Não gerar menus nem áreas laterais de blocos do Moodle
+
+**Regra obrigatória para todas as screenshots: não gerar menus do Moodle nem áreas de blocos laterais, à esquerda ou à direita.**
+
+Isso inclui:
+
+- barra superior do Moodle, cabeçalho global, links de administração e navegação do site;
+- menu lateral de navegação, gaveta de navegação, menu de administração ou índice do curso;
+- coluna de blocos do Moodle à esquerda;
+- coluna de blocos do Moodle à direita;
+- blocos Moodle simulados, ainda que vazios ou apenas decorativos;
+- grandes margens reservadas para um menu, gaveta ou área lateral de blocos.
+
+A **coluna de apresentação do plugin à esquerda não é uma área de blocos do Moodle**: ela continua fazendo parte do modelo visual e deve trazer o ícone, o nome, a descrição e os recursos do produto.
+
+Da mesma forma, **um menu que pertence à própria funcionalidade do plugin não é um menu do Moodle**. Por exemplo, o *Activity menu* visto na referência do H5Prime faz parte da experiência da atividade e pode aparecer quando esse tipo de navegação for real e necessário. Abas, filtros ou seletores internos ao produto também são permitidos; o que está proibido é inserir o entorno de navegação e blocos do Moodle para preencher espaço.
+
+A área à direita da apresentação deve mostrar o plugin diretamente, ocupando toda a região útil. Se a interface original estiver dentro de uma página Moodle com menus ou blocos, remova visualmente essas regiões na composição promocional sem inventar funcionalidades.
 
 ## Identidade visual
 
 As screenshots devem parecer parte da mesma família.
 
-O padrão atual utiliza:
+O padrão observado nas referências utiliza:
 
 - fundo branco ou azul muito claro;
 - grandes áreas brancas;
-- azul como cor principal;
-- azul royal para ações;
+- azul frequente nas interfaces, mas acentos coerentes com o plugin, inclusive roxo como no AI Bridge;
+- azul royal ou a cor do plugin para ações;
 - azul claro para elementos secundários;
 - texto principal azul-marinho ou quase preto;
 - cinza azulado para descrições;
@@ -261,9 +333,7 @@ Cores adicionais podem aparecer conforme o significado:
 - roxo para IA, automação ou indicadores secundários;
 - ciano para tecnologia, conexão ou progresso.
 
-Evite trocar toda a identidade para outra cor apenas porque o plugin usa vermelho, verde ou roxo em algum detalhe.
-
-O azul continua sendo o elo visual principal da coleção.
+Evite trocar toda a identidade para outra cor apenas por decoração; porém, não force o azul em um produto cuja identidade já usa outra cor. O elo principal da coleção é a composição clara, legível e consistente, como mostram as seis imagens de referência.
 
 ## Relação com o ícone
 
@@ -727,7 +797,7 @@ Ao gerar screenshots com IA, use screenshots existentes como referência visual.
 
 O ideal é fornecer:
 
-- 4 a 6 imagens da família geral;
+- as seis imagens listadas em **Referências visuais obrigatórias**, quando disponíveis;
 - a `new-1.png` do próprio plugin ao gerar a `new-2.png`;
 - o ícone correspondente quando necessário.
 
@@ -757,9 +827,9 @@ Use algo próximo deste modelo:
 ```text
 Create a polished 16:9 marketplace screenshot for a Moodle plugin called "[PLUGIN NAME]".
 
-Use the provided reference screenshots only to match the visual family: a left promotional panel and a large detailed Moodle-style interface on the right.
+Use the six mandatory reference images in SCREENSHOT_GUIDE.md to match the visual family: a left product presentation panel and a large detailed product interface on the right. Do not draw Moodle navigation, Moodle header, site menus, course index, left or right Moodle block regions, or empty spaces reserved for them.
 
-Maintain a clean light blue and white design, rounded cards, subtle shadows, modern sans-serif typography, strong blue accents and clear information hierarchy.
+Maintain a clean light blue and white design, rounded cards, subtle shadows, modern sans-serif typography, accents consistent with the plugin identity (including purple when appropriate) and clear information hierarchy.
 
 Left promotional panel:
 - plugin icon
@@ -776,7 +846,7 @@ Use realistic fictional data and concise English interface text.
 
 Do not invent capabilities that are not part of the plugin.
 
-The UI should look like a polished Moodle product screen, not a generic landing page.
+The UI should look like a polished Moodle plugin product screen, not a generic landing page or a full Moodle site page with navigation and block sidebars.
 
 16:9 composition.
 ```
@@ -800,6 +870,7 @@ Preserve the same product identity:
 - same typography
 - same rounded-card UI language
 - same overall 16:9 composition
+- no Moodle site menus, header, course index, navigation drawers or left/right Moodle block areas
 
 Do not duplicate Image A.
 
@@ -868,8 +939,11 @@ Antes de fazer commit, confira:
 - [ ] PNG;
 - [ ] proporção widescreen 16:9;
 - [ ] mesma identidade visual das demais screenshots;
-- [ ] coluna promocional à esquerda;
+- [ ] coluna promocional à esquerda (não é uma área de blocos Moodle);
 - [ ] interface principal à direita;
+- [ ] sem menus do Moodle, cabeçalho global, índice do curso ou gavetas de navegação;
+- [ ] sem áreas de blocos Moodle à esquerda ou à direita;
+- [ ] comparação visual com as seis referências deste guia;
 - [ ] nome correto do plugin;
 - [ ] tagline curta e concreta;
 - [ ] três recursos reais do plugin;
@@ -895,10 +969,11 @@ Evite principalmente:
 - excesso de texto na coluna esquerda;
 - frases promocionais vazias;
 - muitos cards com o mesmo peso;
-- cores completamente diferentes da família azul;
+- cores incoerentes com a identidade visual do plugin e as referências;
 - sombras exageradas;
 - fonte decorativa;
 - interface minúscula;
+- menus e áreas laterais de blocos do Moodle;
 - texto cortado;
 - logos aleatórios;
 - funcionalidades que não existem;
