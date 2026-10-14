@@ -2256,6 +2256,7 @@
                 screenshotsReset,
                 screenshotsToUpload,
                 skippedScreenshots,
+                maxFiles,
             } = prepareMarketplaceScreenshots(
                 screenshotsInput,
                 setupScreenshots,
@@ -3101,6 +3102,7 @@
                 screenshotsReset,
                 screenshotsToUpload,
                 skippedScreenshots,
+                maxFiles,
             } = prepareMarketplaceScreenshots(
                 screenshotsInput,
                 setupScreenshots,

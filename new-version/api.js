@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-14.02-screenshot-fallback";
+        "2026-10-14.03-screenshot-scope-fix";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
