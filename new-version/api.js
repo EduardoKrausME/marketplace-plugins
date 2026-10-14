@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-14.03-screenshot-scope-fix";
+        "2026-10-14.04-published-gallery-first";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`

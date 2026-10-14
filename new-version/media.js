@@ -371,6 +371,18 @@
         ];
     }
 
+    function catalogScreenshotsNotOnMarketplace(catalog, saved) {
+        const names = new Set(saved.flatMap((item) => marketplaceCatalogNames(item)));
+        return getDesiredCatalogScreenshots(catalog).filter((item) =>
+            !marketplaceCatalogNames(item).some((name) => names.has(name))
+        );
+    }
+
+    async function marketplaceHasPublishedScreenshots(pageUrl, rootId) {
+        const saved = await readMarketplaceAssetState(pageUrl, rootId);
+        return saved.some((item) => !isMarketplaceDefaultScreenshot(item));
+    }
+
     function persistedMarketplaceAssetsAsExpected(saved) {
         return saved.map((item) => ({
             filename: item.filename || item.originalName,
@@ -1438,10 +1450,8 @@
     }
 
     function prepareMarketplaceScreenshots(screenshotInput, screenshots, onUpload = null) {
-        if (!screenshots.length) {
-            throw new Error("No catalog screenshots were provided.");
-        }
-
+        // An empty upload list is correct when the Marketplace already
+        // has screenshots. Never replace them with an outdated catalog.
         const declaredMax = Number(
             screenshotInput.getAttribute("data-filepond-max-files-value")
         );
@@ -1801,27 +1811,38 @@
     async function reconcileMarketplaceScreenshots(iframe, pageUrl, rootId, desired, maxFiles) {
         const previous = await readMarketplaceAssetState(pageUrl, rootId);
         let saved = previous;
-        let diff = marketplaceGalleryDiff(saved, desired, true);
 
-        // Always try to remove default.png and any surplus before counting
-        // free slots. A failed removal must not prevent other uploads.
-        if (diff.extra.length) {
-            saved = await clearPersistedMarketplaceAssets(iframe, pageUrl, rootId, desired);
-            diff = marketplaceGalleryDiff(saved, desired, true);
+        // Preserve every real Marketplace screenshot, regardless of whether
+        // a possibly stale plugins.json contains its name.
+        // default.png is the one exception: always attempt its removal.
+        if (saved.some(isMarketplaceDefaultScreenshot)) {
+            const keep = persistedMarketplaceAssetsAsExpected(
+                saved.filter((item) => !isMarketplaceDefaultScreenshot(item))
+            );
+            saved = await clearPersistedMarketplaceAssets(iframe, pageUrl, rootId, keep);
         }
 
-        // The persisted gallery is the source of truth, not the FilePond DOM.
-        // Never upload more than the remaining capacity (including placeholders).
+        if (saved.some((item) => !isMarketplaceDefaultScreenshot(item))) {
+            // The Marketplace is authoritative. Don't delete, replace or
+            // append catalog screenshots to a populated gallery.
+            return {
+                previous,
+                saved,
+                missing: [],
+                skipped: [],
+                expectedGallery: persistedMarketplaceAssetsAsExpected(saved),
+                authoritative: true,
+            };
+        }
+
+        // No real screenshots exist: use the catalog as a fallback, respecting
+        // slots still occupied by an unremovable default.png.
+        const diff = marketplaceGalleryDiff(saved, desired, true);
         const availableSlots = Math.max(0, maxFiles - saved.length);
         const missing = diff.missing.slice(0, availableSlots);
         const skipped = diff.missing.slice(availableSlots);
-        const expectedGallery = [
-            ...persistedMarketplaceAssetsAsExpected(saved),
-            ...missing,
-        ];
-
         if (skipped.length) {
-            console.warn("[Marketplace] Screenshot limit reached", {
+            console.warn("[Marketplace] Screenshot gallery capacity reached", {
                 rootId,
                 maxFiles,
                 existing: saved.length,
@@ -1829,7 +1850,17 @@
             });
         }
 
-        return {previous, saved, missing, skipped, expectedGallery, retainedExtras: diff.extra};
+        return {
+            previous,
+            saved,
+            missing,
+            skipped,
+            expectedGallery: [
+                ...persistedMarketplaceAssetsAsExpected(saved),
+                ...missing,
+            ],
+            authoritative: false,
+        };
     }
 
     async function verifyCatalogGallery(pageUrl, rootId, catalog) {
@@ -2274,11 +2305,18 @@
             );
             const existingServerScreenshots = screenshotState.previous;
             const missingScreenshots = screenshotState.missing;
-            const allSkippedScreenshots = [
-                ...skippedScreenshots,
-                ...screenshotState.skipped,
-                ...getIgnoredCatalogScreenshots(catalog),
-            ];
+            const allSkippedScreenshots = screenshotState.authoritative
+                ? catalogScreenshotsNotOnMarketplace(catalog, screenshotState.saved)
+                : [
+                    ...skippedScreenshots,
+                    ...screenshotState.skipped,
+                    ...getIgnoredCatalogScreenshots(catalog),
+                ];
+            if (screenshotState.authoritative && allSkippedScreenshots.length) {
+                console.warn("[Marketplace] Descartando imagens do catálogo não " +
+                    "publicadas no Marketplace; mantendo a galeria existente.",
+                    plugin.component, allSkippedScreenshots.map((item) => item.filename));
+            }
 
             const previousIconFiles = await readMarketplaceAssetState(
                 overviewUrl, "plugin_edit_overview_form_icon"
@@ -3118,11 +3156,18 @@
             );
             const publishedReviewScreenshots = screenshotState.previous;
             const missingScreenshots = screenshotState.missing;
-            const allSkippedScreenshots = [
-                ...skippedScreenshots,
-                ...screenshotState.skipped,
-                ...getIgnoredCatalogScreenshots(catalog),
-            ];
+            const allSkippedScreenshots = screenshotState.authoritative
+                ? catalogScreenshotsNotOnMarketplace(catalog, screenshotState.saved)
+                : [
+                    ...skippedScreenshots,
+                    ...screenshotState.skipped,
+                    ...getIgnoredCatalogScreenshots(catalog),
+                ];
+            if (screenshotState.authoritative && allSkippedScreenshots.length) {
+                console.warn("[Marketplace] Descartando imagens do catálogo não " +
+                    "publicadas no Marketplace; mantendo a galeria existente.",
+                    plugin.component, allSkippedScreenshots.map((item) => item.filename));
+            }
             const shouldUploadScreenshots = missingScreenshots.length > 0;
 
             /*
@@ -3302,17 +3347,18 @@
             plugin.component
         );
 
-        const setupScreenshots =
-            await getCatalogSetupScreenshots(
-                plugin.component,
-                catalog
-            );
+        const published = await marketplaceHasPublishedScreenshots(
+            `/plugins/submit/step3/${plugin.id}`, "plugin_update_form_screenshots"
+        );
+        const setupScreenshots = published
+            ? []
+            : await getCatalogSetupScreenshots(plugin.component, catalog);
 
         status.set(
             plugin.needsChanges
                 ? "Sincronizando Changes needed..."
                 : "Sincronizando Submitted for review...",
-            `${setupScreenshots.length} screenshot(s) · Description HTML`
+            `${published ? "galeria publicada preservada" : setupScreenshots.length + " screenshot(s) do catálogo"} · Description HTML`
         );
 
         const result =
@@ -3339,7 +3385,7 @@
                     ? `${result.uploadedScreenshotNames.length} screenshot(s) adicionada(s): ${result.uploadedScreenshotNames.join(", ")}`
                     : "screenshots já sincronizadas",
                 result.skippedScreenshotNames.length
-                    ? `limite do Marketplace impediu: ${result.skippedScreenshotNames.join(", ")}`
+                    ? `ignoradas por divergência com Marketplace ou limite: ${result.skippedScreenshotNames.join(", ")}`
                     : null,
                 result.exceedsDeclaredMaxLength
                     ? `campo declara limite de ${result.configuredMaxLength}`
@@ -3380,25 +3426,23 @@
                 overviewCatalog
             );
 
-        const setupScreenshots =
-            await getCatalogSetupScreenshots(
+        const published = await marketplaceHasPublishedScreenshots(
+            `/plugins/${plugin.id}/edit/overview`,
+            "plugin_edit_overview_form_screenshots"
+        );
+        const setupScreenshots = published
+            ? []
+            : await getCatalogSetupScreenshots(
                 plugin.component,
                 overviewCatalog,
-                (
-                    current,
-                    total,
-                    filename
-                ) => {
-                    status.set(
-                        `Preparando screenshots ${current}/${total}`,
-                        filename
-                    );
+                (current, total, filename) => {
+                    status.set(`Preparando screenshots ${current}/${total}`, filename);
                 }
             );
 
         status.set(
             "Overview 0/9 · iniciando sincronização",
-            `${overviewCatalog.name || plugin.component} · ${setupScreenshots.length} screenshot(s)`
+            `${overviewCatalog.name || plugin.component} · ${published ? "galeria publicada preservada" : setupScreenshots.length + " screenshot(s) do catálogo"}`
         );
 
         const overviewResult =
@@ -3435,7 +3479,7 @@
                     ? `${overviewResult.uploadedScreenshotNames.length} screenshot(s) adicionada(s): ${overviewResult.uploadedScreenshotNames.join(", ")}`
                     : "screenshots já sincronizadas",
                 overviewResult.skippedScreenshotNames.length
-                    ? `limite do Marketplace impediu: ${overviewResult.skippedScreenshotNames.join(", ")}`
+                    ? `ignoradas por divergência com Marketplace ou limite: ${overviewResult.skippedScreenshotNames.join(", ")}`
                     : null,
             ]
                 .filter(Boolean)
