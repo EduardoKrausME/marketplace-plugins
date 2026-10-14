@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-14.04-published-gallery-first";
+        "2026-10-14.05-marketplace-screenshot-reconciliation";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`

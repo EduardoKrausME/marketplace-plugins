@@ -379,8 +379,18 @@
     }
 
     async function marketplaceHasPublishedScreenshots(pageUrl, rootId) {
-        const saved = await readMarketplaceAssetState(pageUrl, rootId);
-        return saved.some((item) => !isMarketplaceDefaultScreenshot(item));
+        // Retry briefly before deciding a published gallery is empty:
+        // an intermediate Marketplace response may not list existing assets.
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const saved = await readMarketplaceAssetState(pageUrl, rootId);
+            if (saved.some((item) => !isMarketplaceDefaultScreenshot(item))) {
+                return true;
+            }
+            if (attempt < 2) {
+                await sleep(350);
+            }
+        }
+        return false;
     }
 
     function persistedMarketplaceAssetsAsExpected(saved) {
@@ -1811,6 +1821,12 @@
     async function reconcileMarketplaceScreenshots(iframe, pageUrl, rootId, desired, maxFiles) {
         const previous = await readMarketplaceAssetState(pageUrl, rootId);
         let saved = previous;
+        if (!saved.some((item) => !isMarketplaceDefaultScreenshot(item))) {
+            // Avoid uploading stale catalog files when existing Marketplace
+            // screenshots become visible on a subsequent server response.
+            await sleep(350);
+            saved = await readMarketplaceAssetState(pageUrl, rootId);
+        }
 
         // Preserve every real Marketplace screenshot, regardless of whether
         // a possibly stale plugins.json contains its name.
@@ -1868,6 +1884,23 @@
         for (let attempt = 0; attempt < 3; attempt++) {
             const current = await readMarketplaceAssetState(pageUrl, rootId);
             const diff = marketplaceGalleryDiff(current, catalog);
+            // The Marketplace is authoritative when its gallery already
+            // contains real published screenshots. The catalog can be stale
+            // or the server can assign new names after upload. Neither case
+            // is a reason to reject a successfully saved Overview.
+            if (rootId.includes("screenshots") &&
+                    current.some((item) => !isMarketplaceDefaultScreenshot(item))) {
+                if (!diff.same) {
+                    console.warn("[Marketplace] Published screenshots differ from the catalog; " +
+                        "keeping the Marketplace gallery.", {
+                        rootId,
+                        expected: catalog.map((item) => item.filename || item.file?.name),
+                        published: current.map((item) =>
+                            item.originalName || item.filename),
+                    });
+                }
+                return;
+            }
             observed = diff.actual.map((item) =>
                 item.name + (item.size > 0 ? " (" + item.size + " bytes)" : "")
             ).join(", ") || "(empty)";
