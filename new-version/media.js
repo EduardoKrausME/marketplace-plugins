@@ -2886,7 +2886,7 @@
         try {
             progress("aguardando formulário", reviewUrl);
             /*
-             * Submitted for review usa uma página própria. Nela o Marketplace
+             * Submitted for review e Changes needed usam uma página própria. Nela o Marketplace
              * permite atualizar Description e Screenshots, enquanto o nome
              * continua presente apenas como campo obrigatório do formulário.
              * Não tentamos alterar Overview, ícone ou Support neste estado.
@@ -2948,7 +2948,7 @@
                             form,
                         };
                     },
-                    `submitted review step3 form (${reviewUrl}; page: ${iframe.contentDocument?.title || "untitled"})`,
+                    `review step3 form (${reviewUrl}; page: ${iframe.contentDocument?.title || "untitled"})`,
                     15000
                 );
 
@@ -3244,7 +3244,9 @@
             );
 
         status.set(
-            "Sincronizando Submitted for review...",
+            plugin.needsChanges
+                ? "Sincronizando Changes needed..."
+                : "Sincronizando Submitted for review...",
             `${setupScreenshots.length} screenshot(s) · Description HTML`
         );
 
@@ -3254,13 +3256,15 @@
                 catalog,
                 setupScreenshots,
                 (step, detail) => status.set(
-                    `Submitted for review · ${step}`,
+                    `${plugin.needsChanges ? "Changes needed" : "Submitted for review"} · ${step}`,
                     detail || plugin.component
                 )
             );
 
         status.set(
-            "Submitted for review sincronizado",
+            plugin.needsChanges
+                ? "Changes needed sincronizado"
+                : "Submitted for review sincronizado",
             [
                 `Description HTML · ${result.htmlLength} caracteres`,
                 result.deletedScreenshotNames.length
@@ -3387,8 +3391,8 @@
             status.set("Lendo plugins.json para mídia e descrição...", plugin.component);
             const catalog = await apiCatalog(plugin.component);
 
-            if (plugin.submittedForReview) {
-                // Step3 exposes only description and screenshots while in review.
+            if (plugin.needsChanges || plugin.submittedForReview) {
+                // Step3 exposes description and screenshots for both review states.
                 const reviewDetails = await syncMarketplaceReviewDetails(
                     plugin, status, catalog
                 );
