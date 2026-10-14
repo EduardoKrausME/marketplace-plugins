@@ -175,6 +175,17 @@ Ao criar ou refazer screenshots, use **estas seis imagens do próprio catálogo 
 
 As referências estão dentro do repositório e devem ser abertas antes da geração; não são apenas exemplos de nomes de arquivos.
 
+Links diretos para as imagens de referência:
+
+- [`screenshots/h5plib_vh5prime/new-1.png`](https://github.com/EduardoKrausME/marketplace-plugins/blob/master/screenshots/h5plib_vh5prime/new-1.png)
+- [`screenshots/h5plib_vh5prime/new-2.png`](https://github.com/EduardoKrausME/marketplace-plugins/blob/master/screenshots/h5plib_vh5prime/new-2.png)
+- [`screenshots/local_ai_bridge/new-1.png`](https://github.com/EduardoKrausME/marketplace-plugins/blob/master/screenshots/local_ai_bridge/new-1.png)
+- [`screenshots/local_ai_bridge/new-2.png`](https://github.com/EduardoKrausME/marketplace-plugins/blob/master/screenshots/local_ai_bridge/new-2.png)
+- [`screenshots/local_alternative_file_system/new-1.png`](https://github.com/EduardoKrausME/marketplace-plugins/blob/master/screenshots/local_alternative_file_system/new-1.png)
+- [`screenshots/local_copy/new-1.png`](https://github.com/EduardoKrausME/marketplace-plugins/blob/master/screenshots/local_copy/new-1.png)
+
+As pré-visualizações estão disponíveis logo abaixo.
+
 <details>
 <summary><code>screenshots/h5plib_vh5prime/new-1.png</code></summary>
 
