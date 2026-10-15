@@ -1,6 +1,5 @@
 [
   {
-    "id": 3089,
     "name": "Kopere Dashboard",
     "component": "local_kopere_dashboard",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local-kopere_dashboard",
@@ -48,7 +47,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_kopere_dashboard/icon.png"
   },
   {
-    "id": 3090,
     "name": "Boost Magnific",
     "component": "theme_boost_magnific",
     "repository_url": "https://github.com/EduardoKrausME/moodle-theme_boost_magnific",
@@ -96,7 +94,6 @@
     "iconUrl": "/marketplace-plugins/icon/theme_boost_magnific/icon.png"
   },
   {
-    "id": 3091,
     "name": "Degrade Theme",
     "component": "theme_degrade",
     "repository_url": "https://github.com/EduardoKrausME/moodle-theme_degrade",
@@ -144,7 +141,6 @@
     "iconUrl": "/marketplace-plugins/icon/theme_degrade/icon.png"
   },
   {
-    "id": 3050,
     "name": "Mod Super Video",
     "component": "mod_supervideo",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_supervideo",
@@ -192,7 +188,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_supervideo/icon.png"
   },
   {
-    "id": 2979,
     "name": "GeniAI",
     "component": "local_geniai",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_geniai",
@@ -217,7 +212,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_geniai/icon.png"
   },
   {
-    "id": 3200,
     "name": "Beautiful Certificate",
     "component": "mod_certificatebeautiful",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_certificatebeautiful",
@@ -257,7 +251,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_certificatebeautiful/icon.png"
   },
   {
-    "id": 3148,
     "name": "Alternative File System",
     "component": "local_alternative_file_system",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_alternative_file_system",
@@ -282,7 +275,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_alternative_file_system/icon.png"
   },
   {
-    "id": 3137,
     "name": "Kopere APP Mobile",
     "component": "local_kopere_mobile",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_mobile",
@@ -313,7 +305,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_kopere_mobile/icon.png"
   },
   {
-    "id": 3142,
     "name": "Copy and Paste Modules",
     "component": "local_copy",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_copy",
@@ -335,7 +326,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_copy/icon.png"
   },
   {
-    "id": 3131,
     "name": "Boost Dark",
     "component": "local_boost_dark",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_boost_dark",
@@ -391,7 +381,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_boost_dark/icon.png"
   },
   {
-    "id": 3156,
     "name": "Kopere BI",
     "component": "local_kopere_bi",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_bi",
@@ -431,7 +420,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_kopere_bi/icon.png"
   },
   {
-    "id": 3151,
     "name": "Star Rating",
     "component": "block_rate",
     "repository_url": "https://github.com/EduardoKrausME/moodle-block_rate",
@@ -463,7 +451,6 @@
     "iconUrl": "/marketplace-plugins/icon/block_rate/icon.png"
   },
   {
-    "id": 3155,
     "name": "User Field DB",
     "component": "profilefield_database",
     "repository_url": "https://github.com/EduardoKrausME/moodle-profilefield_database",
@@ -527,7 +514,6 @@
     "iconUrl": "/marketplace-plugins/icon/profilefield_database/icon.png"
   },
   {
-    "id": 3157,
     "name": "Moodle Course Backup",
     "component": "local_backupftp",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_backupftp",
@@ -567,7 +553,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_backupftp/icon.png"
   },
   {
-    "id": 3292,
     "name": "PDF Protect",
     "component": "mod_pdfprotect",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_pdfprotect",
@@ -599,7 +584,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_pdfprotect/icon.png"
   },
   {
-    "id": 3158,
     "name": "SuperVideo Filter Player",
     "component": "media_supervideo",
     "repository_url": "https://github.com/EduardoKrausME/moodle-media_supervideo",
@@ -631,7 +615,6 @@
     "iconUrl": "/marketplace-plugins/icon/media_supervideo/icon.png"
   },
   {
-    "id": 3165,
     "name": "OttFlix Repository",
     "component": "repository_ottflix",
     "repository_url": "https://github.com/OttFlix/moodle-repository_ottflix",
@@ -655,7 +638,6 @@
     "iconUrl": "/marketplace-plugins/icon/repository_ottflix/icon.png"
   },
   {
-    "id": 3166,
     "name": "OttFlix Filter Player",
     "component": "media_ottflix",
     "repository_url": "https://github.com/OttFlix/moodle-media_ottflix",
@@ -679,7 +661,6 @@
     "iconUrl": "/marketplace-plugins/icon/media_ottflix/icon.png"
   },
   {
-    "id": 3191,
     "name": "Helpdesk and Knowledge Base",
     "component": "local_helpdesk",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_helpdesk",
@@ -735,7 +716,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_helpdesk/icon.png"
   },
   {
-    "id": 3319,
     "name": "EadFlix",
     "component": "theme_eadflix",
     "repository_url": "https://github.com/EduardoKrausME/moodle-theme_eadflix",
@@ -823,7 +803,6 @@
     "iconUrl": "/marketplace-plugins/icon/theme_eadflix/icon.png"
   },
   {
-    "id": 3341,
     "name": "Ead Training",
     "component": "theme_eadtraining",
     "repository_url": "https://github.com/EduardoKrausME/moodle-theme_eadtraining",
@@ -858,7 +837,6 @@
     "iconUrl": "/marketplace-plugins/icon/theme_eadtraining/icon.png"
   },
   {
-    "id": 3441,
     "name": "System Status",
     "component": "local_kopere_status",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_status",
@@ -882,7 +860,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_kopere_status/icon.png"
   },
   {
-    "id": 3538,
     "name": "Slow Queries",
     "component": "local_slow_queries",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_slow_queries",
@@ -914,7 +891,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_slow_queries/icon.png"
   },
   {
-    "id": 3551,
     "name": "Kopere Email",
     "component": "message_kopereemail",
     "repository_url": "https://github.com/EduardoKrausME/moodle-message_kopereemail",
@@ -970,7 +946,6 @@
     "iconUrl": "/marketplace-plugins/icon/message_kopereemail/icon.png"
   },
   {
-    "id": 3556,
     "name": "Child Course",
     "component": "mod_childcourse",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_childcourse",
@@ -1026,7 +1001,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_childcourse/icon.png"
   },
   {
-    "id": 3558,
     "name": "Scientific Calculator",
     "component": "mod_scicalc",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_scicalc",
@@ -1058,7 +1032,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_scicalc/icon.png"
   },
   {
-    "id": 3637,
     "name": "Public Sitemap",
     "component": "local_kopere_sitemap",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_sitemap",
@@ -1090,7 +1063,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_kopere_sitemap/icon.png"
   },
   {
-    "id": 3638,
     "name": "Kopere WP Bridge",
     "component": "local_kopere_wpbridge",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_wpbridge",
@@ -1130,7 +1102,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_kopere_wpbridge/icon.png"
   },
   {
-    "id": null,
     "name": "Kopere Proctoring",
     "component": "local_kopere_proctoring",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_proctoring",
@@ -1150,7 +1121,6 @@
     ]
   },
   {
-    "id": null,
     "name": "Video Progress",
     "component": "mod_videoprogress",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoprogress",
@@ -1170,7 +1140,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoprogress/icon.png"
   },
   {
-    "id": null,
     "name": "Recertification",
     "component": "local_kopere_recert",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_recert",
@@ -1190,7 +1159,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_kopere_recert/icon.png"
   },
   {
-    "id": 3639,
     "name": "H5Prime Viewer",
     "component": "h5plib_vh5prime",
     "repository_url": "https://github.com/EduardoKrausME/moodle-h5plib_vh5prime",
@@ -1209,7 +1177,6 @@
     "iconUrl": "/marketplace-plugins/icon/h5plib_vh5prime/icon.png"
   },
   {
-    "id": null,
     "name": "Missing Students",
     "component": "local_missingstudents",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_missingstudents",
@@ -1229,7 +1196,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_missingstudents/icon.png"
   },
   {
-    "id": null,
     "name": "Private Notes",
     "component": "mod_privatenotes",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_privatenotes",
@@ -1249,7 +1215,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_privatenotes/icon.png"
   },
   {
-    "id": null,
     "name": "Branching Video",
     "component": "mod_videobranch",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videobranch",
@@ -1269,7 +1234,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videobranch/icon.png"
   },
   {
-    "id": null,
     "name": "GeniAI Chat",
     "component": "mod_geniai",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_geniai",
@@ -1289,7 +1253,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_geniai/icon.png"
   },
   {
-    "id": null,
     "name": "Phrase Wall",
     "component": "mod_phrasewall",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_phrasewall",
@@ -1309,7 +1272,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_phrasewall/icon.png"
   },
   {
-    "id": null,
     "name": "AJAX Chat",
     "component": "mod_ajaxchat",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_ajaxchat",
@@ -1329,7 +1291,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_ajaxchat/icon.png"
   },
   {
-    "id": null,
     "name": "Class Check-in",
     "component": "mod_checkin",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_checkin",
@@ -1349,7 +1310,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_checkin/icon.png"
   },
   {
-    "id": null,
     "name": "Link Collection",
     "component": "mod_linkcollection",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_linkcollection",
@@ -1369,7 +1329,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_linkcollection/icon.png"
   },
   {
-    "id": null,
     "name": "Video Compare",
     "component": "mod_videocompare",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videocompare",
@@ -1389,7 +1348,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videocompare/icon.png"
   },
   {
-    "id": null,
     "name": "Exit Ticket",
     "component": "mod_exiticket",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_exiticket",
@@ -1409,7 +1367,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_exiticket/icon.png"
   },
   {
-    "id": null,
     "name": "Kopere Trail",
     "component": "local_kopere_trail",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_trail",
@@ -1429,7 +1386,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_kopere_trail/icon.png"
   },
   {
-    "id": null,
     "name": "Video Annotation",
     "component": "mod_videoannotation",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoannotation",
@@ -1449,7 +1405,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoannotation/icon.png"
   },
   {
-    "id": null,
     "name": "Video Debate",
     "component": "mod_videodebate",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videodebate",
@@ -1469,7 +1424,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videodebate/icon.png"
   },
   {
-    "id": null,
     "name": "Video Answer",
     "component": "mod_videoanswer",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoanswer",
@@ -1489,7 +1443,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoanswer/icon.png"
   },
   {
-    "id": null,
     "name": "Confidence Level",
     "component": "mod_confidence",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_confidence",
@@ -1509,7 +1462,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_confidence/icon.png"
   },
   {
-    "id": null,
     "name": "Before / After",
     "component": "mod_beforeafter",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_beforeafter",
@@ -1529,7 +1481,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_beforeafter/icon.png"
   },
   {
-    "id": null,
     "name": "Audio Answer",
     "component": "mod_audioanswer",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_audioanswer",
@@ -1549,7 +1500,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_audioanswer/icon.png"
   },
   {
-    "id": null,
     "name": "Video Book",
     "component": "mod_videobook",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videobook",
@@ -1569,7 +1519,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videobook/icon.png"
   },
   {
-    "id": null,
     "name": "Video Checkpoints",
     "component": "mod_videocheck",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videocheck",
@@ -1589,7 +1538,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videocheck/icon.png"
   },
   {
-    "id": null,
     "name": "Video Practice",
     "component": "mod_videopractice",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videopractice",
@@ -1609,7 +1557,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videopractice/icon.png"
   },
   {
-    "id": null,
     "name": "Quick Statistics",
     "component": "mod_statistics",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_statistics",
@@ -1629,7 +1576,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_statistics/icon.png"
   },
   {
-    "id": null,
     "name": "Rule of Three",
     "component": "mod_ruleofthree",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_ruleofthree",
@@ -1649,7 +1595,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_ruleofthree/icon.png"
   },
   {
-    "id": null,
     "name": "Mass Mail Enrol",
     "component": "local_massmailenrol",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_massmailenrol",
@@ -1669,7 +1614,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_massmailenrol/icon.png"
   },
   {
-    "id": null,
     "name": "Rank",
     "component": "mod_rank",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_rank",
@@ -1689,7 +1633,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_rank/icon.png"
   },
   {
-    "id": null,
     "name": "Video Evidence",
     "component": "mod_videoevidence",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoevidence",
@@ -1709,7 +1652,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoevidence/icon.png"
   },
   {
-    "id": null,
     "name": "Video Sequence",
     "component": "mod_videosequence",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videosequence",
@@ -1729,7 +1671,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videosequence/icon.png"
   },
   {
-    "id": null,
     "name": "QR Code Check",
     "component": "mod_qrcodecheck",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_qrcodecheck",
@@ -1749,7 +1690,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_qrcodecheck/icon.png"
   },
   {
-    "id": null,
     "name": "Pair",
     "component": "mod_pair",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_pair",
@@ -1769,7 +1709,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_pair/icon.png"
   },
   {
-    "id": null,
     "name": "Simple Journal",
     "component": "mod_simplejournal",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_simplejournal",
@@ -1789,7 +1728,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_simplejournal/icon.png"
   },
   {
-    "id": null,
     "name": "Video Discussion",
     "component": "mod_videodiscussion",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videodiscussion",
@@ -1809,7 +1747,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videodiscussion/icon.png"
   },
   {
-    "id": null,
     "name": "Activity Signup",
     "component": "mod_signup",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_signup",
@@ -1829,7 +1766,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_signup/icon.png"
   },
   {
-    "id": null,
     "name": "Request Help",
     "component": "mod_requesthelp",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_requesthelp",
@@ -1849,7 +1785,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_requesthelp/icon.png"
   },
   {
-    "id": null,
     "name": "Forum Reactions",
     "component": "local_forumreactions",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_forumreactions",
@@ -1869,7 +1804,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_forumreactions/icon.png"
   },
   {
-    "id": null,
     "name": "Triangle Calculator",
     "component": "mod_triangle",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_triangle",
@@ -1889,7 +1823,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_triangle/icon.png"
   },
   {
-    "id": null,
     "name": "Video Summary",
     "component": "mod_videosummary",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videosummary",
@@ -1909,7 +1842,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videosummary/icon.png"
   },
   {
-    "id": null,
     "name": "Video Mission",
     "component": "mod_videomission",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videomission",
@@ -1929,7 +1861,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videomission/icon.png"
   },
   {
-    "id": null,
     "name": "Video Interview",
     "component": "mod_videointerview",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videointerview",
@@ -1949,7 +1880,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videointerview/icon.png"
   },
   {
-    "id": null,
     "name": "Video Quiz",
     "component": "mod_videoquiz",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoquiz",
@@ -1969,7 +1899,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoquiz/icon.png"
   },
   {
-    "id": null,
     "name": "BookFlow",
     "component": "mod_bookflow",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_bookflow",
@@ -1989,7 +1918,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_bookflow/icon.png"
   },
   {
-    "id": null,
     "name": "Agreement",
     "component": "mod_agreement",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_agreement",
@@ -2009,7 +1937,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_agreement/icon.png"
   },
   {
-    "id": null,
     "name": "Video Prediction",
     "component": "mod_videopredict",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videopredict",
@@ -2029,7 +1956,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videopredict/icon.png"
   },
   {
-    "id": null,
     "name": "Hand Raise",
     "component": "mod_handraise",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_handraise",
@@ -2049,7 +1975,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_handraise/icon.png"
   },
   {
-    "id": null,
     "name": "Trigonometry",
     "component": "mod_trigonometry",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_trigonometry",
@@ -2069,7 +1994,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_trigonometry/icon.png"
   },
   {
-    "id": null,
     "name": "Fractions",
     "component": "mod_fraction",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_fraction",
@@ -2089,7 +2013,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_fraction/icon.png"
   },
   {
-    "id": null,
     "name": "Video Reflection",
     "component": "mod_videoreflection",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoreflection",
@@ -2109,7 +2032,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoreflection/icon.png"
   },
   {
-    "id": null,
     "name": "Video Lesson",
     "component": "mod_lessonvideo",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_lessonvideo",
@@ -2129,7 +2051,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_lessonvideo/icon.png"
   },
   {
-    "id": null,
     "name": "Video Marker",
     "component": "mod_videomarker",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videomarker",
@@ -2149,7 +2070,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videomarker/icon.png"
   },
   {
-    "id": null,
     "name": "Probability Simulator",
     "component": "mod_probability",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_probability",
@@ -2169,7 +2089,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_probability/icon.png"
   },
   {
-    "id": null,
     "name": "Subcourse",
     "component": "mod_subcourse",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_subcourse",
@@ -2189,7 +2108,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_subcourse/icon.png"
   },
   {
-    "id": null,
     "name": "Traffic Light",
     "component": "mod_trafficlight",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_trafficlight",
@@ -2209,7 +2127,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_trafficlight/icon.png"
   },
   {
-    "id": null,
     "name": "Video Peer Review",
     "component": "mod_videoreview",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoreview",
@@ -2229,7 +2146,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoreview/icon.png"
   },
   {
-    "id": null,
     "name": "Quick Decision",
     "component": "mod_decision",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_decision",
@@ -2249,7 +2165,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_decision/icon.png"
   },
   {
-    "id": null,
     "name": "Class Pulse",
     "component": "mod_classpulse",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_classpulse",
@@ -2269,7 +2184,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_classpulse/icon.png"
   },
   {
-    "id": null,
     "name": "Ohm's Law",
     "component": "mod_ohmslaw",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_ohmslaw",
@@ -2289,7 +2203,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_ohmslaw/icon.png"
   },
   {
-    "id": null,
     "name": "Video Diagnostic",
     "component": "mod_videodiagnostic",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videodiagnostic",
@@ -2309,7 +2222,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videodiagnostic/icon.png"
   },
   {
-    "id": null,
     "name": "Video Playlist",
     "component": "mod_videoplaylist",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoplaylist",
@@ -2329,7 +2241,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoplaylist/icon.png"
   },
   {
-    "id": null,
     "name": "Mood Tracker",
     "component": "mod_moodtracker",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_moodtracker",
@@ -2349,7 +2260,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_moodtracker/icon.png"
   },
   {
-    "id": null,
     "name": "One-minute Paper",
     "component": "mod_minute",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_minute",
@@ -2369,7 +2279,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_minute/icon.png"
   },
   {
-    "id": null,
     "name": "Matrix Calculator",
     "component": "mod_matrixcalc",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_matrixcalc",
@@ -2389,7 +2298,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_matrixcalc/icon.png"
   },
   {
-    "id": null,
     "name": "Percentage Calculator",
     "component": "mod_percentage",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_percentage",
@@ -2409,7 +2317,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_percentage/icon.png"
   },
   {
-    "id": null,
     "name": "Video Notes",
     "component": "mod_videonotes",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videonotes",
@@ -2429,7 +2336,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videonotes/icon.png"
   },
   {
-    "id": null,
     "name": "Chat",
     "component": "mod_chat",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_chat",
@@ -2449,7 +2355,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_chat/icon.png"
   },
   {
-    "id": null,
     "name": "Video Observation",
     "component": "mod_videoobserve",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoobserve",
@@ -2469,7 +2374,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoobserve/icon.png"
   },
   {
-    "id": null,
     "name": "Topic Choice",
     "component": "mod_topicchoice",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_topicchoice",
@@ -2489,7 +2393,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_topicchoice/icon.png"
   },
   {
-    "id": null,
     "name": "Financial Calculator",
     "component": "mod_finance",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_finance",
@@ -2509,7 +2412,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_finance/icon.png"
   },
   {
-    "id": null,
     "name": "Video Error Hunt",
     "component": "mod_videoerrorhunt",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoerrorhunt",
@@ -2529,7 +2431,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoerrorhunt/icon.png"
   },
   {
-    "id": null,
     "name": "My Status",
     "component": "mod_status",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_status",
@@ -2549,7 +2450,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_status/icon.png"
   },
   {
-    "id": null,
     "name": "Completion Board",
     "component": "mod_completionboard",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_completionboard",
@@ -2569,7 +2469,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_completionboard/icon.png"
   },
   {
-    "id": null,
     "name": "Rubric Assistant",
     "component": "local_rubricassistant",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_rubricassistant",
@@ -2589,7 +2488,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_rubricassistant/icon.png"
   },
   {
-    "id": null,
     "name": "Course Audit",
     "component": "local_courseaudit",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_courseaudit",
@@ -2609,7 +2507,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_courseaudit/icon.png"
   },
   {
-    "id": null,
     "name": "GeniAI Course Builder",
     "component": "local_geniaicourse",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_geniaicourse",
@@ -2629,7 +2526,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_geniaicourse/icon.png"
   },
   {
-    "id": null,
     "name": "Plain Language",
     "component": "local_plainlanguage",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_plainlanguage",
@@ -2649,7 +2545,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_plainlanguage/icon.png"
   },
   {
-    "id": null,
     "name": "Role Explainer",
     "component": "local_roleexplainer",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_roleexplainer",
@@ -2669,7 +2564,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_roleexplainer/icon.png"
   },
   {
-    "id": null,
     "name": "Course Start Notifications",
     "component": "local_coursestartnotify",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_coursestartnotify",
@@ -2689,7 +2583,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_coursestartnotify/icon.png"
   },
   {
-    "id": null,
     "name": "Question Audit",
     "component": "qbank_questionaudit",
     "repository_url": "https://github.com/EduardoKrausME/moodle-qbank_questionaudit",
@@ -2709,7 +2602,6 @@
     "iconUrl": "/marketplace-plugins/icon/qbank_questionaudit/icon.png"
   },
   {
-    "id": null,
     "name": "Gradebook Doctor",
     "component": "local_gradebookdoctor",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_gradebookdoctor",
@@ -2729,7 +2621,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_gradebookdoctor/icon.png"
   },
   {
-    "id": null,
     "name": "AI Bridge",
     "component": "local_ai_bridge",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_ai_bridge",
@@ -2749,7 +2640,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_ai_bridge/icon.png"
   },
   {
-    "id": null,
     "name": "Personal XP",
     "component": "local_personalxp",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_personalxp",
@@ -2769,7 +2659,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_personalxp/icon.png"
   },
   {
-    "id": null,
     "name": "Duplicate Questions",
     "component": "qbank_duplicate",
     "repository_url": "https://github.com/EduardoKrausME/moodle-qbank_duplicate",
@@ -2789,7 +2678,6 @@
     "iconUrl": "/marketplace-plugins/icon/qbank_duplicate/icon.png"
   },
   {
-    "id": null,
     "name": "Feedback Insights",
     "component": "local_feedbackinsights",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_feedbackinsights",
@@ -2809,7 +2697,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_feedbackinsights/icon.png"
   },
   {
-    "id": null,
     "name": "Accessibility AI",
     "component": "local_accessibilityai",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_accessibilityai",
@@ -2829,7 +2716,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_accessibilityai/icon.png"
   },
   {
-    "id": null,
     "name": "Oral Assessment",
     "component": "mod_oralassessment",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_oralassessment",
@@ -2849,7 +2735,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_oralassessment/icon.png"
   },
   {
-    "id": null,
     "name": "Outcome Mapper",
     "component": "local_outcomemapper",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_outcomemapper",
@@ -2869,7 +2754,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_outcomemapper/icon.png"
   },
   {
-    "id": null,
     "name": "Course Translator",
     "component": "local_coursetranslate",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_coursetranslate",
@@ -2889,7 +2773,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_coursetranslate/icon.png"
   },
   {
-    "id": null,
     "name": "Moodle Doctor",
     "component": "tool_moodledoctor",
     "repository_url": "https://github.com/EduardoKrausME/moodle-tool_moodledoctor",
@@ -2909,7 +2792,6 @@
     "iconUrl": "/marketplace-plugins/icon/tool_moodledoctor/icon.png"
   },
   {
-    "id": null,
     "name": "Distractor Check",
     "component": "qbank_distractorcheck",
     "repository_url": "https://github.com/EduardoKrausME/moodle-qbank_distractorcheck",
@@ -2929,7 +2811,6 @@
     "iconUrl": "/marketplace-plugins/icon/qbank_distractorcheck/icon.png"
   },
   {
-    "id": null,
     "name": "Content Freshness",
     "component": "local_contentfreshness",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_contentfreshness",
@@ -2949,7 +2830,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_contentfreshness/icon.png"
   },
   {
-    "id": null,
     "name": "Socratic AI Tutor",
     "component": "mod_socratic",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_socratic",
@@ -2969,7 +2849,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_socratic/icon.png"
   },
   {
-    "id": null,
     "name": "Forum Triage",
     "component": "report_forumtriage",
     "repository_url": "https://github.com/EduardoKrausME/moodle-report_forumtriage",
@@ -2989,7 +2868,6 @@
     "iconUrl": "/marketplace-plugins/icon/report_forumtriage/icon.png"
   },
   {
-    "id": null,
     "name": "Log Explainer",
     "component": "local_logexplainer",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_logexplainer",
@@ -3009,7 +2887,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_logexplainer/icon.png"
   },
   {
-    "id": null,
     "name": "Plugin Validator",
     "component": "local_pluginvalidator",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_pluginvalidator",
@@ -3029,7 +2906,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_pluginvalidator/icon.png"
   },
   {
-    "id": null,
     "name": "Case AI",
     "component": "mod_caseai",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_caseai",
@@ -3049,7 +2925,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_caseai/icon.png"
   },
   {
-    "id": null,
     "name": "Personal Progress",
     "component": "block_personalprogress",
     "repository_url": "https://github.com/EduardoKrausME/moodle-block_personalprogress",
@@ -3069,7 +2944,6 @@
     "iconUrl": "/marketplace-plugins/icon/block_personalprogress/icon.png"
   },
   {
-    "id": null,
     "name": "Personal Study Streak",
     "component": "block_personalstreak",
     "repository_url": "https://github.com/EduardoKrausME/moodle-block_personalstreak",
@@ -3089,7 +2963,6 @@
     "iconUrl": "/marketplace-plugins/icon/block_personalstreak/icon.png"
   },
   {
-    "id": null,
     "name": "Personal Goals",
     "component": "local_personalgoals",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_personalgoals",
@@ -3109,7 +2982,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_personalgoals/icon.png"
   },
   {
-    "id": null,
     "name": "Reward Shop",
     "component": "local_rewardshop",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_rewardshop",
@@ -3129,7 +3001,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_rewardshop/icon.png"
   },
   {
-    "id": null,
     "name": "XP Celebration",
     "component": "local_xpcelebration",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_xpcelebration",
@@ -3149,7 +3020,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_xpcelebration/icon.png"
   },
   {
-    "id": null,
     "name": "XP Quests",
     "component": "local_xpquests",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_xpquests",
@@ -3169,7 +3039,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_xpquests/icon.png"
   },
   {
-    "id": null,
     "name": "OabFlix",
     "component": "theme_oabflix",
     "repository_url": "https://github.com/EduardoKrausME/moodle-theme_oabflix",
@@ -3189,7 +3058,6 @@
     "iconUrl": "/marketplace-plugins/icon/theme_oabflix/icon.png"
   },
   {
-    "id": null,
     "name": "Video Bridge",
     "component": "local_video_bridge",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_video_bridge",
@@ -3209,7 +3077,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_video_bridge/icon.png"
   },
   {
-    "id": null,
     "name": "Video Forum",
     "component": "mod_videoforum",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoforum",
@@ -3229,7 +3096,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoforum/icon.png"
   },
   {
-    "id": null,
     "name": "Video Reactions",
     "component": "mod_videoreactions",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videoreactions",
@@ -3249,7 +3115,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videoreactions/icon.png"
   },
   {
-    "id": null,
     "name": "Video Rubric",
     "component": "mod_videorubric",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videorubric",
@@ -3269,7 +3134,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videorubric/icon.png"
   },
   {
-    "id": null,
     "name": "Screen Recorder",
     "component": "tiny_screenrecorder",
     "repository_url": "https://github.com/EduardoKrausME/moodle-tiny_screenrecorder",
@@ -3289,7 +3153,6 @@
     "iconUrl": "/marketplace-plugins/icon/tiny_screenrecorder/icon.png"
   },
   {
-    "id": null,
     "name": "Video Tracker Pro",
     "component": "mod_videotrackerpro",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerpro",
@@ -3309,7 +3172,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videotrackerpro/icon.png"
   },
   {
-    "id": null,
     "name": "Video Tracker Ultra",
     "component": "mod_videotrackerultra",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerultra",
@@ -3329,7 +3191,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videotrackerultra/icon.png"
   },
   {
-    "id": null,
     "name": "Video Tracker Max",
     "component": "mod_videotrackermax",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackermax",
@@ -3349,7 +3210,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videotrackermax/icon.png"
   },
   {
-    "id": null,
     "name": "Video Tracker Prime",
     "component": "mod_videotrackerprime",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerprime",
@@ -3369,7 +3229,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videotrackerprime/icon.png"
   },
   {
-    "id": null,
     "name": "Video Tracker Ultimate",
     "component": "mod_videotrackerultimate",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerultimate",
@@ -3389,7 +3248,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videotrackerultimate/icon.png"
   },
   {
-    "id": null,
     "name": "Super Video Tracker",
     "component": "mod_supervideotracker",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_supervideotracker",
@@ -3409,7 +3267,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_supervideotracker/icon.png"
   },
   {
-    "id": null,
     "name": "Video Tracker Premium",
     "component": "mod_videotrackerpremium",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_videotrackerpremium",
@@ -3429,7 +3286,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_videotrackerpremium/icon.png"
   },
   {
-    "id": null,
     "name": "Authorship",
     "component": "proctoringpolicy_authorship",
     "repository_url": "https://github.com/EduardoKrausME/moodle-proctoringpolicy_authorship",
@@ -3449,7 +3305,6 @@
     "iconUrl": "/marketplace-plugins/icon/proctoringpolicy_authorship/icon.png"
   },
   {
-    "id": null,
     "name": "Mastery Practice",
     "component": "mod_masterypractice",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_masterypractice",
@@ -3469,7 +3324,6 @@
     "iconUrl": "/marketplace-plugins/icon/mod_masterypractice/icon.png"
   },
   {
-    "id": null,
     "name": "Moodle MCP",
     "component": "local_mcp",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_mcp",
@@ -3489,7 +3343,6 @@
     "iconUrl": "/marketplace-plugins/icon/local_mcp/icon.png"
   },
   {
-    "id": null,
     "name": "Sanitized Clone",
     "component": "local_sanitizedclone",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_sanitizedclone",
@@ -3502,7 +3355,6 @@
     "iconUrl": ""
   },
   {
-    "id": null,
     "name": "Site Configuration Diff",
     "component": "local_siteconfigdiff",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_siteconfigdiff",
@@ -3515,7 +3367,6 @@
     "iconUrl": ""
   },
   {
-    "id": null,
     "name": "Backup Drill",
     "component": "local_backupdrill",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_backupdrill",
@@ -3528,7 +3379,6 @@
     "iconUrl": ""
   },
   {
-    "id": null,
     "name": "Institutional Course Blueprints",
     "component": "local_courseblueprints",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_courseblueprints",
@@ -3541,7 +3391,6 @@
     "iconUrl": ""
   },
   {
-    "id": null,
     "name": "Academic Deadline Planner",
     "component": "local_deadlineplanner",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_deadlineplanner",
@@ -3554,7 +3403,6 @@
     "iconUrl": ""
   },
   {
-    "id": null,
     "name": "Syllabus Workflow",
     "component": "local_syllabusworkflow",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_syllabusworkflow",
@@ -3567,7 +3415,6 @@
     "iconUrl": ""
   },
   {
-    "id": null,
     "name": "Super Flipbook",
     "component": "mod_superflipbook",
     "repository_url": "https://github.com/EduardoKrausME/moodle-mod_superflipbook",
@@ -3580,7 +3427,6 @@
     "iconUrl": ""
   },
   {
-    "id": null,
     "name": "File X-Ray",
     "component": "local_filexray",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_filexray",
