@@ -3351,8 +3351,15 @@
     "description": "Planned Moodle staging-clone sanitization tool; the repository currently contains no runnable plugin implementation.",
     "moodle": "Not specified",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Sanitized Clone</h2><p class=\"lead text-body-secondary\">Prepare isolated Moodle copies for testing without exposing production personal information.</p><p>The intended workflow covers reusable anonymization profiles, data inventory, deterministic pseudonymization, preview, auditing and consistency checks. This repository currently contains only the initial files; sanitization is not available yet.</p></div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_sanitizedclone/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_sanitizedclone/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_sanitizedclone/icon.png"
   },
   {
     "name": "Site Configuration Diff",
@@ -3363,8 +3370,15 @@
     "description": "Compare sanitized configuration snapshots across Moodle environments and selectively apply a restricted set of safe core settings.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Site Configuration Diff</h2><p class=\"lead text-body-secondary\">Compare environment configuration without transporting secrets or giving production remote administration access.</p><p>Export and import sanitized snapshots, inspect redacted differences and review a persistent change plan. Version 1.0.0 restricts automatic application to allowlisted core language, country and timezone settings, with explicit approval and audit history.</p></div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_siteconfigdiff/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_siteconfigdiff/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_siteconfigdiff/icon.png"
   },
   {
     "name": "Backup Drill",
@@ -3375,8 +3389,15 @@
     "description": "Test Moodle course backup restorability through real restores and structural checks in an isolated lab environment.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Backup Drill</h2><p class=\"lead text-body-secondary\">A valid MBZ archive is not proof that its course can be restored.</p><p>Run genuine Moodle restore operations in a separately secured laboratory, compare the restored course against its backup manifest and retain technical reports. Version 1.0.0 identifies validation gaps as warnings rather than reporting unsupported checks as passed.</p></div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_backupdrill/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_backupdrill/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_backupdrill/icon.png"
   },
   {
     "name": "Institutional Course Blueprints",
@@ -3387,8 +3408,15 @@
     "description": "Create versioned institutional course templates and provision Moodle courses with native backup and restore APIs.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Institutional Course Blueprints</h2><p class=\"lead text-body-secondary\">Build and reuse published institutional course models with an immutable revision history.</p><p>Create templates from existing courses or initial settings, review dependencies and privacy risks, publish revisions and provision courses through queued Moodle backup and restore operations. Existing courses remain linked to their source revision without automatic resynchronization.</p></div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_courseblueprints/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_courseblueprints/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_courseblueprints/icon.png"
   },
   {
     "name": "Academic Deadline Planner",
@@ -3399,8 +3427,15 @@
     "description": "Analyze assignment and quiz deadline concentration across enrolled courses, with privacy-conscious scenarios for academic planning.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Academic Deadline Planner</h2><p class=\"lead text-body-secondary\">Find student workload conflicts that are invisible when each teacher schedules only their own course.</p><p>Analyze due dates for assignments and quizzes, aggregate cross-course conflicts with privacy thresholds and save proposed date adjustments. Version 1.0.0 offers review and links to Moodle editors rather than automatically changing activity dates.</p></div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_deadlineplanner/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_deadlineplanner/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_deadlineplanner/icon.png"
   },
   {
     "name": "Syllabus Workflow",
@@ -3411,8 +3446,15 @@
     "description": "Manage course syllabus drafts, institutional templates, versioning, sequential reviews, approvals and publication in Moodle.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Syllabus Workflow</h2><p class=\"lead text-body-secondary\">Take institutional teaching plans from draft to approved publication with traceable decisions.</p><p>Define institutional templates, prepare structured course syllabi, assign reviewers and manage revision, approval and publication stages. Immutable revision snapshots, auditable transitions and notifications support academic governance.</p></div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_syllabusworkflow/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_syllabusworkflow/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_syllabusworkflow/icon.png"
   },
   {
     "name": "Super Flipbook",
@@ -3423,8 +3465,15 @@
     "description": "Present course PDFs as page-turning Moodle activities with page-level reading progress, completion rules and reporting.",
     "moodle": "4.1+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">Super Flipbook</h2><p class=\"lead text-body-secondary\">Turn a course PDF into a flipbook activity with recorded per-page interaction.</p><p>Support page progress, bookmarks, optional acknowledgement, configurable completion rules and teacher reports. This is a development candidate that requires third-party JavaScript asset packaging and real Moodle integration testing before production use; it is not DRM.</p></div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_superflipbook/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_superflipbook/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_superflipbook/icon.png"
   },
   {
     "name": "File X-Ray",
@@ -3435,7 +3484,14 @@
     "description": "Inventory Moodle files through native course backup references without generating MBZ archives or deleting file contents.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\"><h2 class=\"h3 fw-bold mb-3\">File X-Ray</h2><p class=\"lead text-body-secondary\">Investigate which Moodle file records are discoverable through ordinary course backup operations.</p><p>Queue per-course inventories, compare referenced records with the Moodle files table and inspect file areas, logical sizes and report progress. Results identify unobserved records, not proven orphan files; the plugin does not delete files or scan physical orphan hashes.</p></div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_filexray/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_filexray/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_filexray/icon.png"
   }
 ]
