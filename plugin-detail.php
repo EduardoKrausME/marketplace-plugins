@@ -137,7 +137,11 @@ $learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
                     </div>
                 </div>
                 <div class="detail-primary-action">
-                    <a href="<?php echo $downloadUrl ?>" target="_blank">Download plugin <span>↓</span></a>
+                    <a href="<?php echo $downloadUrl ?>"
+                       target="_blank">Download plugin <span>↓</span></a>
+                    <a href="https://marketplace.moodle.com/plugins/<?php echo rawurlencode($plugin['component']); ?>"
+                       target="_blank"
+                       rel="noopener noreferrer">Open in Marketplace <span>↗</span></a>
                 </div>
             </header>
 
