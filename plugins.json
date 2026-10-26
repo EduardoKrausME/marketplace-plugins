@@ -1105,6 +1105,7 @@
   {
     "name": "Kopere Proctoring",
     "component": "local_kopere_proctoring",
+    "website": "https://eduardokrausme.github.io/moodle-local_kopere_proctoring/",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_proctoring",
     "branch": "master",
     "category": "administration",
