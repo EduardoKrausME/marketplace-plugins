@@ -384,6 +384,7 @@
     "name": "Kopere BI",
     "component": "local_kopere_bi",
     "repository_url": "https://github.com/EduardoKrausME/moodle-local_kopere_bi",
+    "website": "https://eduardokrausme.github.io/moodle-local_kopere_bi/",
     "category": "reports",
     "description": "More than 100 Moodle reports and dashboards covering learning, access, courses, users, assessments, activities, enrolments and operational analytics.",
     "moodle": "4.4+",

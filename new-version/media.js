@@ -2577,7 +2577,8 @@
 
     function buildMarketplaceDescriptionHtml(
         component,
-        descriptionHtml
+        descriptionHtml,
+        documentationUrl
     ) {
         const publicUrl =
             `https://eduardokraus.com/marketplace-plugins/plugin/${component}`;
@@ -2589,9 +2590,17 @@
             "</mark></p>",
         ].join("\n");
 
+        const documentationUrlValue =
+            String(documentationUrl || "").trim();
+        const documentationLink =
+            /^https:\/\/[^\s"\x27<>]+$/i.test(documentationUrlValue)
+                ? `<p><a href="${documentationUrlValue.replace(/&/g, "&amp;")}" target="_blank" rel="noopener noreferrer">Plugin documentation</a></p>\n`
+                : "";
+
         return (
           //  notice +
           //  "\n" +
+            documentationLink +
             String(
                 descriptionHtml ||
                 ""
@@ -2791,7 +2800,8 @@
         const html =
             buildMarketplaceDescriptionHtml(
                 plugin.component,
-                catalog.description_html
+                catalog.description_html,
+                catalog.website
             );
 
         const maxLength =
@@ -3147,7 +3157,8 @@
             const html =
                 buildMarketplaceDescriptionHtml(
                     plugin.component,
-                    catalog.description_html
+                    catalog.description_html,
+                    catalog.website
                 );
 
             const maxLength =

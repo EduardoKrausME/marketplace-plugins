@@ -760,6 +760,14 @@ function getCatalogPlugin(
                         ""
                     )
                 ),
+
+            "website" =>
+                trim(
+                    (string)(
+                        $plugin["website"] ??
+                        ""
+                    )
+                ),
         ];
     }
 
