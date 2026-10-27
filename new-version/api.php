@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once "config.php";
 
-const CACHE_TTL = 10 * 60 * 60;
+const CACHE_TTL = 10 * 60;
 const ALLOWED_ORIGIN = "https://marketplace.moodle.com";
 const GITHUB_API_VERSION = "2026-03-10";
 
