@@ -2594,7 +2594,13 @@
             String(documentationUrl || "").trim();
         const documentationLink =
             /^https:\/\/[^\s"\x27<>]+$/i.test(documentationUrlValue)
-                ? `<p><a href="${documentationUrlValue.replace(/&/g, "&amp;")}" target="_blank" rel="noopener noreferrer">Plugin documentation</a></p>\n`
+                ? [
+                    "<p><strong>Documentação completa / Complete documentation</strong></p>",
+                    "<p>Este plugin possui documentação completa com detalhes sobre seus recursos, opções de configuração, utilização e referências técnicas. Consulte a documentação para conhecer melhor as possibilidades do plugin: ",
+                    `<a href="${documentationUrlValue.replace(/&/g, "&amp;")}" target="_blank" rel="noopener noreferrer">Acessar documentação</a>.</p>`,
+                    "<p>This plugin includes comprehensive documentation covering its features, configuration options, usage and technical references. Explore the documentation to learn more about what the plugin offers: ",
+                    `<a href="${documentationUrlValue.replace(/&/g, "&amp;")}" target="_blank" rel="noopener noreferrer">Read the documentation</a>.</p>`,
+                ].join("\n") + "\n"
                 : "";
 
         return (
