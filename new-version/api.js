@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-14.05-marketplace-screenshot-reconciliation";
+        "2026-10-29.01-marketplace-frankenstyle-routes";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
@@ -280,19 +280,40 @@
                 continue;
             }
 
-            const idMatch =
-                link
-                    .getAttribute("href")
-                    ?.match(
-                        /^\/plugins\/(\d+)(?:\/|$)/
-                    );
+            /*
+             * Dashboard links use Frankenstyle names (for example
+             * /plugins/local_kopere_proctoring), not only numeric IDs.
+             * Keep numeric IDs compatible with earlier Marketplace pages.
+             */
+            let pluginUrl;
+            try {
+                pluginUrl = new URL(
+                    link.getAttribute("href"),
+                    window.location.href
+                );
+            } catch (_) {
+                continue;
+            }
+
+            if (pluginUrl.origin !== window.location.origin) {
+                continue;
+            }
+
+            const idMatch = pluginUrl.pathname.match(
+                /^\/plugins\/([a-z][a-z0-9_]*|\d+)\/?$/i
+            );
 
             if (!idMatch) {
                 continue;
             }
 
+            const routeId = idMatch[1];
+            if (!/^\d+$/.test(routeId) && routeId !== component) {
+                continue;
+            }
+
             plugins.push({
-                id: Number(idMatch[1]),
+                id: /^\d+$/.test(routeId) ? Number(routeId) : routeId,
                 component,
                 componentCell,
                 row,
@@ -843,7 +864,10 @@
 
         if (!plugins.length) {
             console.log(
-                "[Marketplace] Nenhum plugin Published, aguardando setup ou com Changes needed encontrado."
+                "[Marketplace] Nenhum plugin processável identificado no dashboard.", {
+                    rows: document.querySelectorAll("table tbody tr").length,
+                    detail: "Verifique os status e links /plugins/{frankenstyle} do dashboard."
+                }
             );
 
             return;
