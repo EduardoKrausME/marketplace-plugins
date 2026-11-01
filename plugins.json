@@ -3517,8 +3517,15 @@
     "description": "Protect Moodle web and web-service logins against repeated password attempts with rolling IP and IP-plus-username limits, temporary counters and legacy auth_bruteforce migration.",
     "moodle": "4.1+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h4 class=\"display-5 fw-bold mb-3\">Brute Force Detect</h4>\n<p class=\"lead mb-3\">Block repeated password attempts before they become an endless series of authentication requests.</p>\n<p class=\"text-body-secondary mb-4\">Brute Force Detect monitors failed Moodle logins and maintains independent rolling limits for a remote IP and for an IP-and-username combination. The two thresholds help administrators protect targeted accounts without applying the same restrictive limit to an entire campus or corporate network.</p>\n<div class=\"row g-4\"><div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Two independent limits</h5><p class=\"small text-body-secondary mb-0\">Set focused limits for one account from an IP while retaining a broader allowance for shared networks.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Web and token protection</h5><p class=\"small text-body-secondary mb-0\">Apply the block to regular Moodle login requests and the web-service token endpoint.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Compact, expiring counters</h5><p class=\"small text-body-secondary mb-0\">Reduce permanent security-table growth with rolling counters and scheduled cleanup rather than storing each attempt forever.</p></div></div></div></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Privacy and migration</h5><p class=\"mb-0\">Submitted usernames are represented by a one-way hash in the combined counter; remote IP addresses are temporarily retained for rate limiting. Sites migrating from the older auth_bruteforce plugin can import its threshold settings and recent IP counters without deleting the old table.</p></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Operational considerations</h5><p class=\"mb-0\">The plugin is a local protection layer, not an authentication provider and not a substitute for account policy, trusted reverse-proxy configuration or monitoring of unusual traffic. Configure thresholds for your real user population and ensure Moodle cron runs regularly.</p></div>\n</div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_bruteforce/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_bruteforce/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_bruteforce/icon.png"
   },
   {
     "name": "Office Hours",
@@ -3529,8 +3536,15 @@
     "description": "Let Moodle students book private appointments with teachers using weekly or one-off availability, waiting lists, private calendar events and appointment reports.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h4 class=\"display-5 fw-bold mb-3\">Office Hours</h4>\n<p class=\"lead mb-3\">Turn student consultation hours into reservable appointments inside the course.</p>\n<p class=\"text-body-secondary mb-4\">Office Hours gives teachers a Moodle activity for publishing their availability while students reserve specific time slots. Instead of managing a public spreadsheet or exchanging messages for every meeting, the course provides a booking workflow with private appointment details and reporting.</p>\n<div class=\"row g-4\"><div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Teacher availability</h5><p class=\"small text-body-secondary mb-0\">Configure weekly schedules or one-off availability, using named time zones for consistent slot generation.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Student bookings</h5><p class=\"small text-body-secondary mb-0\">Reserve generated slots and use waiting lists when an available appointment has already filled.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Private course workflow</h5><p class=\"small text-body-secondary mb-0\">Keep appointment information private, create appropriate calendar events and review appointment reports.</p></div></div></div></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Scheduling behavior</h5><p class=\"mb-0\">Slots use UTC timestamps internally while availability rules use IANA time zones. Generation is performed on demand and limited to a 32-day window per request.</p></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Before production deployment</h5><p class=\"mb-0\">The repository targets Moodle 4.5 LTS and 5.x but explicitly notes that the complete Moodle testing matrix and external plugin validation have not yet passed. Concurrent deployments need a working Moodle Lock API backend, and notifications require cron.</p></div>\n</div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_officehours/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_officehours/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_officehours/icon.png"
   },
   {
     "name": "LearnLingo",
@@ -3541,8 +3555,15 @@
     "description": "A Duolingo-inspired Moodle theme with customizable home, login, dashboard, course presentation and branding, plus optional ChatGPT and Claude customization through Moodle MCP.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h4 class=\"display-5 fw-bold mb-3\">LearnLingo</h4>\n<p class=\"lead mb-3\">Give Moodle a playful, learning-first visual experience without replacing its learning engine.</p>\n<p class=\"text-body-secondary mb-4\">LearnLingo changes how a Moodle site presents its homepage, course pages, dashboard and login. Administrators can configure branding through the theme settings or export and import a JSON configuration to reproduce the same visual identity across installations.</p>\n<div class=\"row g-4\"><div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Flexible site identity</h5><p class=\"small text-body-secondary mb-0\">Adapt colors, logos, imagery, homepage presentation and other theme settings for a coherent institutional look.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Learning-first screens</h5><p class=\"small text-body-secondary mb-0\">Customize the homepage, dashboard, course views and login so the environment feels more inviting while retaining Moodle functionality.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Optional AI-assisted setup</h5><p class=\"small text-body-secondary mb-0\">With local_mcp installed, expose tools to read and update supported theme settings and homepage content through a connected assistant.</p></div></div></div></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">MCP integration</h5><p class=\"mb-0\">The theme works without MCP. When local_mcp is installed, the provider exposes read and write tools for homepage content and theme settings; write operations require the Moodle site-configuration capability, MCP WRITE permission and explicit confirmation.</p></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Safe customization workflow</h5><p class=\"mb-0\">MCP updates validate HTML and SCSS, can check a state hash to prevent overwriting concurrent changes, and preserve settings not included in the request. The theme is based on Moodle Boost.</p></div>\n</div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/theme_learnlingo/icon.png"
   },
   {
     "name": "GitHub Plugin Installer",
@@ -3553,8 +3574,15 @@
     "description": "Install or update Moodle plugins from public GitHub repositories through Moodle's native ZIP installer, with archive checks, component detection and administrator confirmation.",
     "moodle": "4.4+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h4 class=\"display-5 fw-bold mb-3\">GitHub Plugin Installer</h4>\n<p class=\"lead mb-3\">Start a plugin installation from a GitHub repository URL, but keep Moodle in charge of validation and deployment.</p>\n<p class=\"text-body-secondary mb-4\">GitHub Plugin Installer downloads source archives from public GitHub repositories and passes them to Moodle's built-in ZIP installation process. Administrators review the detected component and version before Moodle performs its own validation and asks for confirmation.</p>\n<div class=\"row g-4\"><div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">GitHub repository input</h5><p class=\"small text-body-secondary mb-0\">Use a canonical public GitHub repository URL, optionally selecting a branch, tag or full commit SHA.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Pre-install inspection</h5><p class=\"small text-body-secondary mb-0\">Inspect ZIP structure and plugin metadata, reject invalid packages, self-updates and version downgrades.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Native Moodle validation</h5><p class=\"small text-body-secondary mb-0\">Hand the package to Moodle's existing installer instead of executing repository code or bypassing its standard checks.</p></div></div></div></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Scope and requirements</h5><p class=\"mb-0\">This initial release handles public single-plugin repositories; private repositories, access tokens and monorepositories are not supported. It requires PHP cURL, ZipArchive, outbound HTTPS to GitHub and permission for Moodle's built-in installer to deploy files.</p></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Early release caution</h5><p class=\"mb-0\">Version 0.1.0 is marked alpha. Updating an existing plugin replaces its code directory through Moodle's installer, so test deployments and back up the site, code customizations and database before use. Dependencies are handled by Moodle's normal upgrade checks, not installed automatically.</p></div>\n</div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/local_githubinstaller/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/local_githubinstaller/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/local_githubinstaller/icon.png"
   },
   {
     "name": "Project Board",
@@ -3565,7 +3593,14 @@
     "description": "Organize academic projects inside Moodle with individual, group or shared Kanban boards, task dependencies, checklists, evidence, assessment and course completion integration.",
     "moodle": "4.5+",
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h4 class=\"display-5 fw-bold mb-3\">Project Board</h4>\n<p class=\"lead mb-3\">Bring project planning and assessment into the Moodle course instead of scattering tasks across external boards.</p>\n<p class=\"text-body-secondary mb-4\">Project Board is a Moodle activity for academic projects. Teachers can organize work on individual, Moodle-group or shared Kanban boards, while task operations apply course-module capabilities and group permissions on the server.</p>\n<div class=\"row g-4\"><div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Kanban task workflow</h5><p class=\"small text-body-secondary mb-0\">Manage columns, task transitions, assignments, checklists and dependencies from the course activity.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Evidence and discussion</h5><p class=\"small text-body-secondary mb-0\">Attach project evidence, collaborate with comments and keep an activity history of important task changes.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Assessment integration</h5><p class=\"small text-body-secondary mb-0\">Connect project assessment with Moodle's gradebook and completion logic; scheduled tasks can deliver deadline reminders.</p></div></div></div></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Access and recovery</h5><p class=\"mb-0\">Student changes are restricted to boards they may edit; visible-group access can permit observation without changes. The plugin includes Moodle privacy, backup and restore integrations and supports keyboard alternatives.</p></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Beta-quality notice</h5><p class=\"mb-0\">The published release is marked beta and the repository calls for further integration and CI testing against Moodle 4.5 and 5.x. Validate the relevant workflows before enabling it on a production site.</p></div>\n</div></div></div>",
-    "screenshots": [],
-    "iconUrl": ""
+    "screenshots": [
+      {
+        "url": "/marketplace-plugins/screenshots/mod_projectboard/new-1.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/mod_projectboard/new-2.png"
+      }
+    ],
+    "iconUrl": "/marketplace-plugins/icon/mod_projectboard/icon.png"
   }
 ]
