@@ -13,7 +13,7 @@
     };
 
     const SCRIPT_BUILD =
-        "2026-10-29.01-marketplace-frankenstyle-routes";
+        "2026-11-02.01-release-build-consistency";
 
     console.info(
         `[Marketplace] JS carregado: ${SCRIPT_BUILD}`
