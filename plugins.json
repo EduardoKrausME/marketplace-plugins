@@ -3557,10 +3557,34 @@
     "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<h4 class=\"display-5 fw-bold mb-3\">LearnLingo</h4>\n<p class=\"lead mb-3\">Give Moodle a playful, learning-first visual experience without replacing its learning engine.</p>\n<p class=\"text-body-secondary mb-4\">LearnLingo changes how a Moodle site presents its homepage, course pages, dashboard and login. Administrators can configure branding through the theme settings or export and import a JSON configuration to reproduce the same visual identity across installations.</p>\n<div class=\"row g-4\"><div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Flexible site identity</h5><p class=\"small text-body-secondary mb-0\">Adapt colors, logos, imagery, homepage presentation and other theme settings for a coherent institutional look.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Learning-first screens</h5><p class=\"small text-body-secondary mb-0\">Customize the homepage, dashboard, course views and login so the environment feels more inviting while retaining Moodle functionality.</p></div></div></div>\n<div class=\"col-md-4\"><div class=\"card h-100 border\"><div class=\"card-body\"><h5 class=\"h6 fw-semibold mb-2\">Optional AI-assisted setup</h5><p class=\"small text-body-secondary mb-0\">With local_mcp installed, expose tools to read and update supported theme settings and homepage content through a connected assistant.</p></div></div></div></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">MCP integration</h5><p class=\"mb-0\">The theme works without MCP. When local_mcp is installed, the provider exposes read and write tools for homepage content and theme settings; write operations require the Moodle site-configuration capability, MCP WRITE permission and explicit confirmation.</p></div>\n<div class=\"mt-4\"><h5 class=\"h5 fw-bold mb-2\">Safe customization workflow</h5><p class=\"mb-0\">MCP updates validate HTML and SCSS, can check a state hash to prevent overwriting concurrent changes, and preserve settings not included in the request. The theme is based on Moodle Boost.</p></div>\n</div></div></div>",
     "screenshots": [
       {
-        "url": "/marketplace-plugins/screenshots/theme_learnlingo/new-1.png"
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/00-RegenMed.png"
       },
       {
-        "url": "/marketplace-plugins/screenshots/theme_learnlingo/new-2.png"
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/01-RegenMed-dark.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/02-Observatorio90.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/EuAgro.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/EuCafe.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/EuIndustria.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/EuSeguranca.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/EuSolar.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/EuVendas.png"
+      },
+      {
+        "url": "/marketplace-plugins/screenshots/theme_learnlingo/EuVerde.png"
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/theme_learnlingo/icon.png"
