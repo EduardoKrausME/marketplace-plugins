@@ -1074,25 +1074,56 @@
         marketplace,
         repositoryInfo
     ) {
+        const remoteRelease =
+            repositoryInfo.release ||
+            repositoryInfo.tag;
+
+        const releaseComparison =
+            compareVersions(
+                remoteRelease,
+                marketplace.release
+            );
+
         if (
             Number.isFinite(repositoryInfo.build) &&
             Number.isFinite(
                 marketplace.build
             )
         ) {
-            return (
-                repositoryInfo.build >
-                marketplace.build
-            );
+            const buildComparison =
+                Math.sign(
+                    repositoryInfo.build -
+                    marketplace.build
+                );
+
+            // A higher release must have a higher Moodle build number.
+            // An inverted or unchanged build indicates a versioning error,
+            // not an updated plugin or a release safe to upload.
+            if (
+                (
+                    releaseComparison > 0 &&
+                    buildComparison <= 0
+                ) ||
+                (
+                    releaseComparison < 0 &&
+                    buildComparison >= 0
+                )
+            ) {
+                throw new Error(
+                    `Versionamento inconsistente: Marketplace ${marketplace.release} (${marketplace.build}) · ` +
+                    `GitHub ${remoteRelease} (${repositoryInfo.build}). ` +
+                    (
+                        releaseComparison > 0
+                            ? "A release do GitHub é maior, mas o build não aumentou."
+                            : "A release do GitHub é menor, mas o build não diminuiu."
+                    )
+                );
+            }
+
+            return buildComparison > 0;
         }
 
-        return (
-            compareVersions(
-                repositoryInfo.release ||
-                repositoryInfo.tag,
-                marketplace.release
-            ) > 0
-        );
+        return releaseComparison > 0;
     }
 
     async function uploadMarketplaceVersion(
