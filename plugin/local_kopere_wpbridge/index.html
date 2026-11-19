@@ -1,0 +1,148 @@
+<!doctype html>
+<!-- Generated from plugin-detail.php by GitHub Actions. Do not edit. -->
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Synchronize completed WooCommerce orders with Moodle course enrolments and cohorts using mapped products, signed webhooks and scheduled reconciliation.">
+    <title>Kopere WP Bridge | Eduardo Kraus Plugin Marketplace</title>
+    <link rel="stylesheet" href="../../styles/bootstrap.css">
+    <link rel="stylesheet" href="../../styles/styles.css">
+</head>
+<body class="detail-page">
+<main>
+    <header class="topbar detail-topbar shell">
+        <a class="brand" href="../../" aria-label="Return to the Eduardo Kraus Plugin Marketplace">
+            <span class="brand-mark"><b>EK</b><i>✚</i></span>
+            <span>Plugin Marketplace <strong>Eduardo Kraus</strong></span>
+        </a>
+        <a class="back-to-catalog" href="../../">← Back to catalog</a>
+        <div class="theme-toggle" aria-label="Choose theme">
+            <button id="dark-button" type="button" class="active">☾ <span>Dark</span></button>
+            <button id="light-button" type="button">☀ <span>Light</span></button>
+        </div>
+    </header>
+
+    <section class="detail-shell shell">
+                    <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="../../">Marketplace</a>
+                <span>›</span>
+                <span>local_kopere_wpbridge</span>
+            </nav>
+
+            <header class="plugin-detail-hero">
+                <div class="detail-icon integrations">
+                                            <img src="../../icon/local_kopere_wpbridge/icon.png" alt="Plugin icon for Kopere WP Bridge">
+                                    </div>
+                <div class="detail-heading">
+                    <h1>Kopere WP Bridge</h1>
+                    <code>local_kopere_wpbridge</code>
+                    <p>Synchronize completed WooCommerce orders with Moodle course enrolments and cohorts using mapped products, signed webhooks and scheduled reconciliation.</p>
+                    <div class="detail-badges">
+                        <span>Moodle™ Software 4.1+</span>
+                        <span>Integrations</span>
+                    </div>
+                </div>
+                <div class="detail-primary-action">
+                    <a href="https://github.com/EduardoKrausME/moodle-local_kopere_wpbridge/archive/refs/heads/master.zip"
+                       target="_blank" rel="noopener noreferrer">Download plugin <span>↓</span></a>
+                    <a href="https://marketplace.moodle.com/plugins/local_kopere_wpbridge"
+                       target="_blank"
+                       rel="noopener noreferrer">Open in Marketplace <span>↗</span></a>
+                </div>
+            </header>
+
+            <section class="detail-panel">
+                <div class="detail-tabs" role="tablist" aria-label="Plugin information">
+                    <button type="button" class="active" id="tab-description" role="tab" aria-selected="true"
+                            aria-controls="panel-description" data-tab="description">Description</button>
+                    <button type="button" id="tab-download" role="tab" aria-selected="false" aria-controls="panel-download"
+                            data-tab="download">Download</button>
+                    <button type="button" id="tab-learn" role="tab" aria-selected="false" aria-controls="panel-learn"
+                            data-tab="learn">Learn</button>
+                </div>
+
+                <div class="tab-panel active" id="panel-description" role="tabpanel" aria-labelledby="tab-description"
+                     data-panel="description">
+                                            <section class="screenshots-section" aria-label="Screenshots">
+                            <div class="screenshot-carousel" data-carousel>
+                                <div class="carousel-viewport">
+                                    <div class="carousel-track">
+                                                                                    <figure class="carousel-slide active" data-slide="0">
+                                                <img src="../../screenshots/local_kopere_wpbridge/new-1.png?v=a1d0f34ef70bd78b" alt="Kopere WP Bridge - Screenshot 1" >
+                                                <figcaption>Kopere WP Bridge - Screenshot 1</figcaption>
+                                            </figure>
+                                                                            </div>
+                                                                    </div>
+                                                            </div>
+                        </section>
+                    
+                    <section class="plugin-description-html">
+                        <div class="rich-content">
+                            <div class="container-fluid px-0"><div class="card border-0 shadow-sm"><div class="card-body p-4 p-lg-5">
+<div class="row align-items-center g-4">
+  <div class="col-12 col-lg-7">
+    <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-primary">WooCommerce</span><span class="badge text-bg-light border">Moodle enrolment</span></div>
+    <h4 class="display-5 fw-bold mb-3">Kopere WP Bridge</h4>
+    <p class="lead mb-4">Turn WooCommerce purchases into Moodle access without maintaining a second enrolment workflow by hand.</p>
+    <p class="text-body-secondary mb-0">Products can be mapped to courses and cohorts; when an order completes, the bridge identifies the customer, creates the Moodle account when necessary and applies the mapped access.</p>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card border h-100"><div class="card-body p-4">
+      <div class="fw-semibold mb-3">Order-to-access flow</div>
+      <ol class="mb-0">
+        <li>Map a WooCommerce product to one or more Moodle destinations.</li>
+        <li>Receive the completed-order webhook.</li>
+        <li>Validate the local token and WooCommerce HMAC signature.</li>
+        <li>Resolve or create the Moodle user.</li>
+        <li>Enrol in mapped courses and add to mapped cohorts.</li>
+        <li>Record processing so reconciliation can safely retry pending items.</li>
+      </ol>
+    </div></div>
+  </div>
+</div>
+<div class="row g-4 mt-4">
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Product mappings</div><div class="small text-body-secondary">One commercial product can drive course enrolment, cohort membership or both, keeping catalog logic outside Moodle course administration.</div></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Webhook validation</div><div class="small text-body-secondary">Incoming order events are checked using a local endpoint token and WooCommerce signature validation before access is processed.</div></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Scheduled reconciliation</div><div class="small text-body-secondary">A scheduled task revisits recent completed sales so transient webhook failures do not silently become missing enrolments.</div></div></div></div>
+</div>
+<div class="mt-5">
+  <h5 class="h3 fw-bold mb-3">Designed for idempotent commerce workflows</h5>
+  <p class="mb-0">The bridge treats the webhook as the fast path and scheduled synchronization as the safety net, which is much more reliable than assuming every external callback will arrive exactly once and at the perfect moment.</p>
+</div>
+
+<div class="mt-5 pt-2"><h5 class="h3 fw-bold mb-3">How it fits real Moodle workflows</h5><p>Kopere WP Bridge connects Moodle-related workflows with a WordPress-facing site, which is common when marketing content and learning delivery live on separate platforms. The integration is valuable when user navigation or commercial enrolment flows need to cross that boundary with a predictable contract. Administrators should make responsibilities explicit: which platform owns identities, course access, payments and error handling. Secure credentials and consistent synchronization matter more than merely making two screens appear visually connected.</p></div>
+</div></div></div>                        </div>
+                    </section>
+                </div>
+
+                <div class="tab-panel" id="panel-download" role="tabpanel" aria-labelledby="tab-download" data-panel="download"
+                     hidden>
+                    <div class="action-content">
+                        <span class="action-icon">↓</span>
+                        <h2>Download the latest version</h2>
+                        <p>The file is generated directly by GitHub using the current content of the <code>master</code> branch.</p>
+                        <a class="primary-button inline-button" href="https://github.com/EduardoKrausME/moodle-local_kopere_wpbridge/archive/refs/heads/master.zip" target="_blank" rel="noopener noreferrer">Download local_kopere_wpbridge.zip</a>
+                        <a class="text-link" href="https://github.com/EduardoKrausME/moodle-local_kopere_wpbridge" target="_blank" rel="noreferrer">Open repository on GitHub ↗</a>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="panel-learn" role="tabpanel" aria-labelledby="tab-learn" data-panel="learn" hidden>
+                    <div class="action-content">
+                        <span class="action-icon">▷</span>
+                        <span class="section-kicker">COURSE AND DOCUMENTATION</span>
+                        <h2>Learn how to use this plugin</h2>
+                        <p>This button can open the corresponding course within Moodle™ Software.</p>
+                                            </div>
+                </div>
+            </section>
+            </section>
+
+    <footer>
+        <div class="shell"><span>© 2026 Eduardo Kraus</span><span>Moodle™ Software plugins made in Brazil.</span></div>
+    </footer>
+</main>
+<script src="../../js/detail.js"></script>
+<script src="../../js/theme.js"></script>
+</body>
+</html>

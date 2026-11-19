@@ -1,0 +1,142 @@
+<!doctype html>
+<!-- Generated from plugin-detail.php by GitHub Actions. Do not edit. -->
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Turn existing Moodle query logs into an admin interface for finding slow SQL, recurring bottlenecks, callers and CRON-versus-WEB performance problems.">
+    <title>Slow Queries | Eduardo Kraus Plugin Marketplace</title>
+    <link rel="stylesheet" href="../../styles/bootstrap.css">
+    <link rel="stylesheet" href="../../styles/styles.css">
+</head>
+<body class="detail-page">
+<main>
+    <header class="topbar detail-topbar shell">
+        <a class="brand" href="../../" aria-label="Return to the Eduardo Kraus Plugin Marketplace">
+            <span class="brand-mark"><b>EK</b><i>✚</i></span>
+            <span>Plugin Marketplace <strong>Eduardo Kraus</strong></span>
+        </a>
+        <a class="back-to-catalog" href="../../">← Back to catalog</a>
+        <div class="theme-toggle" aria-label="Choose theme">
+            <button id="dark-button" type="button" class="active">☾ <span>Dark</span></button>
+            <button id="light-button" type="button">☀ <span>Light</span></button>
+        </div>
+    </header>
+
+    <section class="detail-shell shell">
+                    <nav class="breadcrumb" aria-label="Breadcrumb">
+                <a href="../../">Marketplace</a>
+                <span>›</span>
+                <span>local_slow_queries</span>
+            </nav>
+
+            <header class="plugin-detail-hero">
+                <div class="detail-icon reports">
+                                            <img src="../../icon/local_slow_queries/icon.png" alt="Plugin icon for Slow Queries">
+                                    </div>
+                <div class="detail-heading">
+                    <h1>Slow Queries</h1>
+                    <code>local_slow_queries</code>
+                    <p>Turn existing Moodle query logs into an admin interface for finding slow SQL, recurring bottlenecks, callers and CRON-versus-WEB performance problems.</p>
+                    <div class="detail-badges">
+                        <span>Moodle™ Software 4.0+</span>
+                        <span>Reports</span>
+                    </div>
+                </div>
+                <div class="detail-primary-action">
+                    <a href="https://github.com/EduardoKrausME/moodle-local_slow_queries/archive/refs/heads/master.zip"
+                       target="_blank" rel="noopener noreferrer">Download plugin <span>↓</span></a>
+                    <a href="https://marketplace.moodle.com/plugins/local_slow_queries"
+                       target="_blank"
+                       rel="noopener noreferrer">Open in Marketplace <span>↗</span></a>
+                </div>
+            </header>
+
+            <section class="detail-panel">
+                <div class="detail-tabs" role="tablist" aria-label="Plugin information">
+                    <button type="button" class="active" id="tab-description" role="tab" aria-selected="true"
+                            aria-controls="panel-description" data-tab="description">Description</button>
+                    <button type="button" id="tab-download" role="tab" aria-selected="false" aria-controls="panel-download"
+                            data-tab="download">Download</button>
+                    <button type="button" id="tab-learn" role="tab" aria-selected="false" aria-controls="panel-learn"
+                            data-tab="learn">Learn</button>
+                </div>
+
+                <div class="tab-panel active" id="panel-description" role="tabpanel" aria-labelledby="tab-description"
+                     data-panel="description">
+                                            <section class="screenshots-section" aria-label="Screenshots">
+                            <div class="screenshot-carousel" data-carousel>
+                                <div class="carousel-viewport">
+                                    <div class="carousel-track">
+                                                                                    <figure class="carousel-slide active" data-slide="0">
+                                                <img src="../../screenshots/local_slow_queries/new-1.png?v=d7e0efcab93261d5" alt="Slow Queries - Screenshot 1" >
+                                                <figcaption>Slow Queries - Screenshot 1</figcaption>
+                                            </figure>
+                                                                            </div>
+                                                                    </div>
+                                                            </div>
+                        </section>
+                    
+                    <section class="plugin-description-html">
+                        <div class="rich-content">
+                            <div class="container-fluid px-0"><div class="card border-0 shadow-sm"><div class="card-body p-4 p-lg-5">
+<div class="row align-items-center g-4">
+  <div class="col-12 col-lg-7">
+    <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-primary">Database performance</span><span class="badge text-bg-light border">Admin-only</span></div>
+    <h4 class="display-5 fw-bold mb-3">Slow Queries</h4>
+    <p class="lead mb-4">Turn a table full of query timings into something an administrator can actually use to answer: which SQL is slow, how often does it happen, and where is it coming from?</p>
+    <p class="text-body-secondary mb-0">The plugin reads an existing <code>{log_queries}</code> data source and provides filtering, triage and context for Moodle database performance investigations.</p>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card border h-100"><div class="card-body p-4">
+      <div class="fw-semibold mb-3">From symptom to caller</div>
+      <ul class="mb-0">
+        <li>Filter by execution time and query metadata.</li>
+        <li>Separate CRON-originated queries from web requests.</li>
+        <li>Derive a practical caller from the captured backtrace.</li>
+        <li>Inspect SQL, parameters, errors and timing together.</li>
+        <li>Look for recurrence instead of chasing one isolated spike.</li>
+      </ul>
+    </div></div>
+  </div>
+</div>
+<div class="row g-4 mt-4">
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Performance triage</div><div class="small text-body-secondary">Start with the worst execution times, then narrow the problem by caller, request type and recurrence before touching indexes or application code.</div></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Backtrace context</div><div class="small text-body-secondary">The UI skips the generic Moodle DML frames and surfaces the next meaningful frame, which is usually much closer to the component that triggered the database call.</div></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Best-effort SQL reconstruction</div><div class="small text-body-secondary">Common parameter formats are parsed so positional values can be shown with the statement for investigation, while making no claim that every logger format can be reconstructed perfectly.</div></div></div></div>
+</div>
+<div class="alert alert-warning mt-4 mb-0"><strong>This is a viewer, not a query collector.</strong> The environment must already record query data in <code>{log_queries}</code>. Access is intentionally restricted because SQL, parameters and backtraces may contain sensitive operational information.</div>
+</div></div></div>                        </div>
+                    </section>
+                </div>
+
+                <div class="tab-panel" id="panel-download" role="tabpanel" aria-labelledby="tab-download" data-panel="download"
+                     hidden>
+                    <div class="action-content">
+                        <span class="action-icon">↓</span>
+                        <h2>Download the latest version</h2>
+                        <p>The file is generated directly by GitHub using the current content of the <code>master</code> branch.</p>
+                        <a class="primary-button inline-button" href="https://github.com/EduardoKrausME/moodle-local_slow_queries/archive/refs/heads/master.zip" target="_blank" rel="noopener noreferrer">Download local_slow_queries.zip</a>
+                        <a class="text-link" href="https://github.com/EduardoKrausME/moodle-local_slow_queries" target="_blank" rel="noreferrer">Open repository on GitHub ↗</a>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="panel-learn" role="tabpanel" aria-labelledby="tab-learn" data-panel="learn" hidden>
+                    <div class="action-content">
+                        <span class="action-icon">▷</span>
+                        <span class="section-kicker">COURSE AND DOCUMENTATION</span>
+                        <h2>Learn how to use this plugin</h2>
+                        <p>This button can open the corresponding course within Moodle™ Software.</p>
+                                            </div>
+                </div>
+            </section>
+            </section>
+
+    <footer>
+        <div class="shell"><span>© 2026 Eduardo Kraus</span><span>Moodle™ Software plugins made in Brazil.</span></div>
+    </footer>
+</main>
+<script src="../../js/detail.js"></script>
+<script src="../../js/theme.js"></script>
+</body>
+</html>
