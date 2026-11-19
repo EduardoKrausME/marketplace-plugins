@@ -1,0 +1,198 @@
+name: Build static Marketplace pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "plugins.json"
+      - "plugin-detail.php"
+      - "index.html"
+      - "js/app.js"
+      - ".github/workflows/build-static.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: marketplace-static-master
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Generate and verify HTML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Validate source files
+        run: |
+          php -l plugin-detail.php
+          node --check js/app.js
+          node --check js/detail.js
+          node --check js/theme.js
+          test -f index.html
+          test -f plugins.json
+
+      - name: Render plugin-detail.php to static pages
+        shell: bash
+        run: |
+          php <<'PHP'
+          <?php
+          declare(strict_types=1);
+
+          $root = getcwd();
+          $raw = file_get_contents($root . '/plugins.json');
+          if ($raw === false) {
+              throw new RuntimeException('Could not read plugins.json.');
+          }
+          $catalog = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+          if (!is_array($catalog) || !array_is_list($catalog)) {
+              throw new RuntimeException('plugins.json must contain a list.');
+          }
+          $components = [];
+          foreach ($catalog as $index => $item) {
+              if (!is_array($item)) {
+                  throw new RuntimeException("Plugin {$index} must be an object.");
+              }
+              $component = $item['component'] ?? null;
+              if (!is_string($component)
+                  || preg_match('/^[a-z][a-z0-9]*_[a-z0-9_]+$/D', $component) !== 1) {
+                  throw new RuntimeException("Invalid plugin component at index {$index}.");
+              }
+              if (isset($components[$component])) {
+                  throw new RuntimeException("Duplicate plugin: {$component}.");
+              }
+              $components[$component] = true;
+          }
+
+          $generatedRoot = $root . '/plugin';
+          if (!is_dir($generatedRoot) && !mkdir($generatedRoot, 0755, true)) {
+              throw new RuntimeException('Unable to create the plugin/ directory.');
+          }
+
+          $marker = '<!-- Generated from plugin-detail.php by GitHub Actions. Do not edit. -->';
+          $updated = 0;
+          $unchanged = 0;
+
+          foreach ($catalog as $item) {
+              $plugin = $item;
+              $component = $plugin['component'];
+              $directory = $generatedRoot . '/' . $component;
+              if (!is_dir($directory) && !mkdir($directory, 0755, true)) {
+                  throw new RuntimeException("Cannot create directory for {$component}.");
+              }
+
+              // Relative URLs work on a project site, custom domain, or nested mount.
+              $assetBase = '../../';
+              ob_start();
+              try {
+                  require $root . '/plugin-detail.php';
+                  $html = ob_get_clean();
+              } catch (Throwable $exception) {
+                  ob_end_clean();
+                  throw new RuntimeException("Rendering {$component}: {$exception->getMessage()}", 0, $exception);
+              }
+              if (!is_string($html) || stripos($html, '<!doctype html>') !== 0) {
+                  throw new RuntimeException("Invalid template output for {$component}.");
+              }
+
+              $html = preg_replace(
+                  '/^<!doctype html>\r?\n/i',
+                  "<!doctype html>\n{$marker}\n",
+                  $html,
+                  1
+              );
+              $target = $directory . '/index.html';
+              if (is_file($target) && file_get_contents($target) === $html) {
+                  $unchanged++;
+                  continue;
+              }
+
+              $temporary = tempnam($directory, '.build-');
+              if ($temporary === false || file_put_contents($temporary, $html) === false
+                  || !rename($temporary, $target)) {
+                  if ($temporary !== false) {
+                      @unlink($temporary);
+                  }
+                  throw new RuntimeException("Cannot write {$target}.");
+              }
+              $updated++;
+          }
+
+          // Never delete a hand-written page: only known generated artifacts.
+          $removed = 0;
+          foreach (new DirectoryIterator($generatedRoot) as $entry) {
+              if ($entry->isDot() || !$entry->isDir()
+                  || isset($components[$entry->getFilename()])) {
+                  continue;
+              }
+              $file = $entry->getPathname() . '/index.html';
+              if (!is_file($file)) {
+                  continue;
+              }
+              $html = file_get_contents($file);
+              if ($html !== false && str_contains($html, $marker)) {
+                  if (!unlink($file)) {
+                      throw new RuntimeException("Cannot remove obsolete {$file}.");
+                  }
+                  @rmdir($entry->getPathname());
+                  $removed++;
+              }
+          }
+          echo count($catalog) . " plugins: {$updated} built, {$unchanged} unchanged, {$removed} removed.\n";
+          PHP
+
+      - name: Verify every generated plugin
+        shell: bash
+        run: |
+          php <<'PHP'
+          <?php
+          declare(strict_types=1);
+
+          $catalog = json_decode(file_get_contents('plugins.json'), true, 512, JSON_THROW_ON_ERROR);
+          $invalid = [];
+          foreach ($catalog as $plugin) {
+              $component = $plugin['component'];
+              $file = "plugin/{$component}/index.html";
+              $html = is_file($file) ? file_get_contents($file) : false;
+              if (!is_string($html)
+                  || !str_contains($html, 'Generated from plugin-detail.php')
+                  || !str_contains($html, '../../styles/styles.css')
+                  || !str_contains($html, '../../js/detail.js')
+                  || !str_contains($html, htmlspecialchars(
+                      (string) $plugin['name'],
+                      ENT_QUOTES | ENT_SUBSTITUTE,
+                      'UTF-8'
+                  ))
+                  || str_contains($html, '<?php')
+                  || str_contains($html, '/marketplace-plugins/styles/')) {
+                  $invalid[] = $component;
+              }
+          }
+          $home = file_get_contents('index.html');
+          if ($home === false || str_contains($home, '<?php')
+              || !str_contains($home, 'js/app.js')
+              || !str_contains($home, 'id="plugin-grid"')) {
+              $invalid[] = 'index.html';
+          }
+          if ($invalid !== []) {
+              throw new RuntimeException('Invalid static pages: ' . implode(', ', $invalid));
+          }
+          echo 'Verified ' . count($catalog) . " detail pages and index.html.\n";
+          PHP
+
+      - name: Commit generated HTML to master
+        shell: bash
+        run: |
+          git add -A -- plugin/
+          if git diff --cached --quiet; then
+            echo "Generated pages are already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: render static Marketplace plugin pages"
+          git push origin HEAD:master

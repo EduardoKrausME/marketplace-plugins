@@ -1,94 +1,134 @@
 <?php
+/**
+ * Detail page template. The GitHub Actions workflow supplies $plugin and $assetBase.
+ * Direct PHP requests with ?component=... remain supported on PHP hosts.
+ */
+declare(strict_types=1);
 
-require_once __DIR__ . '/marketplace.php';
-
-$component = $_GET["component"] ?? "";
-$plugin = null;
+$assetBase = $assetBase ?? './';
 $catalogError = null;
-
-try {
-    $plugins = marketplace_load_plugins(__DIR__ . '/plugins.json');
-    $plugin = marketplace_find_plugin($plugins, $component);
-} catch (RuntimeException $exception) {
-    $catalogError = $exception->getMessage();
+$plugin = $plugin ?? null;
+if (!is_array($plugin)) {
+    try {
+        $raw = file_get_contents(__DIR__ . '/plugins.json');
+        if ($raw === false) {
+            throw new RuntimeException('plugins.json could not be read.');
+        }
+        $catalog = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+        if (!is_array($catalog) || !array_is_list($catalog)) {
+            throw new RuntimeException('plugins.json must be an array.');
+        }
+        $componentRequested = (string) ($_GET['component'] ?? '');
+        $plugin = null;
+        foreach ($catalog as $candidate) {
+            if (is_array($candidate) && ($candidate['component'] ?? '') === $componentRequested) {
+                $plugin = $candidate;
+                break;
+            }
+        }
+    } catch (Throwable $exception) {
+        $catalogError = $exception->getMessage();
+        $plugin = null;
+    }
 }
-
-if ($plugin === null) {
+$found = is_array($plugin) && isset($plugin['component']);
+if (!$found && PHP_SAPI !== 'cli') {
     http_response_code(404);
 }
+$plugin = $found ? $plugin : [];
+$escape = static fn(mixed $value): string =>
+    htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$assetUrl = static function (string $path) use ($assetBase): string {
+    $path = trim($path);
+    if ($path === '') {
+        return $assetBase;
+    }
+    if (preg_match('~^(?:https?:)?//|^data:~i', $path)) {
+        return $path;
+    }
+    if (str_starts_with($path, '/marketplace-plugins/')) {
+        $path = substr($path, strlen('/marketplace-plugins/'));
+    } elseif (str_starts_with($path, '/')) {
+        return $path;
+    }
+    return $assetBase . ltrim($path, '/');
+};
 
-$name = (string) ($plugin["name"] ?? 'Plugin not found');
-$description = (string) ($plugin["description"] ?? 'The requested component does not exist in the catalog.');
-$iconUrl = $plugin["iconUrl"];
-$moodleVersion = (string) ($plugin["moodle"] ?? 'Not specified');
-$category = (string) ($plugin["category"] ?? "plugin");
+$name = (string) ($plugin['name'] ?? 'Plugin not found');
+$description = (string) ($plugin['description'] ?? 'The requested component does not exist in the catalog.');
+$iconUrl = $assetUrl((string) ($plugin['iconUrl'] ?? ''));
+if (empty($plugin['iconUrl'])) {
+    $iconUrl = '';
+}
+$moodleVersion = (string) ($plugin['moodle'] ?? 'Not specified');
+$category = (string) ($plugin['category'] ?? 'plugin');
 $categoryLabels = [
-        "administration" => 'Administration',
-        "themes" => "Themes",
-        "video" => 'Video',
-        "reports" => 'Reports',
-        "integrations" => 'Integrations',
+    'administration' => 'Administration',
+    'themes' => 'Themes',
+    'video' => 'Video',
+    'reports' => 'Reports',
+    'integrations' => 'Integrations',
 ];
 $categoryLabel = $categoryLabels[$category] ?? ucfirst($category);
-$screenshots = is_array($plugin["screenshots"] ?? null) ? array_values($plugin["screenshots"]) : [];
-// Old screenshots are kept as history, not as part of the current gallery.
+$screenshots = is_array($plugin['screenshots'] ?? null) ? array_values(array_filter(
+    $plugin['screenshots'], 'is_array'
+)) : [];
+// Keep historical screenshots only if the plugin has no current new-N assets.
 $newScreenshots = array_values(array_filter(
     $screenshots,
     static fn(array $screenshot): bool =>
-        preg_match('~/new-\\d+\\.(?:png|jpe?g|webp|gif)(?:\\?.*)?$~i', (string) ($screenshot["url"] ?? "")) === 1
+        preg_match('~/new-\d+\.(?:png|jpe?g|webp|gif)(?:\?.*)?$~i', (string) ($screenshot['url'] ?? '')) === 1
 ));
 if ($newScreenshots !== []) {
     usort($newScreenshots, static fn(array $a, array $b): int =>
-        strnatcasecmp((string) ($a["url"] ?? ""), (string) ($b["url"] ?? ""))
+        strnatcasecmp((string) ($a['url'] ?? ''), (string) ($b['url'] ?? ''))
     );
     $screenshots = $newScreenshots;
 }
-// Immutable image URLs prevent stale browser/CDN screenshots after replacement.
 $screenshotRoot = realpath(__DIR__ . '/screenshots');
 foreach ($screenshots as &$screenshot) {
     $url = (string) ($screenshot['url'] ?? '');
-    $path = (string) parse_url($url, PHP_URL_PATH);
-    $prefix = '/marketplace-plugins/screenshots/';
-    if ($screenshotRoot === false || !str_starts_with($path, $prefix)) {
-        continue;
+    $path = (string) (parse_url($url, PHP_URL_PATH) ?: '');
+    if ($screenshotRoot !== false && str_starts_with($path, '/marketplace-plugins/screenshots/')) {
+        $relative = substr($path, strlen('/marketplace-plugins/screenshots/'));
+        $filename = realpath($screenshotRoot . DIRECTORY_SEPARATOR . rawurldecode($relative));
+        if ($filename !== false && str_starts_with($filename, $screenshotRoot . DIRECTORY_SEPARATOR)
+            && is_file($filename)) {
+            $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . substr(sha1_file($filename), 0, 16);
+        }
     }
-    $relative = substr($path, strlen($prefix));
-    $filename = realpath($screenshotRoot . DIRECTORY_SEPARATOR . rawurldecode($relative));
-    if ($filename === false ||
-        !str_starts_with($filename, $screenshotRoot . DIRECTORY_SEPARATOR) ||
-        !is_file($filename)) {
-        continue;
-    }
-    $screenshot['url'] = $url . (str_contains($url, '?') ? '&' : '?') .
-        'v=' . substr(sha1_file($filename), 0, 16);
+    $screenshot['url'] = $assetUrl($url);
 }
 unset($screenshot);
-$downloadUrl = $plugin ? marketplace_download_url($plugin["repository_url"]) : "#";
 
-// These links can be defined individually in plugins.json later.
-$forumUrl = trim((string) ($plugin["forum_url"] ?? ""));
-$learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
+$repositoryUrl = rtrim((string) ($plugin['repository_url'] ?? ''), '/');
+$branch = (string) ($plugin['branch'] ?? 'master');
+$downloadUrl = '#';
+if (preg_match('~^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$~', $repositoryUrl)
+    && preg_match('~^[A-Za-z0-9._/-]+$~', $branch)) {
+    $downloadUrl = $repositoryUrl . '/archive/refs/heads/' . $branch . '.zip';
+}
+$forumUrl = (string) ($plugin['forum_url'] ?? '');
+$learnUrl = (string) ($plugin['learn_url'] ?? '');
 ?>
 <!doctype html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="description" content="<?php echo $description ?>">
-    <title><?php echo $name ?> | Eduardo Kraus Plugin Marketplace</title>
-    <link rel="stylesheet" href="<?php echo marketplace_url('styles/bootstrap.css') ?>">
-    <link rel="stylesheet" href="<?php echo marketplace_url('styles/styles.css') ?>">
+    <meta name="description" content="<?php echo $escape($description); ?>">
+    <title><?php echo $escape($name); ?> | Eduardo Kraus Plugin Marketplace</title>
+    <link rel="stylesheet" href="<?php echo $escape($assetUrl('styles/bootstrap.css')); ?>">
+    <link rel="stylesheet" href="<?php echo $escape($assetUrl('styles/styles.css')); ?>">
 </head>
 <body class="detail-page">
 <main>
     <header class="topbar detail-topbar shell">
-        <a class="brand" href="<?php
-        echo marketplace_url() ?>" aria-label="Return to the Eduardo Kraus Plugin Marketplace">
+        <a class="brand" href="<?php echo $escape($assetUrl('')); ?>" aria-label="Return to the Eduardo Kraus Plugin Marketplace">
             <span class="brand-mark"><b>EK</b><i>✚</i></span>
             <span>Plugin Marketplace <strong>Eduardo Kraus</strong></span>
         </a>
-        <a class="back-to-catalog" href="<?php
-        echo marketplace_url() ?>">← Back to catalog</a>
+        <a class="back-to-catalog" href="<?php echo $escape($assetUrl('')); ?>">← Back to catalog</a>
         <div class="theme-toggle" aria-label="Choose theme">
             <button id="dark-button" type="button" class="active">☾ <span>Dark</span></button>
             <button id="light-button" type="button">☀ <span>Light</span></button>
@@ -96,31 +136,26 @@ $learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
     </header>
 
     <section class="detail-shell shell">
-        <?php
-        if ($plugin === null): ?>
+        <?php if (!$found): ?>
             <div class="not-found-card">
                 <span class="not-found-code">404</span>
                 <h1>Plugin not found</h1>
-                <p><?php
-                    echo $catalogError ?? 'No plugin with the requested component exists in plugins.json.' ?></p>
-                <a class="primary-button inline-button" href="<?php
-                echo marketplace_url() ?>">Back to marketplace</a>
+                <p><?php echo $escape($catalogError ?? 'No plugin with the requested component exists in plugins.json.'); ?></p>
+                <a class="primary-button inline-button" href="<?php echo $escape($assetUrl('')); ?>">Back to marketplace</a>
             </div>
         <?php
         else: ?>
             <nav class="breadcrumb" aria-label="Breadcrumb">
-                <a href="<?php
-                echo marketplace_url() ?>">Marketplace</a>
+                <a href="<?php echo $escape($assetUrl('')); ?>">Marketplace</a>
                 <span>›</span>
-                <span><?php echo $plugin["component"] ?></span>
+                <span><?php echo $escape($plugin["component"]); ?></span>
             </nav>
 
             <header class="plugin-detail-hero">
-                <div class="detail-icon <?php
-                echo $category ?>">
+                <div class="detail-icon <?php echo $escape($category); ?>">
                     <?php
                     if ($iconUrl !== ""): ?>
-                        <img src="<?php echo $iconUrl ?>" alt="Plugin icon for <?php echo $name ?>">
+                        <img src="<?php echo $escape($iconUrl); ?>" alt="Plugin icon for <?php echo $escape($name); ?>">
                     <?php
                     else: ?>
                         <span>EK</span>
@@ -128,17 +163,17 @@ $learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
                     endif; ?>
                 </div>
                 <div class="detail-heading">
-                    <h1><?php echo $name ?></h1>
-                    <code><?php echo $plugin["component"] ?></code>
-                    <p><?php echo $description ?></p>
+                    <h1><?php echo $escape($name); ?></h1>
+                    <code><?php echo $escape($plugin["component"]); ?></code>
+                    <p><?php echo $escape($description); ?></p>
                     <div class="detail-badges">
-                        <span>Moodle™ Software <?php echo $moodleVersion ?></span>
-                        <span><?php echo $categoryLabel ?></span>
+                        <span>Moodle™ Software <?php echo $escape($moodleVersion); ?></span>
+                        <span><?php echo $escape($categoryLabel); ?></span>
                     </div>
                 </div>
                 <div class="detail-primary-action">
-                    <a href="<?php echo $downloadUrl ?>"
-                       target="_blank">Download plugin <span>↓</span></a>
+                    <a href="<?php echo $escape($downloadUrl); ?>"
+                       target="_blank" rel="noopener noreferrer">Download plugin <span>↓</span></a>
                     <a href="https://marketplace.moodle.com/plugins/<?php echo rawurlencode($plugin['component']); ?>"
                        target="_blank"
                        rel="noopener noreferrer">Open in Marketplace <span>↗</span></a>
@@ -170,14 +205,10 @@ $learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
                                                     $name . ' - Screenshot ' . ($index + 1));
                                             ?>
                                             <figure class="carousel-slide<?php
-                                            echo $index === 0 ? ' active' : "" ?>" data-slide="<?php
-                                            echo $index ?>">
-                                                <img src="<?php
-                                                echo $screenshotUrl ?>" alt="<?php
-                                                echo $screenshotName ?>" <?php
+                                            echo $index === 0 ? ' active' : "" ?>" data-slide="<?php echo $escape($index); ?>">
+                                                <img src="<?php echo $escape($screenshotUrl); ?>" alt="<?php echo $escape($screenshotName); ?>" <?php
                                                 echo $index === 0 ? "" : 'loading="lazy"' ?>>
-                                                <figcaption><?php
-                                                    echo $screenshotName ?></figcaption>
+                                                <figcaption><?php echo $escape($screenshotName); ?></figcaption>
                                             </figure>
                                         <?php
                                         endforeach; ?>
@@ -201,11 +232,8 @@ $learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
                                             $thumbnailUrl = $screenshot["url"];
                                             ?>
                                             <button type="button" class="carousel-thumbnail<?php
-                                            echo $index === 0 ? ' active' : "" ?>" data-carousel-go="<?php
-                                            echo $index ?>" aria-label="Open screenshot <?php
-                                            echo $index + 1 ?>">
-                                                <img src="<?php
-                                                echo $thumbnailUrl ?>" alt="" loading="lazy">
+                                            echo $index === 0 ? ' active' : "" ?>" data-carousel-go="<?php echo $escape($index); ?>" aria-label="Open screenshot <?php echo $escape($index + 1); ?>">
+                                                <img src="<?php echo $escape($thumbnailUrl); ?>" alt="" loading="lazy">
                                             </button>
                                         <?php
                                         endforeach; ?>
@@ -230,8 +258,8 @@ $learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
                         <span class="action-icon">↓</span>
                         <h2>Download the latest version</h2>
                         <p>The file is generated directly by GitHub using the current content of the <code>master</code> branch.</p>
-                        <a class="primary-button inline-button" href="<?php echo $downloadUrl ?>" target="_blank">Download <?php echo $plugin["component"] ?>.zip</a>
-                        <a class="text-link" href="<?php echo $plugin["repository_url"] ?>" target="_blank" rel="noreferrer">Open repository on GitHub ↗</a>
+                        <a class="primary-button inline-button" href="<?php echo $escape($downloadUrl); ?>" target="_blank" rel="noopener noreferrer">Download <?php echo $escape($plugin["component"]); ?>.zip</a>
+                        <a class="text-link" href="<?php echo $escape($plugin["repository_url"]); ?>" target="_blank" rel="noreferrer">Open repository on GitHub ↗</a>
                     </div>
                 </div>
 
@@ -243,7 +271,7 @@ $learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
                         <p>This button can open the corresponding course within Moodle™ Software.</p>
                         <?php
                         if ($learnUrl !== ""): ?>
-                            <a class="primary-button inline-button" href="<?php echo $learnUrl ?>">Open course</a>
+                            <a class="primary-button inline-button" href="<?php echo $escape($learnUrl); ?>">Open course</a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -256,7 +284,7 @@ $learnUrl = trim((string) ($plugin["learn_url"] ?? ""));
         <div class="shell"><span>© 2026 Eduardo Kraus</span><span>Moodle™ Software plugins made in Brazil.</span></div>
     </footer>
 </main>
-<script src="<?php echo marketplace_url('js/detail.js') ?>"></script>
-<script src="<?php echo marketplace_url('js/theme.js') ?>"></script>
+<script src="<?php echo $escape($assetUrl('js/detail.js')); ?>"></script>
+<script src="<?php echo $escape($assetUrl('js/theme.js')); ?>"></script>
 </body>
 </html>
