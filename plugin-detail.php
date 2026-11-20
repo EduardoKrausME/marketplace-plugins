@@ -125,7 +125,7 @@ $learnUrl = (string) ($plugin['learn_url'] ?? '');
 <main>
     <header class="topbar detail-topbar shell">
         <a class="brand" href="<?php echo $escape($assetUrl('')); ?>" aria-label="Return to the Eduardo Kraus Plugin Marketplace">
-            <span class="brand-mark"><b>EK</b><i>✚</i></span>
+            <span class="brand-mark" aria-hidden="true"></span>
             <span>Plugin Marketplace <strong>Eduardo Kraus</strong></span>
         </a>
         <a class="back-to-catalog" href="<?php echo $escape($assetUrl('')); ?>">← Back to catalog</a>
