@@ -68,19 +68,35 @@
                     <section class="plugin-description-html">
                         <div class="rich-content">
                             <div class="container-fluid px-0"><div class="card border-0 shadow-sm"><div class="card-body p-4 p-lg-5">
-<div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-primary">Course-level MCP connection</span><span class="badge text-bg-light border">Moodle 4.5+</span></div>
-<h4 class="h3 fw-bold mb-3">Moodle MCP for ChatGPT</h4>
-<p class="lead">Add a course block that helps each teacher or learner connect their own ChatGPT account to Moodle through the <code>local_mcp</code> server.</p>
-<p>The block exposes a configured MCP server connection for the course. Access to study tools, tasks and grades remains tied to the authenticated Moodle user, their enrolment, the block settings and Moodle capabilities; it never issues a shared course token.</p>
-<div class="row g-3 mt-3">
-  <div class="col-md-4"><div class="h-100 border rounded-3 p-3"><h5 class="h6 fw-bold">Learner tools</h5><p class="mb-0">Study accessible course content and consult the user's own tasks, deadlines and visible grades.</p></div></div>
-  <div class="col-md-4"><div class="h-100 border rounded-3 p-3"><h5 class="h6 fw-bold">Teacher controls</h5><p class="mb-0">Choose teachers only or teachers and students, and enable allowlisted course-level write operations only where appropriate.</p></div></div>
-  <div class="col-md-4"><div class="h-100 border rounded-3 p-3"><h5 class="h6 fw-bold">Permission checks</h5><p class="mb-0">Moodle access policies are checked on every request; administrative tools are not exposed to educational users.</p></div></div>
+<div class="row align-items-center g-4">
+  <div class="col-12 col-lg-7">
+    <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-primary">Course AI connection</span><span class="badge text-bg-light border">ChatGPT + Moodle MCP</span></div>
+    <h4 class="display-5 fw-bold mb-3">Moodle MCP for ChatGPT</h4>
+    <p class="lead mb-4">Give teachers and students a course-level connection between their own ChatGPT account and the Moodle content and tools they are allowed to access.</p>
+    <p class="text-body-secondary mb-0">The block makes the course MCP connection visible where learning happens. It works with <code>local_mcp</code>, respects each person's Moodle identity and can expose study information or carefully scoped teaching tools without relying on shared credentials.</p>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card border h-100"><div class="card-body p-4">
+      <div class="fw-semibold mb-3">Course-level capabilities</div>
+      <ul class="mb-0">
+        <li>Personal ChatGPT connections using each user's Moodle account.</li>
+        <li>Study access to visible content, tasks and the learner's own grades.</li>
+        <li>Audience controls for teachers or teachers and students.</li>
+        <li>Optional, allowlisted teacher write tools disabled by default.</li>
+      </ul>
+    </div></div>
+  </div>
 </div>
-<h5 class="h4 fw-semibold mt-5 mb-3">Installation and prerequisites</h5>
-<p>Install the block in <code>blocks/mcp</code> alongside <code>local_mcp</code> version <code>2026112000</code> or newer. Add it to a course, choose the audience and connect with each user's own Moodle account. Custom MCP connections must be available in the ChatGPT account or workspace.</p>
-<div class="border rounded-3 p-3 mt-4"><h5 class="h6 fw-bold">Important integration requirement</h5><p class="mb-0">The block README requires an accompanying <code>local_mcp</code> OAuth integration patch before enabling student or teacher authorization. Verify this prerequisite in the deployed <code>local_mcp</code>; it is not supplied by the block repository.</p></div>
-<p class="mt-4 mb-0">Current release: <strong>1.0.1 (beta)</strong>. Test permissions, course scoping and OAuth authorization in a non-production environment before rolling out to learners.</p>
+<div class="row g-4 mt-4">
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Personal study assistant</div><div class="small text-body-secondary">Learners can ask about accessible course materials, their upcoming tasks and grades they are permitted to see, without opening up other users' records.</div></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Teacher-oriented tools</div><div class="small text-body-secondary">Educators can inspect course context and, when explicitly enabled and authorized, use a restricted set of course-management operations.</div></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Permission-aware access</div><div class="small text-body-secondary">Course visibility, enrolment, block configuration and Moodle capabilities are checked again when tools execute; administrative operations remain outside educational access.</div></div></div></div>
+</div>
+<div class="mt-5">
+  <h5 class="h3 fw-bold mb-3">An AI connection that belongs to the user</h5>
+  <p>A shared integration token is a poor fit for education because it cannot reliably represent the different permissions of a student, a teacher and an administrator. Moodle MCP for ChatGPT connects through each person's own Moodle account, while <code>local_mcp</code> provides the underlying protocol and authorization services.</p>
+  <p class="mb-0">The current <strong>1.0.1 beta</strong> depends on educational OAuth support in <code>local_mcp</code>; the block's repository documents an accompanying authorization integration patch that is required for teacher and student connections. Custom MCP connections must also be supported by the user's ChatGPT account or workspace.</p>
+</div>
 </div></div></div>                        </div>
                     </section>
                 </div>

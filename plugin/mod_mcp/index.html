@@ -68,19 +68,35 @@
                     <section class="plugin-description-html">
                         <div class="rich-content">
                             <div class="container-fluid px-0"><div class="card border-0 shadow-sm"><div class="card-body p-4 p-lg-5">
-<div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-primary">Interactive course activity</span><span class="badge text-bg-light border">Moodle 4.5+</span></div>
-<h4 class="h3 fw-bold mb-3">MCP Activity</h4>
-<p class="lead">Author complete interactive lessons with ChatGPT or Claude (using the MCP protocol), and publish them as standard Moodle course activities.</p>
-<p>The activity accepts a single HTML document with embedded CSS and JavaScript. Teachers work on an unpublished draft, preview it, and publish explicitly; learners continue seeing the last published revision while a new draft is prepared.</p>
-<div class="row g-3 mt-3">
-  <div class="col-md-4"><div class="h-100 border rounded-3 p-3"><h5 class="h6 fw-bold">Isolated interactive content</h5><p class="mb-0">Authored scripts run in a sandboxed iframe without same-origin access to the authenticated Moodle page.</p></div></div>
-  <div class="col-md-4"><div class="h-100 border rounded-3 p-3"><h5 class="h6 fw-bold">Native assessment</h5><p class="mb-0">Questions are created or selected in the Moodle question bank before being linked to the activity; attempts and grading run on the server through the Question Engine.</p></div></div>
-  <div class="col-md-4"><div class="h-100 border rounded-3 p-3"><h5 class="h6 fw-bold">Gradebook integration</h5><p class="mb-0">Grades use Moodle's native gradebook rather than values supplied by the authored JavaScript.</p></div></div>
+<div class="row align-items-center g-4">
+  <div class="col-12 col-lg-7">
+    <div class="d-flex flex-wrap gap-2 mb-3"><span class="badge text-bg-primary">Interactive learning</span><span class="badge text-bg-light border">Moodle question bank</span></div>
+    <h4 class="display-5 fw-bold mb-3">MCP Activity</h4>
+    <p class="lead mb-4">Turn a complete HTML, CSS and JavaScript experience into a Moodle activity that can be authored with ChatGPT or Claude (using the MCP protocol).</p>
+    <p class="text-body-secondary mb-0">Teachers can build interactive lessons, simulations and assessments while Moodle remains responsible for activity visibility, question attempts and grades. Students use the published experience inside their course without needing an AI account.</p>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card border h-100"><div class="card-body p-4">
+      <div class="fw-semibold mb-3">What the activity supports</div>
+      <ul class="mb-0">
+        <li>One HTML document with embedded styles and scripts.</li>
+        <li>Draft previews and explicit publication of immutable revisions.</li>
+        <li>Native question-bank questions and server-side answer validation.</li>
+        <li>Grades recorded through Moodle's native gradebook.</li>
+      </ul>
+    </div></div>
+  </div>
 </div>
-<h5 class="h4 fw-semibold mt-5 mb-3">Publishing workflow</h5>
-<p>Install in <code>mod/mcp</code> and connect <code>local_mcp</code> to author and manage activities using the available tools. Create the activity, save an HTML revision, prepare native question-bank entries where needed, preview, and publish. Students can use the published activity without having a ChatGPT or Claude account.</p>
-<h5 class="h4 fw-semibold mt-4 mb-3">Release and operational limits</h5>
-<p class="mb-0">The current release is <strong>0.1.0 (alpha)</strong>. One attempt per learner is currently supported, and student attempts are not restored by the initial backup implementation. Validate grading, question versioning, backup/restore, capabilities and accessibility in a test Moodle before using it for assessed production activities.</p>
+<div class="row g-4 mt-4">
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Interactive content with isolation</div><div class="small text-body-secondary">Custom JavaScript runs in a sandboxed iframe rather than inside Moodle's authenticated page, keeping the authored content separate from Moodle sessions and interfaces.</div></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Questions stay in Moodle</div><div class="small text-body-secondary">Questions are stored in the native question bank before being linked to the activity. Answers are submitted to the server and evaluated by Moodle's Question Engine, not by browser-side scripts.</div></div></div></div>
+  <div class="col-md-4"><div class="card h-100 border"><div class="card-body"><div class="fw-semibold mb-2">Controlled publication</div><div class="small text-body-secondary">New drafts do not replace the content learners are already viewing. Published revisions remain available until the teacher explicitly publishes an update.</div></div></div></div>
+</div>
+<div class="mt-5">
+  <h5 class="h3 fw-bold mb-3">When an activity needs more than static HTML</h5>
+  <p>Embedding an interactive page is straightforward; making its assessments trustworthy is the harder part. MCP Activity keeps presentation in the authored document but leaves question versions, attempt state and grading to Moodle's established services, so learner scores do not depend on JavaScript running in the browser.</p>
+  <p class="mb-0">The activity integrates with <code>local_mcp</code> for AI-assisted authoring while keeping student access independent of ChatGPT or Claude. The current <strong>0.1.0 alpha</strong> supports one attempt per learner, and its initial backup implementation does not restore student attempts. Assessment workflows should be validated before production use.</p>
+</div>
 </div></div></div>                        </div>
                     </section>
                 </div>
