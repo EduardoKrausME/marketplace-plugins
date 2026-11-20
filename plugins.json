@@ -3647,5 +3647,35 @@
       }
     ],
     "iconUrl": "/marketplace-plugins/icon/mod_projectboard/icon.png"
+  },
+  {
+    "name": "MCP Activity",
+    "component": "mod_mcp",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-mod_mcp",
+    "category": "integrations",
+    "description": "Create interactive Moodle activities with HTML, CSS and JavaScript authored using ChatGPT or Claude, with server-side assessment through the native question bank and gradebook.",
+    "moodle": "4.5+",
+    "branch": "master",
+    "dependencies": {
+      "local_mcp": 2026112000
+    },
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\"><span class=\"badge text-bg-primary\">Interactive course activity</span><span class=\"badge text-bg-light border\">Moodle 4.5+</span></div>\n<h4 class=\"h3 fw-bold mb-3\">MCP Activity</h4>\n<p class=\"lead\">Author complete interactive lessons with ChatGPT or Claude (using the MCP protocol), and publish them as standard Moodle course activities.</p>\n<p>The activity accepts a single HTML document with embedded CSS and JavaScript. Teachers work on an unpublished draft, preview it, and publish explicitly; learners continue seeing the last published revision while a new draft is prepared.</p>\n<div class=\"row g-3 mt-3\">\n  <div class=\"col-md-4\"><div class=\"h-100 border rounded-3 p-3\"><h5 class=\"h6 fw-bold\">Isolated interactive content</h5><p class=\"mb-0\">Authored scripts run in a sandboxed iframe without same-origin access to the authenticated Moodle page.</p></div></div>\n  <div class=\"col-md-4\"><div class=\"h-100 border rounded-3 p-3\"><h5 class=\"h6 fw-bold\">Native assessment</h5><p class=\"mb-0\">Questions are created or selected in the Moodle question bank before being linked to the activity; attempts and grading run on the server through the Question Engine.</p></div></div>\n  <div class=\"col-md-4\"><div class=\"h-100 border rounded-3 p-3\"><h5 class=\"h6 fw-bold\">Gradebook integration</h5><p class=\"mb-0\">Grades use Moodle's native gradebook rather than values supplied by the authored JavaScript.</p></div></div>\n</div>\n<h5 class=\"h4 fw-semibold mt-5 mb-3\">Publishing workflow</h5>\n<p>Install in <code>mod/mcp</code> and connect <code>local_mcp</code> to author and manage activities using the available tools. Create the activity, save an HTML revision, prepare native question-bank entries where needed, preview, and publish. Students can use the published activity without having a ChatGPT or Claude account.</p>\n<h5 class=\"h4 fw-semibold mt-4 mb-3\">Release and operational limits</h5>\n<p class=\"mb-0\">The current release is <strong>0.1.0 (alpha)</strong>. One attempt per learner is currently supported, and student attempts are not restored by the initial backup implementation. Validate grading, question versioning, backup/restore, capabilities and accessibility in a test Moodle before using it for assessed production activities.</p>\n</div></div></div>",
+    "screenshots": [],
+    "iconUrl": "/marketplace-plugins/icon/local_mcp/icon.png"
+  },
+  {
+    "name": "Moodle MCP for ChatGPT Block",
+    "component": "block_mcp",
+    "repository_url": "https://github.com/EduardoKrausME/moodle-block_mcp",
+    "category": "integrations",
+    "description": "Give teachers and learners a course-level entry point to connect their own ChatGPT account to Moodle with permission-scoped MCP tools and optional teacher write access.",
+    "moodle": "4.5+",
+    "branch": "master",
+    "dependencies": {
+      "local_mcp": 2026112000
+    },
+    "description_html": "<div class=\"container-fluid px-0\"><div class=\"card border-0 shadow-sm\"><div class=\"card-body p-4 p-lg-5\">\n<div class=\"d-flex flex-wrap gap-2 mb-3\"><span class=\"badge text-bg-primary\">Course-level MCP connection</span><span class=\"badge text-bg-light border\">Moodle 4.5+</span></div>\n<h4 class=\"h3 fw-bold mb-3\">Moodle MCP for ChatGPT</h4>\n<p class=\"lead\">Add a course block that helps each teacher or learner connect their own ChatGPT account to Moodle through the <code>local_mcp</code> server.</p>\n<p>The block exposes a configured MCP server connection for the course. Access to study tools, tasks and grades remains tied to the authenticated Moodle user, their enrolment, the block settings and Moodle capabilities; it never issues a shared course token.</p>\n<div class=\"row g-3 mt-3\">\n  <div class=\"col-md-4\"><div class=\"h-100 border rounded-3 p-3\"><h5 class=\"h6 fw-bold\">Learner tools</h5><p class=\"mb-0\">Study accessible course content and consult the user's own tasks, deadlines and visible grades.</p></div></div>\n  <div class=\"col-md-4\"><div class=\"h-100 border rounded-3 p-3\"><h5 class=\"h6 fw-bold\">Teacher controls</h5><p class=\"mb-0\">Choose teachers only or teachers and students, and enable allowlisted course-level write operations only where appropriate.</p></div></div>\n  <div class=\"col-md-4\"><div class=\"h-100 border rounded-3 p-3\"><h5 class=\"h6 fw-bold\">Permission checks</h5><p class=\"mb-0\">Moodle access policies are checked on every request; administrative tools are not exposed to educational users.</p></div></div>\n</div>\n<h5 class=\"h4 fw-semibold mt-5 mb-3\">Installation and prerequisites</h5>\n<p>Install the block in <code>blocks/mcp</code> alongside <code>local_mcp</code> version <code>2026112000</code> or newer. Add it to a course, choose the audience and connect with each user's own Moodle account. Custom MCP connections must be available in the ChatGPT account or workspace.</p>\n<div class=\"border rounded-3 p-3 mt-4\"><h5 class=\"h6 fw-bold\">Important integration requirement</h5><p class=\"mb-0\">The block README requires an accompanying <code>local_mcp</code> OAuth integration patch before enabling student or teacher authorization. Verify this prerequisite in the deployed <code>local_mcp</code>; it is not supplied by the block repository.</p></div>\n<p class=\"mt-4 mb-0\">Current release: <strong>1.0.1 (beta)</strong>. Test permissions, course scoping and OAuth authorization in a non-production environment before rolling out to learners.</p>\n</div></div></div>",
+    "screenshots": [],
+    "iconUrl": "/marketplace-plugins/icon/local_mcp/icon.png"
   }
 ]
