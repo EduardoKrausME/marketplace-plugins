@@ -81,31 +81,13 @@ main {
     }
 }
 .brand-mark {
-    width: 58px;
+    width: 158px;
     height: 64px;
-    display: grid;
-    place-items: center;
-    position: relative;
-    font-size: 23px;
-    color: white;
-    background: linear-gradient(145deg, #1681FF, #0B4CAD);
-    clip-path: polygon(50% 0, 93% 21%, 93% 75%, 50% 100%, 7% 75%, 7% 21%);
-    &:after {
-        content: "";
-        position: absolute;
-        inset: 6px;
-        background: var(--bg);
-        clip-path: inherit;
-        z-index: -1;
-    }
-    i {
-        position: absolute;
-        color: var(--orange);
-        font-style: normal;
-        right: -4px;
-        bottom: 5px;
-        font-size: 19px;
-    }
+    flex: 0 0 158px;
+    background: url("https://eduardokraus.com/img/logo-branco.png") center / contain no-repeat;
+}
+:root[data-theme="light"] .brand-mark {
+    background-image: url("https://eduardokraus.com/img/logo-color.png");
 }
 .search {
     height: 52px;
@@ -561,9 +543,12 @@ footer {
         gap: 10px;
     }
     .brand-mark {
-        width: 45px;
+        width: 120px;
         height: 50px;
-        font-size: 18px;
+        flex-basis: 120px;
+    }
+    .brand > span:last-child {
+        display: none;
     }
     .theme-toggle {
         button {
