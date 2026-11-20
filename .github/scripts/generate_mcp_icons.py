@@ -163,6 +163,9 @@ def main():
     for component,art in [('mod_mcp',mod_icon()),('block_mcp',block_icon())]:
         path=dest/component/'icon.png'
         path.parent.mkdir(parents=True,exist_ok=True)
+        # Clip the outer shadow to the rounded app tile so all four corners are transparent.
+        rim=rr((6,6,1018,1018),226,1)
+        art.putalpha(Image.fromarray(np.minimum(np.asarray(art.getchannel('A')),np.asarray(rim)),'L'))
         art.save(path,optimize=True)
         print(f'{component}: {path}, {art.size}, {art.mode}, {path.stat().st_size} bytes')
 
