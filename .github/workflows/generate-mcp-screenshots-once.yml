@@ -30,6 +30,54 @@ jobs:
         shell: bash
         run: |
           printf '%s' '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' | base64 -d | gzip -d > /tmp/render_mcp_marketplace_screens.py
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('/tmp/render_mcp_marketplace_screens.py')
+          source = path.read_text()
+          fixes = [
+              ('Give each course user a secure, personal ChatGPT connection.',
+               'A personal ChatGPT connection for authorized teachers and course managers.'),
+              ("('Personal connection','Each person authorizes their own Moodle account.'),",
+               "('Personal connection','Each teacher uses their own Moodle account.'),"),
+              ("('Study content','Reach visible course content, tasks and grades.'),",
+               "('Teaching tools','Consult course content and organize teaching tasks.'),"),
+              ("('Course permissions','Respect enrolment and the user\\'s Moodle role.'),",
+               "('Teacher permissions','Students cannot see or access the MCP block.'),"),
+              ("('Audience controls','Allow teachers or teachers and students.'),",
+               "('Teachers only','The block is restricted to teaching staff and managers.'),"),
+              ("'BIOLOGY 101  /  STUDENT VIEW','Your AI study assistant'",
+               "'BIOLOGY 101  /  TEACHER VIEW','Your AI course assistant'"),
+              ("'Study the visible course content and check your own progress, deadlines and grades in ChatGPT.'",
+               "'Consult your course content and organize teaching activities in ChatGPT.'"),
+              ("'Configure the block audience and optional, permission-scoped write access.'",
+               "'Manage optional, permission-scoped write access for teaching staff.'"),
+          ]
+          for before, after in fixes:
+              if source.count(before) != 1:
+                  raise RuntimeError('Expected exactly one occurrence: ' + before)
+              source = source.replace(before, after)
+          start_marker = "    txt(d,613,279,'Who can connect',20,NAVY,'semibold')"
+          end_marker = "    button(d,(1201,765,1468,808),'Save changes',True,20)"
+          if source.count(start_marker) != 1 or source.count(end_marker) != 1:
+              raise RuntimeError('Could not locate obsolete audience dropdown')
+          start = source.index(start_marker)
+          end = source.index(end_marker, start)
+          replacement = """    txt(d,613,283,'Teacher-only course access',21,NAVY,'semibold')
+    para(d,613,323,'The MCP block is available to authorized teachers and course managers. Students cannot see the block or access its tools.',18,MUTED,820,27)
+    stroke_line(d,(614,410),(1459,410),LINE,2)
+    rounded(d,(615,450,648,483),'#FFFFFF',7,'#9FB5D2',3)
+    txt(d,666,449,'Allow teacher WRITE tools',21,NAVY,'semibold')
+    txt(d,666,485,'Disabled by default; users also need block/mcp:write.',18,MUTED)
+    rounded(d,(613,547,1463,707),'#F1F6FD',14,'#D7E4F4',2)
+    info_icon(d,634,564,'i')
+    txt(d,680,562,'About teacher WRITE tools',19,NAVY,'semibold')
+    para(d,680,598,'Only selected, course-scoped WRITE tools can be enabled for authorized teachers. The ChatGPT user must still confirm supported changes before execution. Site administration tools are never available through this block.',18,MUTED,736,29)
+"""
+          source = source[:start] + replacement + source[end:]
+          assert 'STUDENT VIEW' not in source
+          assert 'Teachers and students' not in source
+          path.write_text(source)
+          PY
           python3 /tmp/render_mcp_marketplace_screens.py . .
 
       - name: Validate output and distinct flows
@@ -55,39 +103,44 @@ jobs:
           assert len(hashes) == 4
           PY
 
-      - name: Reference the new screenshots only for the two MCP plugins
+      - name: Verify registered screenshot paths and access wording
         run: |
           node <<'JS'
           const fs = require('node:fs');
-          const path = 'plugins.json';
-          const original = JSON.parse(fs.readFileSync(path, 'utf8'));
-          const catalog = structuredClone(original);
+          const catalog = JSON.parse(fs.readFileSync('plugins.json', 'utf8'));
           for (const component of ['mod_mcp', 'block_mcp']) {
-            const matches = catalog.filter(p => p.component === component);
-            if (matches.length !== 1) throw Error('Missing or duplicate ' + component);
-            const entry = matches[0];
-            if ((entry.screenshots || []).length !== 0) throw Error('Unexpected existing screenshots in ' + component);
-            entry.screenshots = [1, 2].map(n => ({
-              url: '/marketplace-plugins/screenshots/' + component + '/new-' + n + '.png'
-            }));
-          }
-          for (let i = 0; i < catalog.length; i++) {
-            if (['mod_mcp', 'block_mcp'].includes(catalog[i].component)) {
-              const before = { ...original[i], screenshots: catalog[i].screenshots };
-              if (JSON.stringify(before) !== JSON.stringify(catalog[i])) throw Error('Unexpected MCP metadata update');
-            } else if (JSON.stringify(catalog[i]) !== JSON.stringify(original[i])) {
-              throw Error('Unrelated catalog record changed: ' + catalog[i].component);
+            const entries = catalog.filter(item => item.component === component);
+            if (entries.length !== 1) throw Error('Invalid catalog component: ' + component);
+            const expected = [1, 2].map(n => ({url: '/marketplace-plugins/screenshots/' + component + '/new-' + n + '.png'}));
+            if (JSON.stringify(entries[0].screenshots) !== JSON.stringify(expected)) {
+              throw Error('Screenshot paths not registered: ' + component);
             }
           }
-          fs.writeFileSync(path, JSON.stringify(catalog, null, 2) + '\n');
+          const block = catalog.find(item => item.component === 'block_mcp');
+          if (/teachers and students|teachers or teachers and students|give teachers and students a course-level connection/i.test(block.description_html)) {
+            throw Error('Incorrect student access statement in description');
+          }
+          if (!block.description.includes('Students cannot access this block.')) {
+            throw Error('Missing block student restriction');
+          }
           JS
 
-      - name: Commit only screenshots and catalog references
+      - name: Commit only four PNGs and remove temporary workflow
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- screenshots/mod_mcp/new-1.png screenshots/mod_mcp/new-2.png screenshots/block_mcp/new-1.png screenshots/block_mcp/new-2.png plugins.json
+          git add -- screenshots/mod_mcp/new-1.png screenshots/mod_mcp/new-2.png screenshots/block_mcp/new-1.png screenshots/block_mcp/new-2.png
           git rm -- .github/workflows/generate-mcp-screenshots-once.yml
           git diff --cached --check
-          git commit -m "feat: add guide-compliant screenshots for MCP activity and block"
-          git push origin HEAD:master
+          git commit -m "feat: publish teacher-only MCP block screenshots"
+          for attempt in 1 2 3 4; do
+            git fetch origin master
+            git rebase origin/master
+            if git push origin HEAD:master; then
+              echo "Published screenshots without overwriting concurrent changes."
+              exit 0
+            fi
+            echo "Concurrent push, retrying (${attempt}/4)."
+          done
+          echo "Unable to publish screenshots after four safe retries." >&2
+          exit 1
