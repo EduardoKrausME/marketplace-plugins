@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - ".github/workflows/generate-mcp-icons-once.yml"
+      - ".github/scripts/generate_mcp_icons.py"
   workflow_dispatch:
 
 permissions:
