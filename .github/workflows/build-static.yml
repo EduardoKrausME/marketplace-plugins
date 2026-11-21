@@ -5,7 +5,7 @@ on:
     branches: [master]
     paths:
       - "plugins.json"
-      - "plugin-detail.php"
+      - "_build-plugin-detail.php"
       - "index.html"
       - "js/app.js"
       - ".github/workflows/build-static.yml"
@@ -29,14 +29,14 @@ jobs:
 
       - name: Validate source files
         run: |
-          php -l plugin-detail.php
+          php -l _build-plugin-detail.php
           node --check js/app.js
           node --check js/detail.js
           node --check js/theme.js
           test -f index.html
           test -f plugins.json
 
-      - name: Render plugin-detail.php to static pages
+      - name: Render _build-plugin-detail.php to static pages
         shell: bash
         run: |
           php <<'PHP'
@@ -73,7 +73,7 @@ jobs:
               throw new RuntimeException('Unable to create the plugin/ directory.');
           }
 
-          $marker = '<!-- Generated from plugin-detail.php by GitHub Actions. Do not edit. -->';
+          $marker = '<!-- Generated from _build-plugin-detail.php by GitHub Actions. Do not edit. -->';
           $updated = 0;
           $unchanged = 0;
 
@@ -89,7 +89,7 @@ jobs:
               $assetBase = '../../';
               ob_start();
               try {
-                  require $root . '/plugin-detail.php';
+                  require $root . '/_build-plugin-detail.php';
                   $html = ob_get_clean();
               } catch (Throwable $exception) {
                   ob_end_clean();
@@ -159,7 +159,7 @@ jobs:
               $file = "plugin/{$component}/index.html";
               $html = is_file($file) ? file_get_contents($file) : false;
               if (!is_string($html)
-                  || !str_contains($html, 'Generated from plugin-detail.php')
+                  || !str_contains($html, 'Generated from _build-plugin-detail.php')
                   || !str_contains($html, '../../styles/styles.css')
                   || !str_contains($html, '../../js/detail.js')
                   || !str_contains($html, htmlspecialchars(
